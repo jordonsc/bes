@@ -2,7 +2,7 @@ package(default_visibility = ["//visibility:public"])
 
 load("//bazel:deps.bzl", "COPTS", "LINKOPTS")
 
-INCLUDES = ["lib"]
+INCLUDES = ["."]
 
 # Application kernel
 cc_library(
@@ -151,7 +151,7 @@ cc_library(
         "web/**/*.tcc",
     ]),
     copts = COPTS,
-    includes = ["web"],
+    includes = INCLUDES,
     linkopts = LINKOPTS,
     deps = [
         ":bes",
