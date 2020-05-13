@@ -1,6 +1,6 @@
 package(default_visibility = ["//visibility:public"])
 
-load(":std.bzl", "COPTS", "LINKOPTS")
+load("//bazel:deps.bzl", "COPTS", "LINKOPTS")
 
 # Application kernel
 cc_library(

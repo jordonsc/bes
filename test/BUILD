@@ -1,4 +1,4 @@
-load("//lib:std.bzl", "COPTS", "LINKOPTS")
+load("//bazel:deps.bzl", "COPTS", "LINKOPTS")
 
 cc_test(
     name = "bes",
