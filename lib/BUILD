@@ -151,7 +151,7 @@ cc_library(
         "web/**/*.tcc",
     ]),
     copts = COPTS,
-    includes = INCLUDES,
+    includes = ["web"],
     linkopts = LINKOPTS,
     deps = [
         ":bes",
