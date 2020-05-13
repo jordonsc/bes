@@ -2,6 +2,8 @@ package(default_visibility = ["//visibility:public"])
 
 load("//bazel:deps.bzl", "COPTS", "LINKOPTS")
 
+INCLUDES = ["lib"]
+
 # Application kernel
 cc_library(
     name = "app",
@@ -11,6 +13,7 @@ cc_library(
         "app/**/*.tcc",
     ]),
     copts = COPTS,
+    includes = INCLUDES,
     linkopts = LINKOPTS,
     deps = [
         ":bes",
@@ -30,6 +33,7 @@ cc_library(
         "bes/**/*.tcc",
     ]),
     copts = COPTS,
+    includes = INCLUDES,
     linkopts = LINKOPTS,
     deps = [
         ":log",
@@ -46,6 +50,7 @@ cc_library(
         "cli/**/*.tcc",
     ]),
     copts = COPTS,
+    includes = INCLUDES,
     linkopts = LINKOPTS,
     deps = [
         ":bes",
@@ -62,6 +67,7 @@ cc_library(
         "fastcgi/**/*.tcc",
     ]),
     copts = COPTS,
+    includes = INCLUDES,
     linkopts = LINKOPTS,
     deps = [
         ":bes",
@@ -79,6 +85,7 @@ cc_library(
         "log/**/*.tcc",
     ]),
     copts = COPTS,
+    includes = INCLUDES,
     linkopts = LINKOPTS,
 )
 
@@ -91,6 +98,7 @@ cc_library(
         "net/**/*.tcc",
     ]),
     copts = COPTS,
+    includes = INCLUDES,
     linkopts = LINKOPTS,
     deps = [
         ":bes",
@@ -107,6 +115,7 @@ cc_library(
         "service/**/*.tcc",
     ]),
     copts = COPTS,
+    includes = INCLUDES,
     linkopts = LINKOPTS,
     deps = [
         ":bes",
@@ -125,6 +134,7 @@ cc_library(
         "templating/**/*.tcc",
     ]),
     copts = COPTS,
+    includes = INCLUDES,
     linkopts = LINKOPTS,
     deps = [
         ":bes",
@@ -141,6 +151,7 @@ cc_library(
         "web/**/*.tcc",
     ]),
     copts = COPTS,
+    includes = INCLUDES,
     linkopts = LINKOPTS,
     deps = [
         ":bes",
@@ -160,6 +171,7 @@ cc_library(
         "web.templating/**/*.tcc",
     ]),
     copts = COPTS,
+    includes = INCLUDES,
     linkopts = LINKOPTS,
     deps = [
         ":templating",
