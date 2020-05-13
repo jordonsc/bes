@@ -40,13 +40,3 @@ def bes_test_deps():
                 "https://github.com/google/googletest/archive/v1.10.x.tar.gz",
             ],
         )
-
-# Standard cxx options
-COPTS = [
-    "-std=c++17",
-]
-
-# Standard linker options
-LINKOPTS = [
-    "-pthread",
-]

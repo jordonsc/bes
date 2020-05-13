@@ -1,16 +1,16 @@
-load("//bazel:deps.bzl", "COPTS", "LINKOPTS")
+load("//bazel:build.bzl", "COPTS", "LINKOPTS")
 
 cc_test(
-    name = "bes",
+    name = "core",
     size = "small",
     srcs = [
-        "bes/filefinder.cc",
+        "core/filefinder.cc",
         "test.cc",
     ],
     copts = COPTS,
     linkopts = LINKOPTS,
     deps = [
-        "//lib:bes",
+        "//:core",
         "@gtest",
     ],
 )
@@ -25,7 +25,7 @@ cc_test(
     copts = COPTS,
     linkopts = LINKOPTS,
     deps = [
-        "//lib:cli",
+        "//:cli",
         "@gtest",
     ],
 )
@@ -40,7 +40,7 @@ cc_test(
     copts = COPTS,
     linkopts = LINKOPTS,
     deps = [
-        "//lib:service",
+        "//:service",
         "@gtest",
     ],
 )
@@ -64,7 +64,7 @@ cc_test(
     ],
     linkopts = LINKOPTS,
     deps = [
-        "//lib:templating",
+        "//:templating",
         "@gtest",
     ],
 )
@@ -79,7 +79,7 @@ cc_test(
     copts = COPTS,
     linkopts = LINKOPTS,
     deps = [
-        "//lib:web",
+        "//:web",
         "@gtest",
     ],
 )
