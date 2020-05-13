@@ -1,0 +1,44 @@
+<html>
+<head>
+    <title>
+    {{- doc.title -}}
+    </title>
+    {#- This is a comment #}
+</head>
+<body>
+{%- if warning is defined %}
+    <div class="err">{{ warning }}</div>
+{%- endif %}
+
+{%- if doc.heading %}
+    <h1>{{ doc.heading|trim }}</h1>
+{%- endif %}
+
+{%- if doc.sub_heading %}
+    <h2>{{ doc.sub_heading }}</h2>
+{%- endif %}
+
+    <p>This is a {template} example.</p>
+    <div class="body">
+{%- for p in doc.paragraphs %}
+        <p{%- if loop.first %} class="first"{%endif-%}>{{ loop.index1 -}} : {{ p }}</p>
+{%- endfor %}
+    </div>
+
+{%- if doc.article_id %}
+
+    <sub>Article ID: {{ doc.article_id }}</sub>
+{%- elif doc.owner_id %}
+
+    <sub>Owner ID: {{ doc.owner_id }}</sub>
+{%- else %}
+
+    <sub>This article has no IDs.</sub>
+{%- endif %}
+    <div class="footer">
+{%- for item in ["foo", "bar", doc.title, 41] %}
+        <sub>{{ item }}</sub>
+{%- endfor %}
+    </div>
+</body>
+</html>
