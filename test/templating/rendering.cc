@@ -1,7 +1,7 @@
 #include <fstream>
 
 #include "gtest/gtest.h"
-#include "lib/templating/templating.h"
+#include "bes/templating.h"
 
 struct Document
 {

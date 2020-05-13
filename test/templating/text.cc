@@ -1,7 +1,7 @@
 #include <vector>
 
 #include "gtest/gtest.h"
-#include "lib/templating/templating.h"
+#include "bes/templating.h"
 
 using s_vec = std::vector<std::string>;
 

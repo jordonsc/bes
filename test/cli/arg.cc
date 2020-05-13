@@ -1,5 +1,5 @@
+#include "bes/cli.h"
 #include "gtest/gtest.h"
-#include "lib/cli/cli.h"
 
 using b_t = std::tuple<std::string, std::string>;
 
