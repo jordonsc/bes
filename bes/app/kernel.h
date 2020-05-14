@@ -377,7 +377,7 @@ void Kernel<AppT>::InitConfig()
         } catch (bes::cli::NoSuchArgumentException&) {
             // Load using a file finder
             bes::FileFinder ff;
-            ff.AppendSearchPath(app.get()->Key().c_str());
+            ff.AppendSearchPath(app.get()->Key().c_str() + ".yaml");
 
             // This will log a warning if it can't find anything, but otherwise carry on
             config.LoadFile(ff);
