@@ -31,7 +31,13 @@ void Engine::LoadFile(std::string const& name, std::string const& filename)
 {
     std::unique_lock<std::shared_mutex> lock;
 
-    std::ifstream str(filename);
+    if (search_path.Empty()) {
+        search_path.AppendSearchPath(".");
+    }
+
+    std::string file_path = search_path.FindInPath(filename);
+
+    std::ifstream str(file_path);
     std::stringstream buffer;
     buffer << str.rdbuf();
 
@@ -40,6 +46,8 @@ void Engine::LoadFile(std::string const& name, std::string const& filename)
 
     ptr->filters = &filters;
     templates.insert_or_assign(name, ptr);
+
+    BES_LOG(DEBUG) << "Loaded template '" << name << "' from file '" << file_path << "'";
 }
 
 void Engine::LoadString(std::string const& name, std::string const& data)
@@ -51,6 +59,8 @@ void Engine::LoadString(std::string const& name, std::string const& data)
 
     ptr->filters = &filters;
     templates.insert_or_assign(name, ptr);
+
+    BES_LOG(DEBUG) << "Loaded template '" << name << "' from memory";
 }
 
 std::string Engine::Render(std::string const& name, data::Context& context, bool throw_on_error)

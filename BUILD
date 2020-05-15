@@ -90,7 +90,9 @@ bes_cc_library(
 bes_cc_library(
     name = "web.templating",
     deps = [
+        ":app",
         ":templating",
         ":web",
+        "@yaml-cpp//:yaml-cpp",
     ],
 )

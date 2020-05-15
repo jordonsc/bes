@@ -3,9 +3,10 @@
 
 #include <string>
 #include <tuple>
+#include <utility>
 
-#include "kernel.h"
 #include "bes/cli.h"
+#include "kernel.h"
 
 namespace bes::app {
 
@@ -24,7 +25,7 @@ class Application
      *
      * Eg: "My Application"
      */
-    virtual inline std::string const& Name() const
+    [[nodiscard]] virtual inline std::string const& Name() const
     {
         return name;
     }
@@ -37,7 +38,7 @@ class Application
      *
      * Eg: "my-application"
      */
-    virtual inline std::string const& Key() const
+    [[nodiscard]] virtual inline std::string const& Key() const
     {
         return key;
     }
@@ -47,7 +48,7 @@ class Application
      *
      * Eg: "Regularly sends me an email telling me I'm awesome."
      */
-    virtual inline std::string const& Description() const
+    [[nodiscard]] virtual inline std::string const& Description() const
     {
         return description;
     }
@@ -57,7 +58,7 @@ class Application
      *
      * Eg. (1, 6, 9)
      */
-    virtual inline version_t const& Version() const
+    [[nodiscard]] virtual inline version_t const& Version() const
     {
         return version;
     }
@@ -114,7 +115,11 @@ class Application
      */
     Application(std::string name, std::string key, std::string description, bes::version_t version,
                 std::string usage = "")
-        : name(name), key(key), description(description), version(version), usage(usage)
+        : name(std::move(name)),
+          key(std::move(key)),
+          description(std::move(description)),
+          version(std::move(version)),
+          usage(std::move(usage))
     {}
 
     static bool KernelExists();

@@ -1,12 +1,14 @@
 #include "file_finder.h"
 
+#include <experimental/filesystem>
 #include <fstream>
 #include <stdexcept>
 
-#include "exception.h"
 #include "bes/log.h"
+#include "exception.h"
 
 using namespace bes;
+using fs_path = std::experimental::filesystem::path;
 
 filesystem_t FileFinder::Find() const
 {
@@ -30,6 +32,23 @@ filesystem_t FileFinder::Find(filesystem_t const& override) const
     } else {
         throw FileNotFoundException("Unable to open file", override);
     }
+}
+
+filesystem_t FileFinder::FindInPath(filesystem_t const& filename) const
+{
+    for (auto const& path : search_path) {
+        std::string fn = path;
+        fn += fs_path::preferred_separator;
+        fn += filename;
+
+        BES_LOG(TRACE) << "Scan: " << fn;
+        if (FileMeetsRequirements(fn)) {
+            BES_LOG(TRACE) << "Match: " << fn;
+            return fn;
+        }
+    }
+
+    throw FileNotFoundException("Cannot locate file", filename);
 }
 
 FileFinder& FileFinder::ClearSearchPath()
@@ -62,4 +81,9 @@ bool FileFinder::FileMeetsRequirements(filesystem_t const& path) const
 size_t FileFinder::SearchPathSize() const
 {
     return search_path.size();
+}
+
+bool FileFinder::Empty() const
+{
+    return search_path.empty();
 }

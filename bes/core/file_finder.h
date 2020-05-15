@@ -22,10 +22,24 @@ class FileFinder
                                bool require_write = false)
         : search_path(std::move(search_paths)), req_read(require_read), req_write(require_write){};
 
+    /**
+     * Find an exact file match.
+     *
+     * The search path should contain filenames.
+     */
     [[nodiscard]] filesystem_t Find() const;
     [[nodiscard]] filesystem_t Find(filesystem_t const& override) const;
+
+    /**
+     * Find the given filename in the search path.
+     *
+     * The search path should contain path names.
+     */
+    [[nodiscard]] filesystem_t FindInPath(filesystem_t const& filename) const;
+
     FileFinder& ClearSearchPath();
     [[nodiscard]] size_t SearchPathSize() const;
+    [[nodiscard]] bool Empty() const;
 
     template <typename T>
     FileFinder& AppendSearchPath(T&&);

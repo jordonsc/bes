@@ -1,8 +1,10 @@
 #include "arg.h"
 
+#include <utility>
+
 using namespace bes::cli;
 
-Arg::Arg(char s, std::string l, ValueType val_type) : Arg::Arg(s, l, "", val_type) {}
+Arg::Arg(char s, std::string l, ValueType val_type) : Arg::Arg(s, std::move(l), "", val_type) {}
 
 Arg::Arg(char s, std::string l, std::string default_val, ValueType val_type)
     : short_form(s), long_form(std::move(l)), arg_value(std::move(default_val)), value_type(val_type)

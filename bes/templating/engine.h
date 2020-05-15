@@ -8,6 +8,7 @@
 #include <streambuf>
 #include <unordered_map>
 
+#include "core.h"
 #include "data/context.h"
 #include "node/root_node.h"
 #include "parser.h"
@@ -44,6 +45,8 @@ class Engine
      * template does not exist, a MissingTemplateException will be raised regardless of throw_on_error.
      */
     std::string Render(std::string const& name, data::Context& context, bool throw_on_error = true);
+
+    bes::FileFinder search_path;
 
    protected:
     std::unordered_map<std::string, std::shared_ptr<node::RootNode>> templates;
