@@ -1,5 +1,10 @@
 load("//bazel:build.bzl", "COPTS", "LINKOPTS")
 
+filegroup(
+    name = "data",
+    srcs = glob(["data/*"]),
+)
+
 cc_test(
     name = "core",
     size = "small",
@@ -48,20 +53,12 @@ cc_test(
 cc_test(
     name = "templating",
     size = "small",
-    srcs = [
-        "templating/expressions.cc",
-        "templating/rendering.cc",
-        "templating/tags.cc",
-        "templating/text.cc",
+    srcs = glob([
+        "templating/*.cc",
         "test.cc",
-    ],
+    ]),
     copts = COPTS,
-    data = [
-        ":data/hello-world.out-1.html",
-        ":data/hello-world.out-2.html",
-        ":data/hello-world.out-3.html",
-        ":data/hello-world.tmpl.html.twig",
-    ],
+    data = [":data"],
     linkopts = LINKOPTS,
     deps = [
         "//:templating",
