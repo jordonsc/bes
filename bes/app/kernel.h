@@ -92,10 +92,10 @@ class Kernel : public KernelInterface
 {
    public:
     template <class... AppArgs>
-    Kernel(int const argc, char** const argv, AppArgs&&... args);
+    Kernel(int argc, char** argv, AppArgs&&... args);
     Kernel(Kernel&) = delete;
     Kernel& operator=(Kernel&) = delete;
-    virtual ~Kernel();
+    ~Kernel() override;
 
     /**
      * Executes the initialisation, custom builder and run phase.
@@ -235,7 +235,7 @@ int Kernel<AppT>::Init()
 
         // Allow the kernel to respond to CLI commands (such as --help or --version) before starting the app
         int cli_result = ExecuteKernelCli();
-        if (cli_result != -1) {
+        if (cli_result != static_cast<int>(ExitCode::SUCCESS)) {
             return cli_result;
         }
 
@@ -394,7 +394,7 @@ int Kernel<AppT>::ExecuteKernelCli()
     try {
         if (cli["help"].Present()) {
             std::cout << app.get()->Usage();
-            return static_cast<int>(ExitCode::SUCCESS);
+            return static_cast<int>(ExitCode::CLI_SUCCESS);
         }
     } catch (bes::cli::NoSuchArgumentException&) {
     }
@@ -403,12 +403,12 @@ int Kernel<AppT>::ExecuteKernelCli()
         if (cli["version"].Present()) {
             auto [major, minor, rev] = app.get()->Version();
             std::cout << app.get()->Name() << "\nv" << major << "." << minor << "." << rev << std::endl;
-            return static_cast<int>(ExitCode::SUCCESS);
+            return static_cast<int>(ExitCode::CLI_SUCCESS);
         }
     } catch (bes::cli::NoSuchArgumentException&) {
     }
 
-    return -1;
+    return static_cast<int>(ExitCode::SUCCESS);
 }
 
 template <class AppT>
@@ -464,12 +464,12 @@ template <class AppT>
 int Kernel<AppT>::Execute(std::function<int()> const& builder)
 {
     if (int r = Init()) {
-        return r;
+        return r < 0 ? 0 : r;
     }
 
     if (builder != nullptr) {
         if (int r = builder()) {
-            return r;
+            return r < 0 ? 0 : r;
         }
     }
 

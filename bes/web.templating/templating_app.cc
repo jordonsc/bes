@@ -21,7 +21,7 @@ void TemplateApp::Bootstrap()
 
     // Build version, template schema and route schema can all be defined in the config or from CLI
     build = Kernel().Config().GetOr<std::string>("static", "web", "build");
-    auto tmpl_schema = Kernel().Config().GetOr<std::string>("/app/templates.yml", "web", "templates");
+    auto tmpl_schema = Kernel().Config().GetOr<std::string>("/app/templating.yml", "web", "templating");
     auto route_schema = Kernel().Config().GetOr<std::string>("/app/routing.yml", "web", "routing");
 
     auto const& cli_build = Kernel().Cli()["build"];
@@ -29,7 +29,7 @@ void TemplateApp::Bootstrap()
         build = cli_build.as<std::string>();
     }
 
-    auto const& cli_templates = Kernel().Cli()["templates"];
+    auto const& cli_templates = Kernel().Cli()["templating"];
     if (cli_templates.Present()) {
         tmpl_schema = cli_templates.as<std::string>();
     }
@@ -41,12 +41,20 @@ void TemplateApp::Bootstrap()
 
     // Parse the templating YAML file and load templates
     BES_LOG(DEBUG) << "Parsing template schema: " << tmpl_schema;
-    LoadTemplates(tmpl_schema);
+    try {
+        LoadTemplates(tmpl_schema);
+    } catch (YAML::BadFile const&) {
+        BES_LOG(ERROR) << "Bad template schema file: " << tmpl_schema;
+    }
 
     // Router
     BES_LOG(DEBUG) << "Parsing route schema: " << route_schema;
     auto router = Kernel().Container().Get<bes::web::MappedRouter>("router");
-    router->LoadRoutesFromFile(route_schema);
+    try {
+        router->LoadRoutesFromFile(route_schema);
+    } catch (YAML::BadFile const&) {
+        BES_LOG(ERROR) << "Bad routing schema file: " << route_schema;
+    }
 
     // Controllers
     RegisterControllers(*router);
@@ -83,7 +91,6 @@ void TemplateApp::LoadTemplates(std::string const& fn)
             throw bes::web::WebException("'templates' node must be a list of name/filename pairs");
         }
 
-        BES_LOG(TRACE) << "Scanning templates..";
         for (auto const& node : templates) {
             if (!node.IsMap()) {
                 throw bes::web::WebException("'templates' list contains non-map elements");
@@ -96,7 +103,12 @@ void TemplateApp::LoadTemplates(std::string const& fn)
                 throw bes::web::WebException("'templates' must contain string 'name' and 'filename' nodes");
             }
 
-            templating->LoadFile(node_name.as<std::string>(), node_file.as<std::string>());
+            try {
+                templating->LoadFile(node_name.as<std::string>(), node_file.as<std::string>());
+            } catch (bes::FileNotFoundException const&) {
+                BES_LOG(ERROR) << "Unable to load template '" << node_name << "': cannot locate file '" << node_file
+                               << "'";
+            }
         }
     }
 }
@@ -106,7 +118,7 @@ void TemplateApp::ConfigureCli(bes::cli::Parser& parser)
     Application::ConfigureCli(parser);
 
     parser << bes::cli::Arg('b', "build", bes::cli::ValueType::REQUIRED)
-           << bes::cli::Arg('t', "templates", bes::cli::ValueType::REQUIRED)
+           << bes::cli::Arg('t', "templating", bes::cli::ValueType::REQUIRED)
            << bes::cli::Arg('r', "routing", bes::cli::ValueType::REQUIRED);
 }
 

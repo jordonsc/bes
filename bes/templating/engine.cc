@@ -68,15 +68,19 @@ std::string Engine::Render(std::string const& name, data::Context& context, bool
     std::shared_lock<std::shared_mutex> lock;
 
     std::ostringstream str;
-    std::shared_ptr<node::RootNode> root;
+    std::shared_ptr<node::RootNode const> root;
     std::unordered_map<std::string, bool> recursion_check;
     recursion_check[name] = true;
+
+    // Top-most template is a nullptr, indicating there are no more child templates
+    context.PrependTemplate(nullptr);
 
     do {
         try {
             if (root == nullptr) {
                 // First template
                 root = templates.at(name);
+                context.PrependTemplate(root.get());
             } else {
                 // A parent template
                 if (recursion_check.find(root->ExtendsTemplate()) != recursion_check.end()) {
@@ -86,9 +90,8 @@ std::string Engine::Render(std::string const& name, data::Context& context, bool
                     recursion_check[root->ExtendsTemplate()] = true;
                 }
 
-                node::RootNode* child = root.get();
                 root = templates.at(root->ExtendsTemplate());
-                root->SetChildTemplate(child);
+                context.PrependTemplate(root.get());
             }
         } catch (std::out_of_range const&) {
             throw MissingTemplateException("Template '" + name + "' does not exist");

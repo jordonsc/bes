@@ -66,18 +66,3 @@ bool RootNode::RenderBlock(std::string const& key, std::ostringstream& ss, bes::
         return false;
     }
 }
-
-void RootNode::SetChildTemplate(RootNode* child)
-{
-    child_template = child;
-}
-
-bool RootNode::HasChild() const
-{
-    return child_template != nullptr;
-}
-
-RootNode* RootNode::Child() const
-{
-    return child_template;
-}

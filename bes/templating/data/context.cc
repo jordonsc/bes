@@ -48,3 +48,24 @@ std::shared_ptr<ShellInterface> const& Context::GetValue(std::string const& key)
 
     throw MissingContextException("Context item '" + key + "' does not exist");
 }
+
+void Context::PrependTemplate(bes::templating::node::RootNode const* tmp)
+{
+    template_stack.push_front(tmp);
+    template_iterator = template_stack.begin();
+}
+
+bes::templating::node::RootNode const* Context::GetTemplate() const
+{
+    return *template_iterator;
+}
+
+void Context::NextTemplate()
+{
+    ++template_iterator;
+}
+
+void Context::PrevTemplate()
+{
+    --template_iterator;
+}

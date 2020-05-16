@@ -32,6 +32,7 @@ using version_t = std::tuple<std::uint16_t, std::uint16_t, std::uint16_t>;
  */
 enum class ExitCode : int
 {
+    CLI_SUCCESS = -1,        // OK state for CLI intercept (--help, --version), will be converted to ExitCode::SUCCESS
     SUCCESS = EXIT_SUCCESS,  // 0
     GEN_ERR = EXIT_FAILURE,  // 1
     CLI_PARSE_ERR = 2,       // App failed to parse CLI

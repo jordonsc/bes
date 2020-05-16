@@ -29,17 +29,11 @@ class RootNode : public NamedNode
     bool HasBlock(std::string const& key) const;
     bool RenderBlock(std::string const& key, std::ostringstream& ss, data::Context& ctx) const;
 
-    void SetChildTemplate(RootNode* child);
-    bool HasChild() const;
-
     std::unordered_map<std::string, Filter>* filters = nullptr;
-
-    RootNode* Child() const;
 
    protected:
     std::string extends_template;
     bool is_extension = false;
-    RootNode* child_template = nullptr;
     std::unordered_map<std::string, std::shared_ptr<Node>> block_nodes;
 };
 

@@ -18,8 +18,11 @@ class BlockNode : public NamedNode
     void Render(std::ostringstream& ss, data::Context& ctx) const override
     {
         ctx.IncreaseStack();
-        auto const* base = dynamic_cast<node::RootNode const*>(root);
-        if (base->HasChild() && base->Child()->HasBlock(name)) {
+        ctx.NextTemplate();
+
+        auto const* child = ctx.GetTemplate();
+
+        if (child != nullptr && child->HasBlock(name)) {
             // Render to a temp context variable for 'super'
             std::ostringstream temp;
             for (auto& node : child_nodes) {
@@ -27,13 +30,15 @@ class BlockNode : public NamedNode
             }
 
             ctx.SetValue("super", std::make_shared<data::StandardShell<std::string>>(temp.str()));
-            base->Child()->RenderBlock(name, ss, ctx);
+            child->RenderBlock(name, ss, ctx);
         } else {
             // Render directly to output
             for (auto& node : child_nodes) {
                 node->Render(ss, ctx);
             }
         }
+
+        ctx.PrevTemplate();
         ctx.DecreaseStack();
     }
 };
