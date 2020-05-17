@@ -31,6 +31,9 @@ Expression::Expression(std::string const& str)
             } else if (part == "extends") {
                 clause = Clause::EXTENDS;
                 continue;
+            } else if (part == "include") {
+                clause = Clause::INCLUDE;
+                continue;
             } else if (part == "for") {
                 ValidateClause(neg, str);
                 clause = Clause::FOR;
@@ -215,15 +218,16 @@ Expression::Expression(std::string const& str)
                 throw MalformedExpressionException(str, "block clause must contain only a name");
             }
             break;
+        case Clause::INCLUDE:
         case Clause::EXTENDS:
             if (left.items.size() != 1) {
-                throw MalformedExpressionException(str, "extends clause must have a single name string literal");
+                throw MalformedExpressionException(str, "clause must have a single name string literal");
             }
             if (left.symbol_type != Symbol::SymbolType::LITERAL || left.data_type != Symbol::DataType::STRING) {
-                throw MalformedExpressionException(str, "extends name should be a string literal");
+                throw MalformedExpressionException(str, "include & extends names should be a string literal");
             }
             if (!right.items.empty() || op != Operator::NONE) {
-                throw MalformedExpressionException(str, "extends clause must contain only a name string literal");
+                throw MalformedExpressionException(str, "clause must contain only a name string literal");
             }
             break;
         case Clause::IF:

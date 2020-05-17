@@ -17,6 +17,7 @@ Key Jinja2 functionality supported includes:
 * Basic for loops (no else or if conditions)
 * Comment tags `{# ... #}`
 * Block tags and template extensions
+* Include tags
 
 ### Expressions
 * Member object referencing {{ object.member_object.sub_member }}
@@ -55,17 +56,23 @@ Key Jinja2 features not supported and on the _immediate_ road-map:
 * Assignment operators
 * Mathematical operators
 * Macros
-* Imports
 
 Any of the above may be added in the future (request it and it'll happen).
 
 Differences From Jinja2
 -----------------------
+Function style syntax `something()` does not exist in this implementation, this has created a few minor differences:
+
 ### Super
 Nested blocks may use `super` context, but should do it in the form of a context item (variable), not a function call:
 
     {{ super }}
     
+
+### Include
+Include tags have the same syntax as `extends`, for example:
+
+    {% include "some_template" %} 
 
 Type Mapping
 ------------

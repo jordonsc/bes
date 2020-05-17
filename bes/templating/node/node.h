@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "../data/context.h"
+#include "../data/template_stack.h"
 #include "../exception.h"
 
 namespace bes::templating::node {
@@ -15,7 +16,7 @@ class Node
    public:
     explicit Node(Node const* const root = nullptr) : root(root) {}
 
-    virtual void Render(std::ostringstream&, data::Context&) const = 0;
+    virtual void Render(std::ostringstream&, data::Context&, data::TemplateStack&) const = 0;
 
     inline void AddNode(std::shared_ptr<Node> const& node)
     {

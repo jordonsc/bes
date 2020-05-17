@@ -45,7 +45,7 @@ class ForNode : public ExpressionNode
         }
     }
 
-    void Render(std::ostringstream& ss, data::Context& ctx) const override
+    void Render(std::ostringstream& ss, data::Context& ctx, data::TemplateStack& ts) const override
     {
         ctx.IncreaseStack();
         // Guarantees of symbol types is done during parsing
@@ -64,7 +64,7 @@ class ForNode : public ExpressionNode
 
                 // Process children
                 for (auto& node : child_nodes) {
-                    node->Render(ss, ctx);
+                    node->Render(ss, ctx, ts);
                 }
 
                 ++pos;
@@ -85,7 +85,7 @@ class ForNode : public ExpressionNode
 
                 // Process children
                 for (auto& node : child_nodes) {
-                    node->Render(ss, ctx);
+                    node->Render(ss, ctx, ts);
                 }
             }
         }

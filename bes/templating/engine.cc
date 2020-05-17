@@ -63,7 +63,7 @@ void Engine::LoadString(std::string const& name, std::string const& data)
     BES_LOG(DEBUG) << "Loaded template '" << name << "' from memory";
 }
 
-std::string Engine::Render(std::string const& name, data::Context& context, bool throw_on_error)
+std::string Engine::Render(std::string const& name, data::Context& context)
 {
     std::shared_lock<std::shared_mutex> lock;
 
@@ -72,15 +72,16 @@ std::string Engine::Render(std::string const& name, data::Context& context, bool
     std::unordered_map<std::string, bool> recursion_check;
     recursion_check[name] = true;
 
-    // Top-most template is a nullptr, indicating there are no more child templates
-    context.PrependTemplate(nullptr);
+    // Build a template stack, used during node rendering when encountering child templates or includes
+    data::TemplateStack ts(this);
+    ts.PrependTemplate(nullptr);
 
     do {
         try {
             if (root == nullptr) {
                 // First template
                 root = templates.at(name);
-                context.PrependTemplate(root.get());
+                ts.PrependTemplate(root.get());
             } else {
                 // A parent template
                 if (recursion_check.find(root->ExtendsTemplate()) != recursion_check.end()) {
@@ -91,7 +92,7 @@ std::string Engine::Render(std::string const& name, data::Context& context, bool
                 }
 
                 root = templates.at(root->ExtendsTemplate());
-                context.PrependTemplate(root.get());
+                ts.PrependTemplate(root.get());
             }
         } catch (std::out_of_range const&) {
             throw MissingTemplateException("Template '" + name + "' does not exist");
@@ -99,13 +100,9 @@ std::string Engine::Render(std::string const& name, data::Context& context, bool
     } while (root->Extends());
 
     try {
-        root->Render(str, context);
+        root->Render(str, context, ts);
     } catch (std::exception& e) {
-        if (throw_on_error) {
-            throw TemplateException(e.what());
-        } else {
-            BES_LOG(WARNING) << "Error rendering template '" << name << "': " << e.what();
-        }
+        throw TemplateException(e.what());
     }
 
     return str.str();

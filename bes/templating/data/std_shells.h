@@ -256,16 +256,13 @@ class StandardShell<std::string> : public SimpleShell<std::string>
     }
 };
 
-/// SHARED_PTR<STRING>
+/// STRING const*
 template <>
-class StandardShell<std::shared_ptr<std::string>> : public ShellInterface
+class StandardShell<std::string const*> : public SimpleShell<std::string const*>
 {
-   public:
-    inline void Render(std::ostringstream& str) const override
-    {
-        str << *(item.get());
-    }
+    using SimpleShell::SimpleShell;
 
+   public:
     inline std::shared_ptr<ShellInterface> ChildNode(std::string const& key) const override
     {
         if (key == "length") {
@@ -279,9 +276,28 @@ class StandardShell<std::shared_ptr<std::string>> : public ShellInterface
     {
         return item->length() > 0;
     }
+};
 
-   protected:
-    std::shared_ptr<std::string> item;
+/// SHARED_PTR<STRING>
+template <>
+class StandardShell<std::shared_ptr<std::string>> : public SimpleShell<std::shared_ptr<std::string>>
+{
+    using SimpleShell::SimpleShell;
+
+   public:
+    inline std::shared_ptr<ShellInterface> ChildNode(std::string const& key) const override
+    {
+        if (key == "length") {
+            return std::make_shared<StandardShell<size_t>>(item->length());
+        } else {
+            throw IndexErrorException(BES_TEMPLATING_NO_NODE + key);
+        }
+    }
+
+    bool IsTrue() const override
+    {
+        return item->length() > 0;
+    }
 };
 
 /// VECTOR<STRING>

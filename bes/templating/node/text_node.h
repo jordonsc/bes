@@ -25,7 +25,7 @@ class TextNode : public Node
         bes::templating::Text::TrimBack(content);
     }
 
-    void Render(std::ostringstream& str, data::Context& ctx) const override
+    void Render(std::ostringstream& str, data::Context& ctx, data::TemplateStack& ts) const override
     {
         str << content;
     }

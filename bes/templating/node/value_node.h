@@ -12,7 +12,7 @@ class ValueNode : public ExpressionNode
    public:
     using ExpressionNode::ExpressionNode;
 
-    void Render(std::ostringstream& ss, data::Context& ctx) const override
+    void Render(std::ostringstream& ss, data::Context& ctx, data::TemplateStack& ts) const override
     {
         if (!expr.filters.empty()) {
             std::ostringstream tmp;

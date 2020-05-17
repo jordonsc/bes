@@ -1,11 +1,6 @@
-<html>
-<head>
-    <title>
-    {{- doc.title -}}
-    </title>
-    {#- This is a comment #}
-</head>
-<body>
+{% extends "base" %}
+
+{% block body %}
 {%- if warning is defined %}
     <div class="err">{{ warning }}</div>
 {%- endif %}
@@ -20,15 +15,15 @@
 
     <p>This is a {template} example.</p>
     <div class="body">
-{%- for p in doc.paragraphs %}
-        <p{%- if loop.first %} class="first"{%endif-%}>{{ loop.index1 -}} : {{ p }}</p>
-{%- endfor %}
+    {%- for p in doc.paragraphs %}
+        <p{%- if loop.first %} class="first"{% endif -%}>{{ loop.index1 -}} : {{ p }}</p>
+    {%- endfor %}
     </div>
 
 {%- if doc.article_id %}
 
     <sub>Article ID: {{ doc.article_id }}</sub>
-{%- elif doc.owner_id %}
+    {%- elif doc.owner_id %}
 
     <sub>Owner ID: {{ doc.owner_id }}</sub>
 {%- else %}
@@ -36,9 +31,8 @@
     <sub>This article has no IDs.</sub>
 {%- endif %}
     <div class="footer">
-{%- for item in ["foo", "bar", doc.title, 41] %}
+    {%- for item in ["foo", "bar", doc.title, 41] %}
         <sub>{{ item }}</sub>
-{%- endfor %}
+    {%- endfor %}
     </div>
-</body>
-</html>
+{% endblock %}

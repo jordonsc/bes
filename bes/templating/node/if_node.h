@@ -86,7 +86,7 @@ class IfNode : public ExpressionNode
         return condition_state;
     }
 
-    void Render(std::ostringstream& ss, data::Context& ctx) const override
+    void Render(std::ostringstream& ss, data::Context& ctx, data::TemplateStack& ts) const override
     {
         using CtrlType = bes::templating::syntax::Expression::Clause;
 
@@ -109,7 +109,7 @@ class IfNode : public ExpressionNode
         // Process children
         ctx.IncreaseStack();
         for (auto& node : child_nodes) {
-            node->Render(ss, ctx);
+            node->Render(ss, ctx, ts);
         }
         ctx.DecreaseStack();
     }

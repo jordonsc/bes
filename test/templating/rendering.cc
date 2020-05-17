@@ -74,7 +74,10 @@ TEST(TemplatingRenderTest, BasicRender)
     std::string template_base = getenv("TEST_SRCDIR") + std::string("/bes/test/data");
     engine.search_path.AppendSearchPath(template_base);
 
-    ASSERT_NO_THROW(engine.LoadFile("sample", std::string("hello-world.tmpl.html.twig")));
+    engine.LoadFile("sample", "hello-world.tmpl.html.twig");
+    engine.LoadFile("base", "hello-world.base.html.twig");
+    engine.LoadFile("snippet_ext", "snippet_ext.html.twig");
+    engine.LoadFile("snippet_base", "snippet_base.html.twig");
 
     ctx.Set("doc", doc);
 

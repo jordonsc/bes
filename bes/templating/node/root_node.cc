@@ -2,10 +2,10 @@
 
 using namespace bes::templating::node;
 
-void RootNode::Render(std::ostringstream& ss, data::Context& ctx) const
+void RootNode::Render(std::ostringstream& ss, data::Context& ctx, data::TemplateStack& ts) const
 {
     for (auto& node : child_nodes) {
-        node->Render(ss, ctx);
+        node->Render(ss, ctx, ts);
     }
 }
 
@@ -57,10 +57,11 @@ bool RootNode::HasBlock(std::string const& key) const
     return block_nodes.find(key) != block_nodes.end();
 }
 
-bool RootNode::RenderBlock(std::string const& key, std::ostringstream& ss, bes::templating::data::Context& ctx) const
+bool RootNode::RenderBlock(std::string const& key, std::ostringstream& ss, bes::templating::data::Context& ctx,
+                           data::TemplateStack& ts) const
 {
     try {
-        block_nodes.at(key)->Render(ss, ctx);
+        block_nodes.at(key)->Render(ss, ctx, ts);
         return true;
     } catch (std::out_of_range const&) {
         return false;

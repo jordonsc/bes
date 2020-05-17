@@ -8,15 +8,17 @@
 #include <streambuf>
 #include <unordered_map>
 
-#include "core.h"
+#include "bes/core.h"
 #include "data/context.h"
+#include "data/template_stack.h"
 #include "node/root_node.h"
 #include "parser.h"
+#include "rendering_interface.h"
 #include "text.h"
 
 namespace bes::templating {
 
-class Engine
+class Engine : public RenderingInterface
 {
    public:
     Engine();
@@ -44,7 +46,7 @@ class Engine
      * If throw_on_error is false, rendering exceptions will be suppressed and sent to the log sink instead. If a
      * template does not exist, a MissingTemplateException will be raised regardless of throw_on_error.
      */
-    std::string Render(std::string const& name, data::Context& context, bool throw_on_error = true);
+    std::string Render(std::string const& name, data::Context& context) override;
 
     bes::FileFinder search_path;
 

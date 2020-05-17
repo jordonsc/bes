@@ -39,6 +39,7 @@ struct Expression
 
         // Single tags with no end
         EXTENDS,
+        INCLUDE,
     };
 
     enum class Operator : char
