@@ -128,7 +128,6 @@ void TemplateApp::Run()
     BES_LOG(INFO) << "Build: " << build;
 
     // Start the FastCGI server
-    BES_LOG(INFO) << "Starting FastCGI server..";
     svc = std::make_unique<bes::web::WebServer>();
     svc->AddRouter(Kernel().Container().Get<bes::web::MappedRouter>("router"));
     svc->Run(bes::net::Address(Kernel().Config().GetOr<std::string>("0.0.0.0", "server", "bind"),

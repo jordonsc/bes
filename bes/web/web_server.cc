@@ -9,7 +9,7 @@ WebServer::WebServer()
 
 void WebServer::Run(bes::net::Address const& listen_addr, bool allow_dbg_rendering)
 {
-    BES_LOG(INFO) << "Starting web server on " << listen_addr.AddrFull() << "..";
+    BES_LOG(INFO) << "Binding web server to " << listen_addr.AddrFull() << "..";
     // Start the FastCGI server
     svc = std::make_unique<bes::fastcgi::Service>();
     svc->container.Add("routers", routers);

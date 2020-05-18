@@ -13,6 +13,12 @@ class ContextBuilder
     ContextBuilder() : ctx(local) {}
 
     template <class T>
+    void Set(std::string const& key, T* item);
+
+    template <class T>
+    void Set(std::string const& key, T const* item);
+
+    template <class T>
     void Set(std::string const& key, T item);
 
     [[nodiscard]] inline data::Context& GetContext() const
@@ -24,6 +30,18 @@ class ContextBuilder
     data::Context& ctx;
     data::Context local;
 };
+
+template <class T>
+inline void ContextBuilder::Set(std::string const& key, T* item)
+{
+    ctx.SetValue(key, std::make_shared<StandardShell<T const*>>(item));
+}
+
+template <class T>
+inline void ContextBuilder::Set(std::string const& key, T const* item)
+{
+    ctx.SetValue(key, std::make_shared<StandardShell<T const*>>(item));
+}
 
 template <class T>
 inline void ContextBuilder::Set(std::string const& key, T item)

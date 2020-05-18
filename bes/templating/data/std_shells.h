@@ -263,6 +263,11 @@ class StandardShell<std::string const*> : public SimpleShell<std::string const*>
     using SimpleShell::SimpleShell;
 
    public:
+    void Render(std::ostringstream& str) const override
+    {
+        str << *item;
+    }
+
     inline std::shared_ptr<ShellInterface> ChildNode(std::string const& key) const override
     {
         if (key == "length") {
@@ -285,6 +290,11 @@ class StandardShell<std::shared_ptr<std::string>> : public SimpleShell<std::shar
     using SimpleShell::SimpleShell;
 
    public:
+    void Render(std::ostringstream& str) const override
+    {
+        str << *item;
+    }
+
     inline std::shared_ptr<ShellInterface> ChildNode(std::string const& key) const override
     {
         if (key == "length") {

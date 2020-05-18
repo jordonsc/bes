@@ -13,7 +13,7 @@ Service& Service::Run(bes::net::Address const& listen_addr, size_t threads, size
         throw FastCgiException("FastCGI service already running");
     }
 
-    BES_LOG(INFO) << "Starting FastCGI listener..";
+    BES_LOG(INFO) << "Starting FastCGI server..";
     main_socket.Bind(listen_addr);
     worker_pool = std::make_unique<bes::ThreadPool>(threads);
     svr_running.store(true);
