@@ -5,14 +5,14 @@
 
 namespace bes::web {
 
-class SessionInterface {
+class SessionInterface
+{
    public:
     virtual Session CreateSession() = 0;
     virtual Session GetSession(std::string const& id) = 0;
-    virtual void PersistSession(Session const&) = 0;
+    virtual void PersistSession(Session const& session, size_t ttl) = 0;
 };
 
-}
-
+}  // namespace bes::web
 
 #endif

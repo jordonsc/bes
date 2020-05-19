@@ -5,6 +5,13 @@
 
 using namespace bes::web;
 
+SessionObject::SessionObject(char const* item) : data(std::string(item)), data_type(ObjectType::STRING) {}
+SessionObject::SessionObject(std::string const& item) : data(item), data_type(ObjectType::STRING) {}
+SessionObject::SessionObject(int32_t item) : data(int64_t(item)), data_type(ObjectType::INT64) {}
+SessionObject::SessionObject(int64_t item) : data(item), data_type(ObjectType::INT64) {}
+SessionObject::SessionObject(double item) : data(item), data_type(ObjectType::DOUBLE) {}
+SessionObject::SessionObject(bool item) : data(item), data_type(ObjectType::BOOL) {}
+
 Session::Session(std::string id) : session_id(std::move(id)) {}
 
 std::string const& Session::SessionId() const
@@ -47,12 +54,17 @@ std::unordered_map<std::string, SessionObject> const& Session::Map() const
     return map;
 }
 
-SessionObject::SessionObject(char const* item) : data(item), data_type(ObjectType::STRING) {}
+size_t Session::Size() const
+{
+    return map.size();
+}
 
-SessionObject::SessionObject(std::string const& item) : data(item), data_type(ObjectType::STRING) {}
+bool Session::Empty() const
+{
+    return map.empty();
+}
 
-SessionObject::SessionObject(int64_t item) : data(item), data_type(ObjectType::INT64) {}
-
-SessionObject::SessionObject(double item) : data(item), data_type(ObjectType::DOUBLE) {}
-
-SessionObject::SessionObject(bool item) : data(item), data_type(ObjectType::BOOL) {}
+bool Session::HasItem(std::string const& key) const
+{
+    return map.find(key) != map.end();
+}

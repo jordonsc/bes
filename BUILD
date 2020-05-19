@@ -90,8 +90,10 @@ bes_cc_library(
 bes_cc_library(
     name = "web.redis",
     deps = [
+        ":log",
+        ":net",
         ":web",
-        "@cpp_redis//:cpp_redis",
+        "@cpp_redis",
     ],
 )
 

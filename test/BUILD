@@ -80,3 +80,18 @@ cc_test(
         "@gtest",
     ],
 )
+
+cc_test(
+    name = "web.redis",
+    size = "small",
+    srcs = [
+        "test.cc",
+        "web.redis/redis_session.cc",
+    ],
+    copts = COPTS,
+    linkopts = LINKOPTS,
+    deps = [
+        "//:web.redis",
+        "@gtest",
+    ],
+)
