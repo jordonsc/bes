@@ -86,6 +86,15 @@ bes_cc_library(
     ],
 )
 
+# Web + Redis sessions
+bes_cc_library(
+    name = "web.redis",
+    deps = [
+        ":web",
+        "@cpp_redis//:cpp_redis",
+    ],
+)
+
 # Web + templating
 bes_cc_library(
     name = "web.templating",

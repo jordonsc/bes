@@ -1,5 +1,10 @@
-COPTS = ["-std=c++17"]
-LINKOPTS = ["-pthread"]
+COPTS = [
+    "-std=c++17",
+    "-I.",
+]
+LINKOPTS = [
+    "-pthread",
+]
 
 def bes_cc_library(name, deps = []):
     native.cc_library(

@@ -31,6 +31,21 @@ def bes_deps():
             ],
         )
 
+    if "cpp_redis" not in native.existing_rules():
+        #http_archive(
+        #    name = "cpp_redis",
+        #    #sha256 = "4cbce7f708917b6e58b631c24c59fe720acc8fef5f959df9a58cdf9558d0a79b",
+        #    strip_prefix = "cpp_redis-x.x.x",
+        #    urls = [
+        #        "xxx",
+        #    ],
+        #)
+        native.local_repository(
+            name = "cpp_redis",
+            path = "../../random/cpp_redis",
+        )
+
+
 def bes_test_deps():
     if "gtest" not in native.existing_rules():
         http_archive(
