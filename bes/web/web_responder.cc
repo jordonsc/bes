@@ -18,10 +18,14 @@ int WebResponder::Run()
         method = request.Param(Http::Parameter::REQUEST_METHOD);
         uri = request.Param(Http::Parameter::REQUEST_URI);
 
+        if (http_req.HasCookie(SESSION_KEY)) {
+            auto session_mgr = request.container.Get<bes::web::SessionInterface>(SVC_SESSION_MGR);
+        }
+
         try {
             /// Normal response handling
             bool responded = false;
-            for (auto const& router : *(request.container.Get<std::vector<std::shared_ptr<Router>>>("routers"))) {
+            for (auto const& router : *(request.container.Get<std::vector<std::shared_ptr<Router>>>(SVC_ROUTER))) {
                 try {
                     // Get an HttpResponse from the router, if applicable
                     auto resp = router->YieldResponse(http_req);
@@ -114,6 +118,40 @@ void WebResponder::RenderResponse(HttpResponse const& resp)
     for (auto const& header : resp.Headers()) {
         out << header.first << ": " << header.second << "\n";
     }
+
+    // Cookies
+    for (auto const& it : resp.Cookies()) {
+        out << "Set-Cookie: " << it.second.Name() << "=" << it.second.Value();
+
+        if (!it.second.Domain().empty()) {
+            out << "; Domain=" << it.second.Domain();
+        }
+
+        if (!it.second.Path().empty()) {
+            out << "; Path=" << it.second.Path();
+        }
+
+        if (it.second.MaxAge()) {
+            out << "; Max-Age=" << std::to_string(it.second.MaxAge());
+        } else if (it.second.Expires() > std::chrono::system_clock::now()) {
+            std::time_t exp_time_t = std::chrono::system_clock::to_time_t(it.second.Expires());
+            std::tm exp_tm = *std::localtime(&exp_time_t);
+            char buf[40];  // Should be ~ 30 chars
+            strftime(buf, 40, "%a, %d-%b-%Y %T GMT", &exp_tm);
+            out << "; Expires=" << buf;
+        }
+
+        if (it.second.Secure()) {
+            out << "; Secure";
+        }
+
+        if (it.second.HttpOnly()) {
+            out << "; HttpOnly";
+        }
+
+        out << "\n";
+    }
+
     out << "\n";
 
     // Render content
@@ -140,7 +178,7 @@ void WebResponder::RenderEmergencyErrorResponse(std::string const& debug_msg)
 bool WebResponder::DebugMode()
 {
     try {
-        return *(request.container.Get<bool>("debug_mode"));
+        return *(request.container.Get<bool>(DEBUG_KEY));
     } catch (...) {
         return false;
     }

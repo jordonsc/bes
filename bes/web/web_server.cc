@@ -12,8 +12,9 @@ void WebServer::Run(bes::net::Address const& listen_addr, bool allow_dbg_renderi
     BES_LOG(INFO) << "Binding web server to " << listen_addr.AddrFull() << "..";
     // Start the FastCGI server
     svc = std::make_unique<bes::fastcgi::Service>();
-    svc->container.Add("routers", routers);
-    svc->container.Emplace<bool>("debug_mode", allow_dbg_rendering);
+    svc->container.Add(SVC_ROUTER, routers);
+    svc->container.Add(SVC_SESSION_MGR, session_mgr);
+    svc->container.Emplace<bool>(DEBUG_KEY, allow_dbg_rendering);
     svc->SetRole<WebResponder>(bes::fastcgi::model::Role::RESPONDER);
     svc->Run(listen_addr);
 }
@@ -34,4 +35,14 @@ void WebServer::AllocateRouter(Router* router)
 void WebServer::AddRouter(std::shared_ptr<Router> const& router)
 {
     routers->push_back(router);
+}
+
+void WebServer::AllocateSessionInterface(SessionInterface* si)
+{
+    session_mgr = std::shared_ptr<SessionInterface>(si);
+}
+
+void WebServer::SetSessionInterface(std::shared_ptr<SessionInterface> const& si)
+{
+    session_mgr = si;
 }

@@ -34,3 +34,21 @@ std::string HttpResponse::Content() const
 {
     return content.str();
 }
+
+void HttpResponse::SetCookie(Cookie cookie)
+{
+    cookies.insert_or_assign(cookie.Name(), std::move(cookie));
+}
+
+std::unordered_map<std::string, Cookie> const& HttpResponse::Cookies() const
+{
+    return cookies;
+}
+
+HttpResponse HttpResponse::OK(std::string const& content_type)
+{
+    HttpResponse ok;
+    ok.Status(Http::Status::OK, content_type);
+
+    return ok;
+}

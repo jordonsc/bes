@@ -24,6 +24,11 @@ void TemplateApp::Bootstrap()
     auto tmpl_schema = Kernel().Config().GetOr<std::string>("/app/templating.yml", "web", "templating");
     auto route_schema = Kernel().Config().GetOr<std::string>("/app/routing.yml", "web", "routing");
 
+    debug_mode = Kernel().Cli()["debug"].Present();
+    if (debug_mode) {
+        BES_LOG(WARNING) << "Debug mode enabled; web server will render error details";
+    }
+
     auto const& cli_build = Kernel().Cli()["build"];
     if (cli_build.Present()) {
         build = cli_build.as<std::string>();
@@ -119,6 +124,7 @@ void TemplateApp::ConfigureCli(bes::cli::Parser& parser)
 
     parser << bes::cli::Arg('b', "build", bes::cli::ValueType::REQUIRED)
            << bes::cli::Arg('t', "templating", bes::cli::ValueType::REQUIRED)
+           << bes::cli::Arg('d', "debug", bes::cli::ValueType::NONE)
            << bes::cli::Arg('r', "routing", bes::cli::ValueType::REQUIRED);
 }
 
@@ -132,7 +138,7 @@ void TemplateApp::Run()
     svc->AddRouter(Kernel().Container().Get<bes::web::MappedRouter>("router"));
     svc->Run(bes::net::Address(Kernel().Config().GetOr<std::string>("0.0.0.0", "server", "bind"),
                                Kernel().Config().GetOr<uint16_t>(9000, "server", "listen")),
-             true);
+             debug_mode);
 }
 
 void TemplateApp::Shutdown()

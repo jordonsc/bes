@@ -23,6 +23,7 @@ class TemplateApp : public bes::app::Application
 
     std::unique_ptr<bes::web::WebServer> svc;
     std::string build;
+    bool debug_mode = false;
 
    private:
     void Bootstrap();

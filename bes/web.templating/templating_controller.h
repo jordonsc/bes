@@ -20,6 +20,9 @@ class TemplatingController
     HttpResponse Response(std::string const& templ, bes::templating::data::ContextBuilder const& ctx);
 
     HttpResponse Response(std::string const& templ, bes::templating::data::ContextBuilder const& ctx,
+                          HttpResponse &&resp);
+
+    HttpResponse Response(std::string const& templ, bes::templating::data::ContextBuilder const& ctx,
                           bes::web::Http::Status status);
 
     HttpResponse Response(std::string const& templ, bes::templating::data::ContextBuilder const& ctx,
@@ -27,10 +30,6 @@ class TemplatingController
 
     HttpResponse Response(std::string const& templ, bes::templating::data::ContextBuilder const& ctx,
                           bes::web::Http::Status status, std::string const& content_type);
-
-    HttpResponse Response(std::string const& templ, bes::templating::data::ContextBuilder const& ctx,
-                          bes::web::Http::Status status, std::string const& content_type,
-                          std::unordered_map<std::string, std::string> const& headers);
 
     std::shared_ptr<bes::templating::Engine> renderer;
 };

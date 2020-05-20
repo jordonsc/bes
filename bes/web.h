@@ -1,6 +1,7 @@
 #ifndef BES_WEB_H
 #define BES_WEB_H
 
+#include "web/cookie.h"
 #include "web/exception.h"
 #include "web/http.h"
 #include "web/mapped_router.h"

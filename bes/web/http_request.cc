@@ -6,6 +6,7 @@ HttpRequest::HttpRequest(bes::fastcgi::Request const& base) : base_request(base)
 {
     method = Http::MethodFromString(base_request.Param(Http::Parameter::REQUEST_METHOD));
     ParseQueryString();
+    ParseCookies();
 }
 
 std::string const& HttpRequest::Uri() const
@@ -47,7 +48,7 @@ void HttpRequest::ParseQueryString()
             ++mode = 1;
         } else if (c == '&') {
             /// Next item
-            if (key.str().length()) {
+            if (key.rdbuf()->in_avail()) {
                 query_params[key.str()] = value.str();
             }
             key.str(std::string());
@@ -79,6 +80,46 @@ void HttpRequest::ParseQueryString()
     }
 }
 
+void HttpRequest::ParseCookies()
+{
+    if (!base_request.HasParam("HTTP_COOKIE")) {
+        return;
+    }
+
+    uint8_t mode = 0;
+    std::stringstream key;
+    std::stringstream value;
+
+    for (char const& c : base_request.Param("HTTP_COOKIE")) {
+        if (c == ';') {
+            /// Next cookie
+            if (key.rdbuf()->in_avail() && value.rdbuf()->in_avail()) {
+                cookies.insert_or_assign(key.str(), value.str());
+            }
+
+            key.str(std::string());
+            value.str(std::string());
+            mode = 0;
+            continue;
+
+        } else if (mode == 0 && c == '=') {
+            /// Move to value
+            ++mode;
+            continue;
+        }
+
+        if (mode == 0) {
+            key << c;
+        } else {
+            value << c;
+        }
+    }
+
+    if (key.rdbuf()->in_avail() && value.rdbuf()->in_avail()) {
+        cookies.insert_or_assign(key.str(), value.str());
+    }
+}
+
 /**
  * Converts an ASCII value of a hex character into the number it represents (eg 'D' == 13).
  */
@@ -107,7 +148,17 @@ bool HttpRequest::HasQueryParam(std::string const& key) const
     return query_params.find(key) != query_params.end();
 }
 
-std::string HttpRequest::QueryParam(std::string const& key) const
+std::string const& HttpRequest::QueryParam(std::string const& key) const
 {
     return query_params.at(key);
+}
+
+bool HttpRequest::HasCookie(std::string const& key) const
+{
+    return cookies.find(key) != cookies.end();
+}
+
+std::string const& HttpRequest::Cookie(std::string const& key) const
+{
+    return cookies.at(key);
 }

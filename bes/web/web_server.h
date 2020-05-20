@@ -4,7 +4,9 @@
 #include <memory>
 
 #include "bes/fastcgi.h"
+#include "model.h"
 #include "router.h"
+#include "session_interface.h"
 #include "web_responder.h"
 
 namespace bes::web {
@@ -21,15 +23,27 @@ class WebServer
     void AllocateRouter(Router *);
     void AddRouter(std::shared_ptr<Router> const &);
 
+    template <class T, class... Args>
+    void EmplaceSessionInterface(Args &&...);
+    void AllocateSessionInterface(SessionInterface *);
+    void SetSessionInterface(std::shared_ptr<SessionInterface> const &);
+
    protected:
     std::unique_ptr<bes::fastcgi::Service> svc;
     std::shared_ptr<std::vector<std::shared_ptr<Router>>> routers;
+    std::shared_ptr<SessionInterface> session_mgr;
 };
 
 template <class T, class... Args>
 inline void WebServer::EmplaceRouter(Args &&... args)
 {
     routers->push_back(std::make_shared<T>(std::forward<Args>(args)...));
+}
+
+template <class T, class... Args>
+inline void WebServer::EmplaceSessionInterface(Args &&... args)
+{
+    session_mgr = std::make_shared<T>(std::forward<Args>(args)...);
 }
 
 }  // namespace bes::web

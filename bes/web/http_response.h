@@ -4,6 +4,7 @@
 #include <sstream>
 #include <unordered_map>
 
+#include "cookie.h"
 #include "http.h"
 
 namespace bes::web {
@@ -11,6 +12,12 @@ namespace bes::web {
 class HttpResponse
 {
    public:
+    HttpResponse() = default;
+    HttpResponse(HttpResponse&&) = default;
+    HttpResponse& operator=(HttpResponse&&) = default;
+
+    static HttpResponse OK(std::string const& content_type = Http::ContentType::HTML);
+
     /**
      * Set an HTTP header.
      */
@@ -28,6 +35,16 @@ class HttpResponse
     void Status(Http::Status status_code, std::string const& content_type);
 
     /**
+     * Set a cookie to send to the client.
+     */
+    void SetCookie(Cookie cookie);
+
+    /**
+     * Get a map of all cookies
+     */
+    std::unordered_map<std::string, Cookie> const& Cookies() const;
+
+    /**
      * Write content to the internal content buffer. Returns the length of content written.
      */
     size_t Write(std::string const&);
@@ -39,6 +56,7 @@ class HttpResponse
 
    protected:
     std::unordered_map<std::string, std::string> headers;
+    std::unordered_map<std::string, Cookie> cookies;
     std::stringstream content;
 };
 
