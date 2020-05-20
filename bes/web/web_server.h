@@ -28,10 +28,15 @@ class WebServer
     void AllocateSessionInterface(SessionInterface *);
     void SetSessionInterface(std::shared_ptr<SessionInterface> const &);
 
+    void SetSessionTtl(uint64_t ttl);
+    void SetSessionAutoCreate(bool);
+
    protected:
     std::unique_ptr<bes::fastcgi::Service> svc;
     std::shared_ptr<std::vector<std::shared_ptr<Router>>> routers;
     std::shared_ptr<SessionInterface> session_mgr;
+    uint64_t session_ttl = 0;
+    bool session_auto_create = false;
 };
 
 template <class T, class... Args>
@@ -44,6 +49,7 @@ template <class T, class... Args>
 inline void WebServer::EmplaceSessionInterface(Args &&... args)
 {
     session_mgr = std::make_shared<T>(std::forward<Args>(args)...);
+    session_mgr->SetSessionTtl(session_ttl);
 }
 
 }  // namespace bes::web

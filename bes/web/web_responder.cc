@@ -18,8 +18,17 @@ int WebResponder::Run()
         method = request.Param(Http::Parameter::REQUEST_METHOD);
         uri = request.Param(Http::Parameter::REQUEST_URI);
 
-        if (http_req.HasCookie(SESSION_KEY)) {
-            auto session_mgr = request.container.Get<bes::web::SessionInterface>(SVC_SESSION_MGR);
+        auto session_mgr = request.container.Get<bes::web::SessionInterface>(SVC_SESSION_MGR);
+        if (session_mgr != nullptr) {
+            if (http_req.HasCookie(SESSION_KEY)) {
+                try {
+                    http_req.session = session_mgr->GetSession(http_req.Cookie(SESSION_KEY));
+                } catch (SessionNotExistsException const&) {
+                    http_req.session = session_mgr->CreateSession();
+                }
+            } else if (*(request.container.Get<bool>(SESSION_AC_KEY))) {
+                http_req.session = session_mgr->CreateSession();
+            }
         }
 
         try {
@@ -67,6 +76,10 @@ int WebResponder::Run()
             /// Other exceptions - internal server error
             ret_status = "500";
             RenderError(http_req, Http::Status::INTERNAL_SERVER_ERROR, e.what());
+        }
+
+        if (session_mgr != nullptr && (!http_req.session.Empty() || !http_req.session.SessionId().empty())) {
+            session_mgr->PersistSession(http_req.session);
         }
 
     } catch (std::exception& e) {

@@ -6,9 +6,9 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include "bes/log.h"
 #include "exception.h"
 #include "file_finder.h"
-#include "bes/log.h"
 
 namespace bes {
 
@@ -39,7 +39,7 @@ class Config
     R GetOr(R const &_default, T &&key, Args &&... args) const;
 
     /**
-     * Same as GetOr() but will raise a NullException if the node exists, but is a value-value.
+     * Same as GetOr() but will raise a NullException if the node exists and is a null-value.
      */
     template <typename R, typename T, typename... Args>
     R GetOrNull(R const &_default, T &&key, Args &&... args) const;
@@ -50,6 +50,9 @@ class Config
 
     template <typename R, typename T>
     R TraverseNested(YAML::Node const &, T &&key) const;
+
+    template <typename T>
+    YAML::Node TraverseNested(YAML::Node const &, T &&key) const;
 
     template <typename T>
     std::basic_string<char> TraverseNested(YAML::Node const &, T &&key) const;
@@ -109,6 +112,12 @@ R bes::Config::TraverseNested(YAML::Node const &base_node, T &&key) const
     } else {
         return n.as<R>();
     }
+}
+
+template <typename T>
+YAML::Node bes::Config::TraverseNested(YAML::Node const &base_node, T &&key) const
+{
+    return base_node[std::forward<T>(key)];
 }
 
 }  // namespace bes

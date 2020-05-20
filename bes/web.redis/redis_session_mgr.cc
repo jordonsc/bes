@@ -1,18 +1,19 @@
-#include "redis_session.h"
+#include "redis_session_mgr.h"
 
 #include <functional>
 #include <iostream>
+#include <vector>
 
 using namespace bes::web;
 
-RedisSession::RedisSession(bes::net::Address addr, uint32_t timeout_ms)
-    : server(std::move(addr)), connect_timeout(timeout_ms), session_ttl(0)
+RedisSessionMgr::RedisSessionMgr(bes::net::Address addr, uint32_t timeout_ms)
+    : server(std::move(addr)), connect_timeout(timeout_ms)
 {
     Connect();
 }
 
-RedisSession::RedisSession(std::vector<bes::net::Address> const& sentinels, std::string sentinel_svc,
-                           uint32_t timeout_ms)
+RedisSessionMgr::RedisSessionMgr(std::vector<bes::net::Address> const& sentinels, std::string sentinel_svc,
+                                 uint32_t timeout_ms)
     : server(bes::net::Address("", 0)), sentinel_svc_name(std::move(sentinel_svc)), connect_timeout(timeout_ms)
 {
     for (auto const& addr : sentinels) {
@@ -22,10 +23,56 @@ RedisSession::RedisSession(std::vector<bes::net::Address> const& sentinels, std:
     Connect();
 }
 
-void RedisSession::Connect()
+RedisSessionMgr* RedisSessionMgr::FromConfig(bes::Config const& config)
+{
+    auto timeout = config.GetOr<uint32_t>(250, "web", "sessions", "timeout");
+    auto sentinel_name = config.GetOr<std::string>("", "web", "sessions", "sentinel-name");
+
+    if (!sentinel_name.empty()) {
+        // We've been given a sentinel service name, now check to see we've got at least one sentinel server, too -
+        auto node = config.Get<YAML::Node>("web", "sessions", "sentinels");
+        if (node.IsDefined() && node.IsSequence() && node.size()) {
+            std::vector<bes::net::Address> sentinels;
+
+            // Looks like we've got sentinels, add them to a vector
+            for (auto const& sentinel : node) {
+                auto host_node = sentinel["host"];
+                if (host_node.IsDefined() && host_node.IsScalar()) {
+                    auto port_node = sentinel["port"];
+                    if (port_node.IsDefined() && port_node.IsScalar()) {
+                        sentinels.emplace_back(host_node.as<std::string>(), port_node.as<uint32_t>());
+                    } else {
+                        sentinels.emplace_back(host_node.as<std::string>(), 6379);
+                    }
+
+                } else {
+                    throw WebException("Sentinel must have 'host' key in configuration");
+                }
+            }
+
+            if (!sentinels.empty()) {
+                // We've now got everything we need for a sentinel-based config, build and return
+                BES_LOG(DEBUG) << "Creating Redis session manager with " << sentinels.size() << " sentinels";
+                return new RedisSessionMgr(sentinels, sentinel_name, timeout);
+            }
+        }
+    }
+
+    bes::net::Address adr(config.GetOr<std::string>("", "web", "sessions", "redis", "host"),
+                          config.GetOr<uint32_t>(6379, "web", "sessions", "redis", "port"));
+
+    if (!adr.HasIp4Addr()) {
+        throw WebException("No host or sentinels found in configuration for Redis session manager");
+    }
+
+    BES_LOG(DEBUG) << "Creating Redis session manager on server " << adr.Ip4Addr() << ":" << adr.Port();
+    return new RedisSessionMgr(adr, timeout);
+}
+
+void RedisSessionMgr::Connect()
 {
     using namespace std::placeholders;
-    auto log = std::bind(&RedisSession::LogConnectStatus, this, _1, _2, _3);
+    auto log = std::bind(&RedisSessionMgr::LogConnectStatus, this, _1, _2, _3);
 
     if (server.Port() == 0) {
         client.connect(sentinel_svc_name, log, connect_timeout);
@@ -34,11 +81,12 @@ void RedisSession::Connect()
     }
 }
 
-RedisSession& RedisSession::LogConnectStatus(std::string const& host, std::size_t port, cpp_redis::connect_state status)
+RedisSessionMgr& RedisSessionMgr::LogConnectStatus(std::string const& host, std::size_t port,
+                                                   cpp_redis::connect_state status)
 {
     switch (status) {
         case cpp_redis::connect_state::dropped:
-            BES_LOG(ERROR) << "Redis disconnected from " << host << ":" << port;
+            BES_LOG(INFO) << "Redis disconnected from " << host << ":" << port;
             break;
         case cpp_redis::connect_state::failed:
             BES_LOG(ERROR) << "Redis connection failed to " << host << ":" << port;
@@ -47,26 +95,26 @@ RedisSession& RedisSession::LogConnectStatus(std::string const& host, std::size_
             BES_LOG(INFO) << "Redis connected to " << host << ":" << port;
             break;
         case cpp_redis::connect_state::start:
-            BES_LOG(DEBUG) << "Redis start: " << host << ":" << port;
+            BES_LOG(TRACE) << "Redis start: " << host << ":" << port;
             break;
         case cpp_redis::connect_state::lookup_failed:
             BES_LOG(ERROR) << "Lookup failure: " << host << ":" << port;
             break;
         case cpp_redis::connect_state::sleeping:
-            BES_LOG(DEBUG) << "Sleeping: " << host << ":" << port;
+            BES_LOG(TRACE) << "Sleeping: " << host << ":" << port;
             break;
         case cpp_redis::connect_state::stopped:
-            BES_LOG(NOTICE) << "Redis connection stopped: " << host << ":" << port;
+            BES_LOG(INFO) << "Redis connection stopped: " << host << ":" << port;
             break;
         default:
-            BES_LOG(NOTICE) << "Unknown redis state: " << host << ":" << port;
+            BES_LOG(ERROR) << "Unknown redis state: " << host << ":" << port;
             break;
     }
 
     return *this;
 }
 
-Session RedisSession::CreateSession()
+Session RedisSessionMgr::CreateSession()
 {
     std::string id = "S";
     int64_t index = 0;
@@ -86,7 +134,7 @@ Session RedisSession::CreateSession()
     return Session(id);
 }
 
-Session RedisSession::GetSession(std::string const& session_id)
+Session RedisSessionMgr::GetSession(std::string const& session_id)
 {
     bes::web::Session session(session_id);
 
@@ -133,20 +181,27 @@ Session RedisSession::GetSession(std::string const& session_id)
                     break;
             }
         }
+    } else {
+        throw SessionNotExistsException("Session with ID '" + session_id + "' does not exist");
     }
 
     return session;
 }
 
-void RedisSession::SetSessionTtl(uint64_t ttl)
+void RedisSessionMgr::SetSessionTtl(uint64_t ttl)
 {
     session_ttl = ttl;
 }
 
-void RedisSession::PersistSession(Session const& session)
+void RedisSessionMgr::PersistSession(Session const& session)
 {
     std::string id("session:");
-    id += session.SessionId();
+
+    if (session.SessionId().empty()) {
+        id += CreateSession().SessionId();
+    } else {
+        id += session.SessionId();
+    }
 
     std::vector<std::pair<std::string, std::string>> hash;
     for (auto const& it : session.Map()) {

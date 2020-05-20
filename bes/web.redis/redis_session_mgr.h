@@ -1,5 +1,5 @@
-#ifndef BES_WEB_REDIS_REDIS_SESSION_H
-#define BES_WEB_REDIS_REDIS_SESSION_H
+#ifndef BES_WEB_REDIS_REDIS_SESSION_MGR_H
+#define BES_WEB_REDIS_REDIS_SESSION_MGR_H
 
 #include <cpp_redis/cpp_redis>
 #include <vector>
@@ -10,11 +10,13 @@
 
 namespace bes::web {
 
-class RedisSession : public SessionInterface
+class RedisSessionMgr : public SessionInterface
 {
    public:
-    explicit RedisSession(bes::net::Address svr, uint32_t timeout_ms = 250);
-    RedisSession(std::vector<bes::net::Address> const& sentinels, std::string sentinel_svc, uint32_t timeout_ms = 250);
+    explicit RedisSessionMgr(bes::net::Address svr, uint32_t timeout_ms = 250);
+    RedisSessionMgr(std::vector<bes::net::Address> const& sentinels, std::string sentinel_svc,
+                    uint32_t timeout_ms = 250);
+    static RedisSessionMgr* FromConfig(bes::Config const&);
 
     void SetSessionTtl(uint64_t ttl) override;
 
@@ -24,13 +26,13 @@ class RedisSession : public SessionInterface
 
    protected:
     void Connect();
-    RedisSession& LogConnectStatus(std::string const& host, std::size_t port, cpp_redis::connect_state status);
+    RedisSessionMgr& LogConnectStatus(std::string const& host, std::size_t port, cpp_redis::connect_state status);
 
     cpp_redis::client client;
     bes::net::Address server;
     std::string sentinel_svc_name;
     uint32_t connect_timeout;
-    uint64_t session_ttl;
+    uint64_t session_ttl = 0;
 };
 
 }  // namespace bes::web

@@ -5,6 +5,7 @@
 
 #include "bes/fastcgi.h"
 #include "http.h"
+#include "session.h"
 
 namespace bes::web {
 
@@ -22,6 +23,8 @@ class HttpRequest
 
     bool HasCookie(std::string const& key) const;
     std::string const& Cookie(std::string const& key) const;
+
+    mutable Session session;
 
    protected:
     bes::fastcgi::Request const& base_request;

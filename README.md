@@ -26,12 +26,13 @@ Library Documentation
 ---------------------
 * Application Kernel
 * Concurrency
-* [FastCGI + Web](docs/library/FastCGI.md)
+* [FastCGI](docs/library/FastCGI.md)
 * Filesystem
 * Log
 * Net
 * Service (gRPC abstraction)
 * [Templating](docs/library/Templating.md)
+* [Web](docs/library/Web.md)
 
 Code Dependencies
 -----------------

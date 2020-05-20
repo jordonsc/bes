@@ -29,6 +29,11 @@ class NoRouteException : public WebException
     using WebException::WebException;
 };
 
+class SessionNotExistsException : public WebException
+{
+    using WebException::WebException;
+};
+
 class NoMatchException : public WebException
 {
    public:
@@ -74,7 +79,7 @@ class HttpWebException : public WebException
 class RedirectHttpException : public HttpWebException
 {
    public:
-    RedirectHttpException(Http::Status http_code, std::string const& msg, std::string  target)
+    RedirectHttpException(Http::Status http_code, std::string const& msg, std::string target)
         : HttpWebException(http_code, msg), tgt(std::move(target))
     {}
 

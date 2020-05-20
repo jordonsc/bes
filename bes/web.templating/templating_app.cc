@@ -136,6 +136,10 @@ void TemplateApp::Run()
     // Start the FastCGI server
     svc = std::make_unique<bes::web::WebServer>();
     svc->AddRouter(Kernel().Container().Get<bes::web::MappedRouter>("router"));
+
+    // Allow the app to add a session manager or other configuration
+    ConfigureServer(*(svc.get()));
+
     svc->Run(bes::net::Address(Kernel().Config().GetOr<std::string>("0.0.0.0", "server", "bind"),
                                Kernel().Config().GetOr<uint16_t>(9000, "server", "listen")),
              debug_mode);

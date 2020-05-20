@@ -36,9 +36,12 @@ struct SessionObject
 class Session
 {
    public:
+    Session() = default;
     explicit Session(std::string id);
     Session(Session const&) = default;
     Session(Session&&) = default;
+    Session& operator=(Session const&) = default;
+    Session& operator=(Session&&) = default;
 
     [[nodiscard]] std::string const& SessionId() const;
     void SetValue(std::string const& key, SessionObject const& data);

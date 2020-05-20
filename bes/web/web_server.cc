@@ -15,6 +15,8 @@ void WebServer::Run(bes::net::Address const& listen_addr, bool allow_dbg_renderi
     svc->container.Add(SVC_ROUTER, routers);
     svc->container.Add(SVC_SESSION_MGR, session_mgr);
     svc->container.Emplace<bool>(DEBUG_KEY, allow_dbg_rendering);
+    svc->container.Emplace<uint64_t>(SESSION_TTL_KEY, session_ttl);
+    svc->container.Emplace<bool>(SESSION_AC_KEY, session_auto_create);
     svc->SetRole<WebResponder>(bes::fastcgi::model::Role::RESPONDER);
     svc->Run(listen_addr);
 }
@@ -40,9 +42,39 @@ void WebServer::AddRouter(std::shared_ptr<Router> const& router)
 void WebServer::AllocateSessionInterface(SessionInterface* si)
 {
     session_mgr = std::shared_ptr<SessionInterface>(si);
+    session_mgr->SetSessionTtl(session_ttl);
 }
 
 void WebServer::SetSessionInterface(std::shared_ptr<SessionInterface> const& si)
 {
     session_mgr = si;
+    session_mgr->SetSessionTtl(session_ttl);
+}
+
+void WebServer::SetSessionTtl(uint64_t ttl)
+{
+    session_ttl = ttl;
+
+    if (svc != nullptr) {
+        if (svc->container.Exists(SESSION_TTL_KEY)) {
+            svc->container.Remove(SESSION_TTL_KEY);
+        }
+        svc->container.Emplace<uint64_t>(SESSION_TTL_KEY, ttl);
+    }
+
+    if (session_mgr != nullptr) {
+        session_mgr->SetSessionTtl(ttl);
+    }
+}
+
+void WebServer::SetSessionAutoCreate(bool ac)
+{
+    session_auto_create = ac;
+
+    if (svc != nullptr) {
+        if (svc->container.Exists(SESSION_AC_KEY)) {
+            svc->container.Remove(SESSION_AC_KEY);
+        }
+        svc->container.Emplace<bool>(SESSION_AC_KEY, ac);
+    }
 }
