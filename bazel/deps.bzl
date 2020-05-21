@@ -40,10 +40,17 @@ def bes_deps():
         #        "xxx",
         #    ],
         #)
-        native.local_repository(
+
+        # Sorry - fixing the Bazel support for this, will try to get the author to merge soon
+        git_repository(
             name = "cpp_redis",
-            path = "../../random/cpp_redis",
+            branch = "bazel-fixes",
+            remote = "https://github.com/jordonsc/cpp_redis.git",
         )
+        #native.local_repository(
+        #    name = "cpp_redis",
+        #    path = "../../random/cpp_redis",
+        #)
 
 
 def bes_test_deps():
