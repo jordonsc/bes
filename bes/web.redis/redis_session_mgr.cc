@@ -116,20 +116,23 @@ RedisSessionMgr& RedisSessionMgr::LogConnectStatus(std::string const& host, std:
 
 Session RedisSessionMgr::CreateSession()
 {
-    std::string id = "S";
-    int64_t index = 0;
+    bool ok = false;
+    std::string id;
+    uint16_t attempts = 0;
 
-    client.incr("session.index", [&index](cpp_redis::reply& reply) {
-        if (reply.ok() && reply.is_integer()) {
-            index = reply.as_integer();
-        } else {
-            throw WebException("Session tables not configured correctly");
+    do {
+        id = SessionInterface::GenerateSessionKey();
+
+        // Commit a blank value to the DB to ensure there is no collision
+        client.setnx("session:" + id, "-", [&ok](cpp_redis::reply& reply) {
+            ok = reply.ok();
+        });
+        client.sync_commit();
+
+        if (++attempts == 50) {
+            throw WebException("Too many attempts creating unique session ID");
         }
-    });
-    client.sync_commit();
-
-    // TODO: something cool here, thinking the current unix time in hex concatenated w/ index in hex form
-    id += std::to_string(index);
+    } while (!ok);
 
     return Session(id);
 }
@@ -140,18 +143,25 @@ Session RedisSessionMgr::GetSession(std::string const& session_id)
 
     std::string id("session:");
     id += session_id;
+    bool valid = true;
 
-    std::cout << "Getting session: " << id << std::endl;
-    auto reply_f = client.hgetall(id);
-    client.commit();
+    client.exists({id}, [&valid](cpp_redis::reply& reply) {
+        if (!reply.ok() || !reply.is_integer() || reply.as_integer() != 1) {
+            valid = false;
+        }
+    });
 
-    auto reply = reply_f.get();
+    client.hgetall(id, [&valid, &session, &session_id](cpp_redis::reply& reply) {
+        if (!reply.ok() || !reply.is_array()) {
+            valid = false;
+            return;
+        }
 
-    if (reply.ok() && reply.is_array()) {
         auto const& arr = reply.as_array();
         if (arr.size() % 2 != 0) {
             BES_LOG(WARNING) << "Session value size error for session '" << session_id << "': " << arr.size();
-            return session;
+            valid = false;
+            return;
         }
 
         for (auto it = arr.begin(); it != arr.end(); ++it) {
@@ -181,7 +191,11 @@ Session RedisSessionMgr::GetSession(std::string const& session_id)
                     break;
             }
         }
-    } else {
+    });
+
+    client.sync_commit();
+
+    if (!valid) {
         throw SessionNotExistsException("Session with ID '" + session_id + "' does not exist");
     }
 
@@ -198,7 +212,7 @@ void RedisSessionMgr::PersistSession(Session const& session)
     std::string id("session:");
 
     if (session.SessionId().empty()) {
-        id += CreateSession().SessionId();
+        throw WebException("Attempting to persist a null session");
     } else {
         id += session.SessionId();
     }
@@ -225,8 +239,10 @@ void RedisSessionMgr::PersistSession(Session const& session)
 
     client.del({id});
     client.hmset(id, hash);
+
     if (session_ttl) {
         client.expire(id, session_ttl);
     }
+
     client.sync_commit();
 }

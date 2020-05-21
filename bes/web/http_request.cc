@@ -217,7 +217,8 @@ void HttpRequest::BootstrapSession()
         try {
             session = session_mgr->GetSession(GetCookie(SESSION_KEY));
         } catch (SessionNotExistsException const&) {
-            // Session has likely expired
+            // Session has likely expired, create a new one
+            session = session_mgr->CreateSession();
         }
     }
 }

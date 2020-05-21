@@ -34,6 +34,11 @@ class SessionNotExistsException : public WebException
     using WebException::WebException;
 };
 
+class SessionIndexError : public WebException
+{
+    using WebException::WebException;
+};
+
 class NoMatchException : public WebException
 {
    public:

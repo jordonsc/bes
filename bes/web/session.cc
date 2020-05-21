@@ -26,27 +26,47 @@ void Session::SetValue(std::string const& key, SessionObject const& data)
 
 SessionObject const& Session::GetValue(std::string const& key) const
 {
-    return map.at(key);
+    try {
+        return map.at(key);
+    } catch (...) {
+        throw SessionIndexError("Session key '" + key + "' does not exist");
+    }
 };
 
 std::string const& Session::GetString(std::string const& key) const
 {
-    return std::any_cast<std::string const&>(map.at(key).data);
-};
+    try {
+        return std::any_cast<std::string const&>(map.at(key).data);
+    } catch (...) {
+        throw SessionIndexError("Session key '" + key + "' does not exist");
+    }
+}
 
 int64_t Session::GetInt(std::string const& key) const
 {
-    return std::any_cast<int64_t>(map.at(key).data);
+    try {
+        return std::any_cast<int64_t>(map.at(key).data);
+    } catch (...) {
+        throw SessionIndexError("Session key '" + key + "' does not exist");
+    }
 }
 
 double Session::GetDouble(std::string const& key) const
 {
-    return std::any_cast<double>(map.at(key).data);
-};
+    try {
+        return std::any_cast<double>(map.at(key).data);
+    } catch (...) {
+        throw SessionIndexError("Session key '" + key + "' does not exist");
+    }
+}
 
 bool Session::GetBool(std::string const& key) const
 {
-    return std::any_cast<bool>(map.at(key).data);
+    try {
+        return std::any_cast<bool>(map.at(key).data);
+    } catch (...) {
+        throw SessionIndexError("Session key '" + key + "' does not exist");
+    }
 }
 
 std::unordered_map<std::string, SessionObject> const& Session::Map() const

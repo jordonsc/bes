@@ -5,6 +5,8 @@
 #include <string>
 #include <unordered_map>
 
+#include "exception.h"
+
 namespace bes::web {
 
 struct SessionObject
