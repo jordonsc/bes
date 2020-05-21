@@ -22,7 +22,8 @@ class WebResponder : public bes::fastcgi::Response
     int Run() override;
 
    protected:
-    void RenderResponse(HttpResponse const& resp);
+    void RenderResponse(HttpResponse const& resp, HttpRequest const& req);
+    void RenderCookie(Cookie const&);
     void RenderError(HttpRequest const& req, Http::Status code, std::string const& debug_msg);
     void RenderEmergencyErrorResponse(std::string const& debug_msg);
     bool DebugMode();

@@ -12,7 +12,7 @@ auto constexpr DEBUG_KEY = "debug_mode";
 auto constexpr SVC_SESSION_MGR = "session_mgr";
 auto constexpr SVC_ROUTER = "routers";
 auto constexpr SESSION_TTL_KEY = "session_ttl";
-auto constexpr SESSION_AC_KEY = "session_ac";
+auto constexpr SESSION_SECURE_KEY = "session_secure";
 
 }  // namespace bes::web
 

@@ -16,7 +16,7 @@ void WebServer::Run(bes::net::Address const& listen_addr, bool allow_dbg_renderi
     svc->container.Add(SVC_SESSION_MGR, session_mgr);
     svc->container.Emplace<bool>(DEBUG_KEY, allow_dbg_rendering);
     svc->container.Emplace<uint64_t>(SESSION_TTL_KEY, session_ttl);
-    svc->container.Emplace<bool>(SESSION_AC_KEY, session_auto_create);
+    svc->container.Emplace<bool>(SESSION_SECURE_KEY, session_secure);
     svc->SetRole<WebResponder>(bes::fastcgi::model::Role::RESPONDER);
     svc->Run(listen_addr);
 }
@@ -67,14 +67,14 @@ void WebServer::SetSessionTtl(uint64_t ttl)
     }
 }
 
-void WebServer::SetSessionAutoCreate(bool ac)
+void WebServer::SetSessionSecure(bool secure)
 {
-    session_auto_create = ac;
+    session_secure = secure;
 
     if (svc != nullptr) {
-        if (svc->container.Exists(SESSION_AC_KEY)) {
-            svc->container.Remove(SESSION_AC_KEY);
+        if (svc->container.Exists(SESSION_SECURE_KEY)) {
+            svc->container.Remove(SESSION_SECURE_KEY);
         }
-        svc->container.Emplace<bool>(SESSION_AC_KEY, ac);
+        svc->container.Emplace<bool>(SESSION_SECURE_KEY, secure);
     }
 }

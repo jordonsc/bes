@@ -26,11 +26,11 @@ RedisSessionMgr::RedisSessionMgr(std::vector<bes::net::Address> const& sentinels
 RedisSessionMgr* RedisSessionMgr::FromConfig(bes::Config const& config)
 {
     auto timeout = config.GetOr<uint32_t>(250, "web", "sessions", "timeout");
-    auto sentinel_name = config.GetOr<std::string>("", "web", "sessions", "sentinel-name");
+    auto sentinel_name = config.GetOr<std::string>("", "web", "sessions", "redis", "sentinel-name");
 
     if (!sentinel_name.empty()) {
         // We've been given a sentinel service name, now check to see we've got at least one sentinel server, too -
-        auto node = config.Get<YAML::Node>("web", "sessions", "sentinels");
+        auto node = config.Get<YAML::Node>("web", "sessions", "redis", "sentinels");
         if (node.IsDefined() && node.IsSequence() && node.size()) {
             std::vector<bes::net::Address> sentinels;
 

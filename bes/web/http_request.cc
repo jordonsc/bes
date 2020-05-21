@@ -7,6 +7,18 @@ HttpRequest::HttpRequest(bes::fastcgi::Request const& base) : base_request(base)
     method = Http::MethodFromString(base_request.Param(Http::Parameter::REQUEST_METHOD));
     ParseQueryString();
     ParseCookies();
+    BootstrapSession();
+}
+
+HttpRequest::~HttpRequest()
+{
+    // Persist the session
+    if (HasSession()) {
+        auto session_mgr = base_request.container.Get<bes::web::SessionInterface>(SVC_SESSION_MGR);
+        if (session_mgr != nullptr) {
+            session_mgr->PersistSession(session);
+        }
+    }
 }
 
 std::string const& HttpRequest::Uri() const
@@ -106,6 +118,10 @@ void HttpRequest::ParseCookies()
             /// Move to value
             ++mode;
             continue;
+        } else if (std::isspace(c)) {
+            // Whitespace is not a legal cookie character, we'll use this opportunity to trim whitespace around the
+            // header parameters.
+            continue;
         }
 
         if (mode == 0) {
@@ -158,7 +174,50 @@ bool HttpRequest::HasCookie(std::string const& key) const
     return cookies.find(key) != cookies.end();
 }
 
-std::string const& HttpRequest::Cookie(std::string const& key) const
+std::string const& HttpRequest::GetCookie(std::string const& key) const
 {
     return cookies.at(key);
+}
+
+bool HttpRequest::HasSession() const
+{
+    return !session.SessionId().empty();
+}
+
+Session& HttpRequest::GetSession() const
+{
+    if (!HasSession()) {
+        // Create a new session
+        auto session_mgr = base_request.container.Get<bes::web::SessionInterface>(SVC_SESSION_MGR);
+        if (session_mgr == nullptr) {
+            BES_LOG(WARNING) << "Session requested but no session manager available";
+            return session;
+        }
+
+        session = session_mgr->CreateSession();
+    }
+
+    return session;
+}
+
+/**
+ * Create a session object if a session cookie exists.
+ *
+ * This function must be called after the cookies has been initialised, as it depends on them.
+ */
+void HttpRequest::BootstrapSession()
+{
+    auto session_mgr = base_request.container.Get<bes::web::SessionInterface>(SVC_SESSION_MGR);
+    if (session_mgr == nullptr) {
+        return;
+    }
+
+    if (HasCookie(SESSION_KEY)) {
+        // Session cookie exists, query manager for it
+        try {
+            session = session_mgr->GetSession(GetCookie(SESSION_KEY));
+        } catch (SessionNotExistsException const&) {
+            // Session has likely expired
+        }
+    }
 }

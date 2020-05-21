@@ -94,6 +94,7 @@ bes_cc_library(
         ":net",
         ":web",
         "@cpp_redis",
+        "@yaml-cpp//:yaml-cpp",
     ],
 )
 

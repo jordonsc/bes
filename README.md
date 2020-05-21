@@ -25,9 +25,8 @@ Documentation Contents
 Library Documentation
 ---------------------
 * Application Kernel
-* Concurrency
+* Core
 * [FastCGI](docs/library/FastCGI.md)
-* Filesystem
 * Log
 * Net
 * Service (gRPC abstraction)
@@ -44,6 +43,8 @@ Non-critical dependencies:
 * YAML C++:
   * Reading application config files
   * Loading routes into a `MappedRouter` (optional)
+* CPP Redis:
+  * For Redis session support
 * GTest:
   * Running test suites
 

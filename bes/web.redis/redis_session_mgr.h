@@ -2,6 +2,7 @@
 #define BES_WEB_REDIS_REDIS_SESSION_MGR_H
 
 #include <cpp_redis/cpp_redis>
+#include <yaml-cpp/yaml.h>
 #include <vector>
 
 #include "bes/log.h"

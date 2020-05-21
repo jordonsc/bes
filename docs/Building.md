@@ -1,7 +1,7 @@
 Building the Platform
 =====================
-The entire build platform is managed using [Bazel](https://bazel.build/). Look to the 
-[Local Environment](Local_Environment.md) docs for details on setting up Bazel and requisite tools.
+The entire build platform is managed using [Bazel](https://bazel.build/). To get started, first get Bazel set up on your
+local environment. There is no CMake support, and this is not planned.
 
 Supported Compilers
 -------------------

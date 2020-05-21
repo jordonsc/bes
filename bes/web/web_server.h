@@ -29,14 +29,14 @@ class WebServer
     void SetSessionInterface(std::shared_ptr<SessionInterface> const &);
 
     void SetSessionTtl(uint64_t ttl);
-    void SetSessionAutoCreate(bool);
+    void SetSessionSecure(bool);
 
    protected:
     std::unique_ptr<bes::fastcgi::Service> svc;
     std::shared_ptr<std::vector<std::shared_ptr<Router>>> routers;
     std::shared_ptr<SessionInterface> session_mgr;
     uint64_t session_ttl = 0;
-    bool session_auto_create = false;
+    bool session_secure = false;
 };
 
 template <class T, class... Args>

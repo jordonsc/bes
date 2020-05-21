@@ -18,19 +18,7 @@ int WebResponder::Run()
         method = request.Param(Http::Parameter::REQUEST_METHOD);
         uri = request.Param(Http::Parameter::REQUEST_URI);
 
-        auto session_mgr = request.container.Get<bes::web::SessionInterface>(SVC_SESSION_MGR);
-        if (session_mgr != nullptr) {
-            if (http_req.HasCookie(SESSION_KEY)) {
-                try {
-                    http_req.session = session_mgr->GetSession(http_req.Cookie(SESSION_KEY));
-                } catch (SessionNotExistsException const&) {
-                    http_req.session = session_mgr->CreateSession();
-                }
-            } else if (*(request.container.Get<bool>(SESSION_AC_KEY))) {
-                http_req.session = session_mgr->CreateSession();
-            }
-        }
-
+        // There are a few layers of error handling here to try to offer the best error response to the client
         try {
             /// Normal response handling
             bool responded = false;
@@ -48,7 +36,7 @@ int WebResponder::Run()
                     }
 
                     // Render, break from the loop
-                    RenderResponse(resp);
+                    RenderResponse(resp, http_req);
                     responded = true;
                     break;
                 } catch (CannotYieldException const&) {
@@ -67,7 +55,7 @@ int WebResponder::Run()
             resp.Status(e.HttpCode());
             resp.Header(Http::Header::LOCATION, e.Target());
             ret_status = resp.Headers().at(Http::Header::STATUS);
-            RenderResponse(resp);
+            RenderResponse(resp, http_req);
         } catch (HttpWebException const& e) {
             /// HTTP error handling
             ret_status = std::to_string(static_cast<int>(e.HttpCode()));
@@ -76,10 +64,6 @@ int WebResponder::Run()
             /// Other exceptions - internal server error
             ret_status = "500";
             RenderError(http_req, Http::Status::INTERNAL_SERVER_ERROR, e.what());
-        }
-
-        if (session_mgr != nullptr && (!http_req.session.Empty() || !http_req.session.SessionId().empty())) {
-            session_mgr->PersistSession(http_req.session);
         }
 
     } catch (std::exception& e) {
@@ -113,7 +97,7 @@ void WebResponder::RenderError(HttpRequest const& req, Http::Status code, std::s
     for (auto const& router : *(request.container.Get<std::vector<std::shared_ptr<Router>>>("routers"))) {
         try {
             // Render error response, if this router yields one
-            RenderResponse(router->YieldErrorResponse(req, code, debug_msg));
+            RenderResponse(router->YieldErrorResponse(req, code, debug_msg), req);
         } catch (CannotYieldException const&) {
             // Router does not handle this error type, continue looking
             // At least one router should be a catch-all error handler
@@ -125,50 +109,66 @@ void WebResponder::RenderError(HttpRequest const& req, Http::Status code, std::s
     RenderEmergencyErrorResponse("No routers contain a handler for this error: " + debug_msg);
 }
 
-void WebResponder::RenderResponse(HttpResponse const& resp)
+void WebResponder::RenderResponse(HttpResponse const& resp, HttpRequest const& req)
 {
     // Render headers
     for (auto const& header : resp.Headers()) {
         out << header.first << ": " << header.second << "\n";
     }
-
     // Cookies
     for (auto const& it : resp.Cookies()) {
-        out << "Set-Cookie: " << it.second.Name() << "=" << it.second.Value();
-
-        if (!it.second.Domain().empty()) {
-            out << "; Domain=" << it.second.Domain();
-        }
-
-        if (!it.second.Path().empty()) {
-            out << "; Path=" << it.second.Path();
-        }
-
-        if (it.second.MaxAge()) {
-            out << "; Max-Age=" << std::to_string(it.second.MaxAge());
-        } else if (it.second.Expires() > std::chrono::system_clock::now()) {
-            std::time_t exp_time_t = std::chrono::system_clock::to_time_t(it.second.Expires());
-            std::tm exp_tm = *std::localtime(&exp_time_t);
-            char buf[40];  // Should be ~ 30 chars
-            strftime(buf, 40, "%a, %d-%b-%Y %T GMT", &exp_tm);
-            out << "; Expires=" << buf;
-        }
-
-        if (it.second.Secure()) {
-            out << "; Secure";
-        }
-
-        if (it.second.HttpOnly()) {
-            out << "; HttpOnly";
-        }
-
-        out << "\n";
+        RenderCookie(it.second);
     }
 
+    // Check for a session, add a session cookie if we have a session
+    if (req.HasSession()) {
+        Cookie session_cookie(SESSION_KEY, req.GetSession().SessionId());
+        session_cookie.HttpOnly(true);
+        if (*(request.container.Get<bool>(SESSION_SECURE_KEY))) {
+            session_cookie.Secure(true);
+        }
+
+        RenderCookie(session_cookie);
+    }
+
+    // End of headers
     out << "\n";
 
     // Render content
     out << resp.Content();
+}
+
+void WebResponder::RenderCookie(Cookie const& cookie)
+{
+    out << "Set-Cookie: " << cookie.Name() << "=" << cookie.Value();
+
+    if (!cookie.Domain().empty()) {
+        out << "; Domain=" << cookie.Domain();
+    }
+
+    if (!cookie.Path().empty()) {
+        out << "; Path=" << cookie.Path();
+    }
+
+    if (cookie.MaxAge()) {
+        out << "; Max-Age=" << std::to_string(cookie.MaxAge());
+    } else if (cookie.Expires() > std::chrono::system_clock::now()) {
+        std::time_t exp_time_t = std::chrono::system_clock::to_time_t(cookie.Expires());
+        std::tm exp_tm = *std::localtime(&exp_time_t);
+        char buf[40];  // Should be ~ 30 chars
+        strftime(buf, 40, "%a, %d-%b-%Y %T GMT", &exp_tm);
+        out << "; Expires=" << buf;
+    }
+
+    if (cookie.Secure()) {
+        out << "; Secure";
+    }
+
+    if (cookie.HttpOnly()) {
+        out << "; HttpOnly";
+    }
+
+    out << "\n";
 }
 
 void WebResponder::RenderEmergencyErrorResponse(std::string const& debug_msg)
