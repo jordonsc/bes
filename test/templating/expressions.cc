@@ -1,5 +1,5 @@
-#include "gtest/gtest.h"
-#include "bes/templating.h"
+#include <bes/templating.h>
+#include <gtest/gtest.h>
 
 using bes::templating::syntax::Expression;
 using Clause = bes::templating::syntax::Expression::Clause;
@@ -241,7 +241,6 @@ TEST_P(TemplatingTestMalformed, ExpressionMalformed)
 {
     EXPECT_THROW(Expression a(GetParam()), bes::templating::MalformedExpressionException);
 }
-
 
 TEST(TemplatingTest, Filters)
 {

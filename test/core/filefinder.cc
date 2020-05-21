@@ -1,5 +1,5 @@
-#include "bes/core.h"
-#include "gtest/gtest.h"
+#include <bes/core.h>
+#include <gtest/gtest.h>
 
 TEST(BesCoreTest, FileFinder)
 {

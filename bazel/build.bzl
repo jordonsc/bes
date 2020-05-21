@@ -1,6 +1,6 @@
 COPTS = [
     "-std=c++17",
-    "-I.",
+    "-Ilib",
 ]
 LINKOPTS = [
     "-pthread",
@@ -16,7 +16,7 @@ def bes_cc_library(name, deps = []):
             "bes/" + name + "/**/*.tcc",
         ]),
         copts = COPTS,
-        includes = ["bes"],
+        includes = ["lib"],
         linkopts = LINKOPTS,
         deps = deps,
         visibility = ["//visibility:public"],

@@ -1,7 +1,7 @@
-#include <utility>
+#include <bes/templating.h>
+#include <gtest/gtest.h>
 
-#include "bes/templating.h"
-#include "gtest/gtest.h"
+#include <utility>
 
 struct Document
 {

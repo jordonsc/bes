@@ -1,7 +1,7 @@
-#include <vector>
+#include <bes/web.h>
+#include <gtest/gtest.h>
 
-#include "gtest/gtest.h"
-#include "bes/web.h"
+#include <vector>
 
 constexpr auto routes = R"--EOF--(---
 home:

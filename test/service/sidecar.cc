@@ -1,5 +1,5 @@
-#include "gtest/gtest.h"
-#include "bes/service.h"
+#include <bes/service.h>
+#include <gtest/gtest.h>
 
 TEST(ServiceTest, Sidecar)
 {

@@ -1,11 +1,12 @@
-#include <vector>
+#include <bes/web.redis.h>
+#include <gtest/gtest.h>
 
-#include "bes/web.redis.h"
-#include "gtest/gtest.h"
+#include <vector>
 
 TEST(SessionTest, RedisSessionTest)
 {
-    bes::web::RedisSession mgr(bes::net::Address("127.0.0.1", 6379));
+    bes::web::RedisSessionMgr mgr(bes::net::Address("127.0.0.1", 6379));
+    mgr.SetSessionTtl(60);
 
     auto session1 = mgr.CreateSession();
     auto session2 = mgr.CreateSession();
@@ -24,7 +25,7 @@ TEST(SessionTest, RedisSessionTest)
     EXPECT_EQ(0, session2.Size());
     EXPECT_TRUE(session2.Empty());
 
-    mgr.PersistSession(session1, 30);
+    mgr.PersistSession(session1);
 
     auto session3 = mgr.GetSession(session1.SessionId());
 
