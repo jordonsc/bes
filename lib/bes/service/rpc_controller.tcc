@@ -1,6 +1,9 @@
 #ifndef BES_SERVICE_SERVICE_CONTROLLER_TCC
 #define BES_SERVICE_SERVICE_CONTROLLER_TCC
 
+#include <bes/core.h>
+#include <bes/log.h>
+#include <bes/net.h>
 #include <grpcpp/grpcpp.h>
 
 #include <cassert>
@@ -10,9 +13,6 @@
 #include <thread>
 #include <vector>
 
-#include "bes/core.h"
-#include "bes/log.h"
-#include "bes/net.h"
 #include "pool_tracker.h"
 
 namespace bes::service {

@@ -1,9 +1,9 @@
 #ifndef BES_CLI_EXCEPTION_H
 #define BES_CLI_EXCEPTION_H
 
-#include <utility>
+#include <bes/core.h>
 
-#include "bes/core.h"
+#include <utility>
 
 namespace bes::cli {
 

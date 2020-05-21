@@ -1,11 +1,12 @@
 #ifndef BES_APP_APPLICATION_H
 #define BES_APP_APPLICATION_H
 
+#include <bes/cli.h>
+
 #include <string>
 #include <tuple>
 #include <utility>
 
-#include "bes/cli.h"
 #include "kernel.h"
 
 namespace bes::app {

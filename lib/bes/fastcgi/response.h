@@ -1,8 +1,9 @@
 #ifndef BES_RESPONSE_H
 #define BES_RESPONSE_H
 
-#include "bes/log.h"
-#include "bes/net.h"
+#include <bes/log.h>
+#include <bes/net.h>
+
 #include "model.h"
 #include "request.h"
 

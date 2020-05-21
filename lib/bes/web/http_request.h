@@ -1,10 +1,11 @@
 #ifndef BES_WEB_HTTP_REQUEST_H
 #define BES_WEB_HTTP_REQUEST_H
 
+#include <bes/fastcgi.h>
+
 #include <cctype>
 #include <unordered_map>
 
-#include "bes/fastcgi.h"
 #include "cookie.h"
 #include "exception.h"
 #include "http.h"

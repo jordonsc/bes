@@ -1,11 +1,11 @@
 #ifndef BES_FILESYSTEM_FILEFINDER_H
 #define BES_FILESYSTEM_FILEFINDER_H
 
+#include <bes/log.h>
+
 #include <filesystem>
 #include <utility>
 #include <vector>
-
-#include "bes/log.h"
 
 namespace bes {
 

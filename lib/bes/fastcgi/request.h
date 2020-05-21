@@ -1,9 +1,10 @@
 #ifndef BES_FASTCGI_REQUEST_H
 #define BES_FASTCGI_REQUEST_H
 
+#include <bes/core.h>
+
 #include <unordered_map>
 
-#include "bes/core.h"
 #include "exception.h"
 #include "memory.tcc"
 #include "model.h"

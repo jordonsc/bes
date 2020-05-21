@@ -4,7 +4,6 @@
 #include <utility>
 
 #include "../syntax/expression.h"
-#include "bes/log.h"
 #include "node.h"
 
 namespace bes::templating::node {

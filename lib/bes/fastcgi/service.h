@@ -1,13 +1,14 @@
 #ifndef BES_FASTCGI_SERVICE_H
 #define BES_FASTCGI_SERVICE_H
 
+#include <bes/core.h>
+#include <bes/log.h>
+
 #include <atomic>
 #include <cstring>
 #include <memory>
 #include <mutex>
 
-#include "bes/core.h"
-#include "bes/log.h"
 #include "bes/net.h"
 #include "exception.h"
 #include "model.h"

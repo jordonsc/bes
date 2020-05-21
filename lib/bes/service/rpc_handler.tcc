@@ -1,13 +1,13 @@
 #ifndef BES_SERVICE_SERVICEHANDLER_TCC
 #define BES_SERVICE_SERVICEHANDLER_TCC
 
+#include <bes/log.h>
 #include <grpcpp/grpcpp.h>
 
 #include <iostream>
 #include <stdexcept>
 #include <thread>
 
-#include "bes/log.h"
 #include "pool_tracker.h"
 
 using grpc::Server;

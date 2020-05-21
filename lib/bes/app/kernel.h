@@ -1,6 +1,11 @@
 #ifndef BES_APP_KERNEL_H
 #define BES_APP_KERNEL_H
 
+#include <bes/cli.h>
+#include <bes/core.h>
+#include <bes/log.h>
+#include <bes/net.h>
+#include <bes/service.h>
 #include <signal.h>
 
 #include <chrono>
@@ -9,11 +14,6 @@
 #include <memory>
 #include <shared_mutex>
 
-#include "bes/cli.h"
-#include "bes/core.h"
-#include "bes/log.h"
-#include "bes/net.h"
-#include "bes/service.h"
 #include "exception.h"
 
 namespace bes::app {

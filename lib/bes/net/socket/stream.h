@@ -5,7 +5,6 @@
 #include <functional>
 #include <thread>
 
-#include "bes/log.h"
 #include "socket.h"
 
 namespace bes::net::socket {

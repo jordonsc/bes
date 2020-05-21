@@ -5,8 +5,6 @@
 #include <queue>
 
 #include "application.h"
-#include "bes/core.h"
-#include "bes/net.h"
 #include "bes/service.h"
 #include "exception.h"
 #include "kernel.h"

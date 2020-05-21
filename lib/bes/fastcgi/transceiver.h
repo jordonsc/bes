@@ -1,10 +1,11 @@
 #ifndef BES_FASTCGI_TRANSCEIVER_H
 #define BES_FASTCGI_TRANSCEIVER_H
 
+#include <bes/log.h>
+#include <bes/net.h>
+
 #include <cstring>
 
-#include "bes/log.h"
-#include "bes/net.h"
 #include "memory.tcc"
 #include "model.h"
 
@@ -75,7 +76,6 @@ inline void Transceiver::WriteModel(T& model, bool to_net)
 
     socket.WriteBytes(&model, sizeof(T));
 }
-
 
 }  // namespace bes::fastcgi
 

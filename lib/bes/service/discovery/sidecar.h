@@ -1,9 +1,10 @@
 #ifndef BES_SERVICE_DISCOVERY_PASSIVESIDECAR_H
 #define BES_SERVICE_DISCOVERY_PASSIVESIDECAR_H
 
+#include <bes/core.h>
+
 #include <unordered_map>
 
-#include "bes/core.h"
 #include "discovery_interface.h"
 
 namespace bes::service::discovery {

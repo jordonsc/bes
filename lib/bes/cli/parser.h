@@ -1,13 +1,14 @@
 #ifndef BES_CLI_PARSER_H
 #define BES_CLI_PARSER_H
 
+#include <bes/log.h>
+
 #include <map>
-#include <vector>
 #include <mutex>
+#include <vector>
 
 #include "arg.h"
 #include "exception.h"
-#include "bes/log.h"
 
 namespace bes::cli {
 

@@ -1,7 +1,7 @@
 #ifndef BES_TEMPLATING_EXCEPTION_H
 #define BES_TEMPLATING_EXCEPTION_H
 
-#include "bes/core.h"
+#include <bes/core.h>
 
 namespace bes::templating {
 

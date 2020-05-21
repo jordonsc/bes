@@ -1,10 +1,11 @@
 #include "file_finder.h"
 
+#include <bes/log.h>
+
 #include <experimental/filesystem>
 #include <fstream>
 #include <stdexcept>
 
-#include "bes/log.h"
 #include "exception.h"
 
 using namespace bes;

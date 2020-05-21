@@ -1,9 +1,10 @@
 #ifndef BES_WEB_WEB_SERVER_H
 #define BES_WEB_WEB_SERVER_H
 
+#include <bes/fastcgi.h>
+
 #include <memory>
 
-#include "bes/fastcgi.h"
 #include "model.h"
 #include "router.h"
 #include "session_interface.h"

@@ -1,10 +1,10 @@
 #ifndef BES_FASTCGI_MEMORY_H
 #define BES_FASTCGI_MEMORY_H
 
+#include <bes/log.h>
 #include <stdint.h>
 
 #include "exception.h"
-#include "bes/log.h"
 #include "model.h"
 
 #define bes_endian_u16(x, to_host) to_host ? be16toh(x) : htobe16(x)

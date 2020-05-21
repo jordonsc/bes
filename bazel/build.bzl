@@ -9,15 +9,15 @@ LINKOPTS = [
 def bes_cc_library(name, deps = []):
     native.cc_library(
         name = name,
-        srcs = native.glob(["bes/" + name + "/**/*.cc"]),
+        srcs = native.glob(["lib/bes/" + name + "/**/*.cc"]),
         hdrs = native.glob([
-            "bes/" + name + ".h",
-            "bes/" + name + "/**/*.h",
-            "bes/" + name + "/**/*.tcc",
+            "lib/bes/" + name + ".h",
+            "lib/bes/" + name + "/**/*.h",
+            "lib/bes/" + name + "/**/*.tcc",
         ]),
         copts = COPTS,
-        includes = ["lib"],
         linkopts = LINKOPTS,
+        includes = ["lib"],
         deps = deps,
         visibility = ["//visibility:public"],
     )

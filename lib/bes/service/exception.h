@@ -1,10 +1,9 @@
 #ifndef BES_SERVICE_EXCEPTION_H
 #define BES_SERVICE_EXCEPTION_H
 
+#include <bes/core.h>
+#include <bes/log.h>
 #include <grpcpp/grpcpp.h>
-
-#include "bes/core.h"
-#include "bes/log.h"
 
 namespace bes::service {
 

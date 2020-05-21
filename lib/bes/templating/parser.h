@@ -1,9 +1,10 @@
 #ifndef BES_TEMPLATING_PARSER_H
 #define BES_TEMPLATING_PARSER_H
 
+#include <bes/log.h>
+
 #include <memory>
 
-#include "bes/log.h"
 #include "exception.h"
 #include "node/block_node.h"
 #include "node/for_node.h"

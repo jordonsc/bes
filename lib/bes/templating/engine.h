@@ -1,6 +1,8 @@
 #ifndef BES_TEMPLATING_ENGINE_H
 #define BES_TEMPLATING_ENGINE_H
 
+#include <bes/core.h>
+
 #include <fstream>
 #include <memory>
 #include <shared_mutex>
@@ -8,7 +10,6 @@
 #include <streambuf>
 #include <unordered_map>
 
-#include "bes/core.h"
 #include "data/context.h"
 #include "data/template_stack.h"
 #include "node/root_node.h"

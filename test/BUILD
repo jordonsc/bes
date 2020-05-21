@@ -15,7 +15,7 @@ cc_test(
     copts = COPTS,
     linkopts = LINKOPTS,
     deps = [
-        "//lib:core",
+        "//:core",
         "@gtest",
     ],
 )
@@ -30,7 +30,7 @@ cc_test(
     copts = COPTS,
     linkopts = LINKOPTS,
     deps = [
-        "//lib:cli",
+        "//:cli",
         "@gtest",
     ],
 )
@@ -45,7 +45,7 @@ cc_test(
     copts = COPTS,
     linkopts = LINKOPTS,
     deps = [
-        "//lib:service",
+        "//:service",
         "@gtest",
     ],
 )
@@ -61,7 +61,7 @@ cc_test(
     data = [":data"],
     linkopts = LINKOPTS,
     deps = [
-        "//lib:templating",
+        "//:templating",
         "@gtest",
     ],
 )
@@ -76,7 +76,7 @@ cc_test(
     copts = COPTS,
     linkopts = LINKOPTS,
     deps = [
-        "//lib:web",
+        "//:web",
         "@gtest",
     ],
 )
@@ -91,7 +91,7 @@ cc_test(
     copts = COPTS,
     linkopts = LINKOPTS,
     deps = [
-        "//lib:web.redis",
+        "//:web.redis",
         "@gtest",
     ],
 )

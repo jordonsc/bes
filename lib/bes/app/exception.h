@@ -1,9 +1,9 @@
 #ifndef BES_APP_EXCEPTION_H
 #define BES_APP_EXCEPTION_H
 
-#include <stdexcept>
+#include <bes/core.h>
 
-#include "bes/core.h"
+#include <stdexcept>
 
 namespace bes::app {
 

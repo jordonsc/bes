@@ -1,14 +1,14 @@
 #ifndef BES_SERVICE_DISCOVERY_INTERFACE_H
 #define BES_SERVICE_DISCOVERY_INTERFACE_H
 
+#include <bes/log.h>
+#include <bes/net.h>
 #include <grpcpp/grpcpp.h>
 
 #include <memory>
 #include <shared_mutex>
 
 #include "../exception.h"
-#include "bes/log.h"
-#include "bes/net.h"
 
 namespace bes::service::discovery {
 

@@ -4,9 +4,9 @@
 #define BES_CFG_KEY_ERR_MSG "Config key does not exist: "
 #define BES_CFG_NO_FILE_ERR_MSG "Unable to load configuration file"
 
+#include <bes/log.h>
 #include <yaml-cpp/yaml.h>
 
-#include "bes/log.h"
 #include "exception.h"
 #include "file_finder.h"
 

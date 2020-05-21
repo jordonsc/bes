@@ -1,7 +1,7 @@
 #ifndef BES_FASTCGI_EXCEPTION_H
 #define BES_FASTCGI_EXCEPTION_H
 
-#include "bes/core.h"
+#include <bes/core.h>
 
 namespace bes::fastcgi {
 
