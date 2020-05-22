@@ -10,7 +10,7 @@
 
 #include "../exception.h"
 
-namespace bes::service::discovery {
+namespace bes::app::discovery {
 
 class DiscoveryInterface
 {

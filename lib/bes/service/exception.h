@@ -12,11 +12,6 @@ class ServiceException : public bes::BesException
     using BesException::BesException;
 };
 
-class NoDiscoveryInterfaceException : public ServiceException
-{
-    using ServiceException::ServiceException;
-};
-
 class RpcException : public bes::BesException
 {
     using BesException::BesException;

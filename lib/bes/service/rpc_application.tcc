@@ -1,18 +1,18 @@
 #ifndef BES_APP_RPC_APPLICATION_H
 #define BES_APP_RPC_APPLICATION_H
 
+#include <bes/app.h>
+
 #include <memory>
 #include <queue>
 
-#include "application.h"
-#include "bes/service.h"
 #include "exception.h"
-#include "kernel.h"
+#include "rpc_controller.tcc"
 
-namespace bes::app {
+namespace bes::service {
 
 template <class RpcService>
-class RpcApplication : public Application
+class RpcApplication : public bes::app::Application
 {
    public:
     void Run() override;
@@ -110,6 +110,6 @@ RpcApplication<RpcService>::~RpcApplication()
     RpcApplication<RpcService>::Shutdown();
 }
 
-}  // namespace bes::app
+}  // namespace bes::service
 
 #endif

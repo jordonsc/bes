@@ -1,6 +1,6 @@
 #include "sidecar.h"
 
-using namespace bes::service::discovery;
+using namespace bes::app::discovery;
 
 Sidecar::Sidecar(bes::Config const& config) : config(config)
 {

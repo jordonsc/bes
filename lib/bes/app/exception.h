@@ -20,6 +20,11 @@ class KernelPanicException : public KernelException
     using KernelException::KernelException;
 };
 
+class NoDiscoveryInterfaceException : public KernelException
+{
+    using KernelException::KernelException;
+};
+
 }  // namespace bes::app
 
 #endif

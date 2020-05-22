@@ -104,10 +104,6 @@ inline void RpcHandler<SyncSvcT, RequestT, ResponseT>::Proceed()
         tracker->InstanceWorking(this);
         grpc::Status rpc_status = Process();
 
-#if BES_ENV == 0
-        BES_LOG(TRACE) << "RPC from " << context.peer() << " processed: " << std::boolalpha << rpc_status.ok();
-#endif
-
         // Let the gRPC runtime know we've finished and pass it our reply (formed in Process())
         responder.Finish(response, rpc_status, this);
         status = CallStatus::FINISH;

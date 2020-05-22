@@ -7,7 +7,7 @@
 
 #include "discovery_interface.h"
 
-namespace bes::service::discovery {
+namespace bes::app::discovery {
 
 /**
  * The Sidecar service-discovery model is suitable for most cluster environments.

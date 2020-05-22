@@ -5,7 +5,6 @@
 #include <bes/core.h>
 #include <bes/log.h>
 #include <bes/net.h>
-#include <bes/service.h>
 #include <signal.h>
 
 #include <chrono>
@@ -15,10 +14,11 @@
 #include <shared_mutex>
 
 #include "exception.h"
+#include "discovery/discovery_interface.h"
 
 namespace bes::app {
 
-using di_t = ::bes::service::discovery::DiscoveryInterface;
+using di_t = ::bes::app::discovery::DiscoveryInterface;
 
 class Application;
 
@@ -258,7 +258,7 @@ int Kernel<AppT>::Run()
         // now. If this model isn't appropriate, consider creating one in a lambda function passed to Exec().
         if (!di_t::HasDiscoveryInterface()) {
             BES_LOG(INFO) << "Building a sidecar as the default service-discovery mechanic";
-            di_t::SetDiscoveryInterface<bes::service::discovery::Sidecar>(config);
+            di_t::SetDiscoveryInterface<bes::app::discovery::Sidecar>(config);
         }
 
         // Wait for the DiscoveryInterface to come online
