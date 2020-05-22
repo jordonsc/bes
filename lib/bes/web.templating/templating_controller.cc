@@ -28,6 +28,12 @@ HttpResponse TemplatingController::Response(std::string const& templ, bes::templ
     return Response(templ, ctx, status, bes::web::Http::ContentType::HTML);
 }
 
+HttpResponse TemplatingController::Response(std::string const& templ, const bes::templating::data::ContextBuilder& ctx,
+                                            std::string const& content_type)
+{
+    return Response(templ, ctx, bes::web::Http::Status::OK, content_type);
+}
+
 HttpResponse TemplatingController::Response(std::string const& templ, bes::templating::data::ContextBuilder const& ctx,
                                             bes::web::Http::Status status, std::string const& content_type)
 {
