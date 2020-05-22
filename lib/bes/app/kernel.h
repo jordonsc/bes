@@ -13,8 +13,8 @@
 #include <memory>
 #include <shared_mutex>
 
+#include "discovery/sidecar.h"
 #include "exception.h"
-#include "discovery/discovery_interface.h"
 
 namespace bes::app {
 

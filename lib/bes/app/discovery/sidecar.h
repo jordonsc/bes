@@ -1,7 +1,8 @@
-#ifndef BES_SERVICE_DISCOVERY_PASSIVESIDECAR_H
-#define BES_SERVICE_DISCOVERY_PASSIVESIDECAR_H
+#ifndef BES_APP_DISCOVERY_SIDECAR_H
+#define BES_APP_DISCOVERY_SIDECAR_H
 
 #include <bes/core.h>
+#include <bes/net.h>
 
 #include <unordered_map>
 
@@ -40,6 +41,6 @@ class Sidecar : public DiscoveryInterface
     std::unordered_map<std::string, bes::net::Address> cache;
 };
 
-}  // namespace bes::service::discovery
+}  // namespace bes::app::discovery
 
 #endif

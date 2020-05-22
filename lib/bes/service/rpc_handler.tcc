@@ -24,8 +24,6 @@ namespace bes::service {
  *
  * For every RPC call you'll need an implementation of this class, and send it to the ServiceController for it to
  * manage in a thread-pool and process the small state-engine implemented in this template.
- *
- * TODO: consider copying; this should have an interface
  */
 template <class SyncSvcT, class RequestT, class ResponseT>
 class RpcHandler

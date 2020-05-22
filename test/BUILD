@@ -6,6 +6,21 @@ filegroup(
 )
 
 cc_test(
+    name = "app",
+    size = "small",
+    srcs = [
+        "app/sidecar.cc",
+        "test.cc",
+    ],
+    copts = COPTS,
+    linkopts = LINKOPTS,
+    deps = [
+        "//:app",
+        "@gtest",
+    ],
+)
+
+cc_test(
     name = "core",
     size = "small",
     srcs = [
@@ -31,21 +46,6 @@ cc_test(
     linkopts = LINKOPTS,
     deps = [
         "//:cli",
-        "@gtest",
-    ],
-)
-
-cc_test(
-    name = "service",
-    size = "small",
-    srcs = [
-        "service/sidecar.cc",
-        "test.cc",
-    ],
-    copts = COPTS,
-    linkopts = LINKOPTS,
-    deps = [
-        "//:service",
         "@gtest",
     ],
 )

@@ -8,7 +8,6 @@ bes_cc_library(
         ":core",
         ":log",
         ":net",
-        ":service",
     ],
 )
 
@@ -57,6 +56,7 @@ bes_cc_library(
 bes_cc_library(
     name = "service",
     deps = [
+        ":app",
         ":core",
         ":log",
         ":net",

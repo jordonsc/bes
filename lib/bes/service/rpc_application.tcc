@@ -1,5 +1,5 @@
-#ifndef BES_APP_RPC_APPLICATION_H
-#define BES_APP_RPC_APPLICATION_H
+#ifndef BES_SERVICE_RPC_APPLICATION_H
+#define BES_SERVICE_RPC_APPLICATION_H
 
 #include <bes/app.h>
 
@@ -48,7 +48,7 @@ template <class RpcService>
 void RpcApplication<RpcService>::Run()
 {
     if (rpc_ctrl != nullptr) {
-        throw KernelPanicException("Panic! Attempted to rebuild service controller!");
+        throw bes::app::KernelPanicException("Panic! Attempted to rebuild service controller!");
     }
 
     rpc_ctrl = std::make_unique<bes::service::RpcController<RpcService>>();
@@ -65,7 +65,7 @@ template <class RpcService>
 void RpcApplication<RpcService>::BindServer()
 {
     if (rpc_ctrl == nullptr) {
-        throw KernelPanicException("Panic! RPC Controller not created, cannot bind.");
+        throw bes::app::KernelPanicException("Panic! RPC Controller not created, cannot bind.");
     }
 
     // The default port we can reconfigure with the below macro, but the default bind address will always be controlled

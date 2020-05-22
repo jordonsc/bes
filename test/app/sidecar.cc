@@ -1,4 +1,4 @@
-#include <bes/service.h>
+#include <bes/app.h>
 #include <gtest/gtest.h>
 
 TEST(ServiceTest, Sidecar)
@@ -27,7 +27,7 @@ discovery:
     ASSERT_EQ("myapp", cfg_a.Get<std::string>("discovery", "service", "app1.frontend", "host"));
     ASSERT_EQ(20001, cfg_a.Get<uint16_t>("discovery", "service", "app1.frontend", "port"));
 
-    bes::service::discovery::Sidecar sidecar_a(cfg_a);
+    bes::app::discovery::Sidecar sidecar_a(cfg_a);
     ASSERT_TRUE(sidecar_a.Ready());
 
     EXPECT_EQ("myapp:20002", sidecar_a.GetServiceAddr("app1").AddrFull());
@@ -54,7 +54,7 @@ discovery:
     ASSERT_EQ(60001, cfg_b.Get<uint16_t>("discovery", "config", "port"));
     ASSERT_EQ("core.dev", cfg_b.Get<std::string>("discovery", "service", "myapp", "host"));
 
-    bes::service::discovery::Sidecar sidecar_b(cfg_b);
+    bes::app::discovery::Sidecar sidecar_b(cfg_b);
     ASSERT_TRUE(sidecar_b.Ready());
 
     EXPECT_EQ("core.dev:60001", sidecar_b.GetServiceAddr("myapp").AddrFull());
@@ -74,7 +74,7 @@ discovery:
 
     ASSERT_EQ(50001, cfg_c.Get<uint16_t>("discovery", "config", "port"));
 
-    bes::service::discovery::Sidecar sidecar_c(cfg_c);
+    bes::app::discovery::Sidecar sidecar_c(cfg_c);
     ASSERT_TRUE(sidecar_c.Ready());
 
     EXPECT_EQ("some-app:50001", sidecar_c.GetServiceAddr("some-app").AddrFull());

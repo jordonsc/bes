@@ -1,5 +1,5 @@
-#ifndef BES_SERVICE_DISCOVERY_INTERFACE_H
-#define BES_SERVICE_DISCOVERY_INTERFACE_H
+#ifndef BES_APP_DISCOVERY_DISCOVERY_INTERFACE_H
+#define BES_APP_DISCOVERY_DISCOVERY_INTERFACE_H
 
 #include <bes/log.h>
 #include <bes/net.h>
@@ -71,6 +71,6 @@ class DiscoveryInterface
     static std::shared_mutex discovery_m;
 };
 
-}  // namespace bes::service::discovery
+}  // namespace bes::app::discovery
 
 #endif
