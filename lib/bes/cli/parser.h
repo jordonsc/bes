@@ -15,12 +15,10 @@ namespace bes::cli {
 class Parser
 {
    public:
-    Parser() {}
-
     Parser& operator<<(Arg arg);
     Parser& AddArgument(Arg arg);
     Parser& AddArgument(char s, std::string l, std::string default_val = "");
-    size_t ArgCount() const;
+    [[nodiscard]] size_t ArgCount() const;
 
     Arg const& operator[](std::string const& s) const;
     [[nodiscard]] std::vector<Arg const*> GetAllArgs() const;
@@ -52,7 +50,7 @@ class Parser
     Arg* GetArgFromShort(char c);
 
     // Inner workings of parser
-    Arg* _last_arg;
+    Arg* _last_arg = nullptr;
     std::mutex _m;
 };
 

@@ -1,11 +1,13 @@
-#ifndef BES_SERVICE_EXCEPTION_H
-#define BES_SERVICE_EXCEPTION_H
+#ifndef BES_RPC_EXCEPTION_H
+#define BES_RPC_EXCEPTION_H
 
 #include <bes/core.h>
 #include <bes/log.h>
 #include <grpcpp/grpcpp.h>
 
-namespace bes::service {
+#include <utility>
+
+namespace bes::rpc {
 
 class ServiceException : public bes::BesException
 {
@@ -17,13 +19,19 @@ class RpcException : public bes::BesException
     using BesException::BesException;
 };
 
+class NotFoundException : public RpcException
+{
+    using RpcException::RpcException;
+};
+
 class RpcCallException : public RpcException
 {
    public:
-    RpcCallException(grpc::Status const& rpc_stat) : RpcException(rpc_stat.error_message()), rpc_status(rpc_stat) {}
-    RpcCallException(grpc::Status const& rpc_stat, std::string const& msg) : RpcException(msg), rpc_status(rpc_stat) {}
+    RpcCallException(grpc::Status rpc_stat) : RpcException(rpc_stat.error_message()), rpc_status(std::move(rpc_stat)) {}
+    RpcCallException(grpc::Status rpc_stat, std::string const& msg) : RpcException(msg), rpc_status(std::move(rpc_stat))
+    {}
 
-    constexpr grpc::Status const& GetRpcStatus() const
+    [[nodiscard]] constexpr grpc::Status const& GetRpcStatus() const
     {
         return rpc_status;
     }
@@ -94,6 +102,6 @@ class RpcCallException : public RpcException
     grpc::Status const rpc_status;
 };
 
-}  // namespace bes::service
+}  // namespace bes::rpc
 
 #endif

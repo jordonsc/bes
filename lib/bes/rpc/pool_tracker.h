@@ -1,18 +1,21 @@
-#ifndef BES_POOL_TRACKER_H
-#define BES_POOL_TRACKER_H
+#ifndef BES_RPC_POOL_TRACKER_H
+#define BES_RPC_POOL_TRACKER_H
 
+#include <bes/core.h>
+
+#include <cstdint>
 #include <iostream>
 #include <mutex>
 #include <unordered_map>
-#include <cstdint>
 
-namespace bes::service {
+namespace bes::rpc {
 
 /**
  * Keeps a tally of the state of all workers in a pool
  */
-class PoolTracker final {
-  public:
+class PoolTracker final
+{
+   public:
     PoolTracker();
 
     /**
@@ -37,18 +40,19 @@ class PoolTracker final {
 
     size_t Capacity();
 
-  private:
-    enum class InstState {
+   private:
+    enum class InstState
+    {
         READY,
         WORKING
     };
 
     size_t instances = 0;
     size_t capacity = 0;
-    std::mutex mutex {};
-    std::unordered_map<void*, InstState> inst_map {};
+    std::mutex mutex{};
+    std::unordered_map<void*, InstState> inst_map{};
 };
 
-}   // end namespace
+}  // namespace bes::rpc
 
 #endif

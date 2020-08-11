@@ -24,8 +24,8 @@ Building Libraries
 ------------------
 To build an application, use the `build` command with a Bazel build target path:
 
-    bazel build //lib:templating
-    bazel build //lib:all
+    bazel build //:templating
+    bazel build //:all
     
 
 Running Tests

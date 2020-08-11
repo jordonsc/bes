@@ -1,2 +1,2 @@
-build --symlink_prefix=bazel-build/ --cxxopt='-fdiagnostics-color=always'
+build --cxxopt='-fdiagnostics-color=always'
 test --test_output=errors

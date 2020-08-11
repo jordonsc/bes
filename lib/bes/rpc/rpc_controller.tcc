@@ -1,5 +1,5 @@
-#ifndef BES_SERVICE_SERVICE_CONTROLLER_TCC
-#define BES_SERVICE_SERVICE_CONTROLLER_TCC
+#ifndef BES_RPC_RPC_CONTROLLER_TCC
+#define BES_RPC_RPC_CONTROLLER_TCC
 
 #include <bes/core.h>
 #include <bes/log.h>
@@ -15,7 +15,7 @@
 
 #include "pool_tracker.h"
 
-namespace bes::service {
+namespace bes::rpc {
 
 using threadsize_t = bes::threadsize_t;
 
@@ -106,7 +106,7 @@ void RpcController<ServiceClass>::HandleRpc(threadsize_t const max_threads)
     // Run a loop in a thread,
     rpc_threads.push_back(std::thread([&, this, min_handlers, max_threads] {
         // Current number of processors we've running for this RPC
-        bes::service::PoolTracker tracker;
+        bes::rpc::PoolTracker tracker;
         bes::ThreadPool thread_pool(max_threads);
         std::unique_ptr<grpc::ServerCompletionQueue> const& cq = *cq_index;
         ++cq_index;
@@ -192,6 +192,6 @@ inline void RpcController<ServiceClass>::Shutdown()
     }
 }
 
-}  // namespace bes::service
+}  // namespace bes::rpc
 
 #endif

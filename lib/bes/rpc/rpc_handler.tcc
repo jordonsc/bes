@@ -1,5 +1,5 @@
-#ifndef BES_SERVICE_SERVICEHANDLER_TCC
-#define BES_SERVICE_SERVICEHANDLER_TCC
+#ifndef BES_RPC_RPC_HANDLER_TCC
+#define BES_RPC_RPC_HANDLER_TCC
 
 #include <bes/log.h>
 #include <grpcpp/grpcpp.h>
@@ -17,7 +17,7 @@ using grpc::ServerContext;
 using grpc::Status;
 using grpc_impl::ServerAsyncResponseWriter;
 
-namespace bes::service {
+namespace bes::rpc {
 
 /**
  * This is the foundation for listening to individual RPC calls.
@@ -123,6 +123,6 @@ inline RpcHandler<SyncSvcT, RequestT, ResponseT>::~RpcHandler()
     tracker->InstanceTerminating(this);
 }
 
-}  // namespace bes::service
+}  // namespace bes::rpc
 
 #endif

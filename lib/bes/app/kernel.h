@@ -5,10 +5,10 @@
 #include <bes/core.h>
 #include <bes/log.h>
 #include <bes/net.h>
-#include <signal.h>
 
 #include <chrono>
 #include <condition_variable>
+#include <csignal>
 #include <cstdlib>
 #include <memory>
 #include <shared_mutex>
@@ -152,7 +152,7 @@ class Kernel : public KernelInterface
     std::unique_ptr<AppT> app;
     bool has_inited = false;
 
-    sigset_t signal_intercept;
+    sigset_t signal_intercept{};
     std::atomic<int> exit_request{0};
     std::mutex exit_cv_mutex;
     std::condition_variable exit_cv;

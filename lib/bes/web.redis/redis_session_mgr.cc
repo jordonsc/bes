@@ -74,11 +74,17 @@ void RedisSessionMgr::Connect()
     using namespace std::placeholders;
     auto log = std::bind(&RedisSessionMgr::LogConnectStatus, this, _1, _2, _3);
 
-    if (server.Port() == 0) {
-        client.connect(sentinel_svc_name, log, connect_timeout);
-    } else {
-        client.connect(server.HasIp6Addr() ? server.Ip6Addr() : server.Ip4Addr(), server.Port(), log, 250);
+    try {
+        if (server.Port() == 0) {
+            client.connect(sentinel_svc_name, log, connect_timeout);
+        } else {
+            client.connect(server.HasIp6Addr() ? server.Ip6Addr() : server.Ip4Addr(), server.Port(), log, 250);
+        }
+    } catch (std::exception &e) {
+        BES_LOG(ERROR) << "Unable to open connection to Redis server on " << server.Ip4Addr() << ":" << server.Port();
+        throw WebException("Unable to connect to Redis server");
     }
+
 }
 
 RedisSessionMgr& RedisSessionMgr::LogConnectStatus(std::string const& host, std::size_t port,

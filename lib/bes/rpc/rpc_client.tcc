@@ -1,19 +1,20 @@
-#ifndef BES_SERVICE_SERVICECLIENT_H
-#define BES_SERVICE_SERVICECLIENT_H
+#ifndef BES_RPC_SERVICECLIENT_H
+#define BES_RPC_SERVICECLIENT_H
 
+#include <bes/app.h>
 #include <grpcpp/grpcpp.h>
 
 #include <memory>
 
-namespace bes::service {
+namespace bes::rpc {
 
 template <class RpcService>
 class RpcClient
 {
    public:
-    explicit RpcClient(std::shared_ptr<bes::service::discovery::DiscoveryInterface> const& discovery_iface = nullptr)
+    explicit RpcClient(std::shared_ptr<bes::app::discovery::DiscoveryInterface> const& discovery_iface = nullptr)
         : discovery_iface(discovery_iface ? discovery_iface
-                                          : bes::service::discovery::DiscoveryInterface::GetDiscoveryInterface())
+                                          : bes::app::discovery::DiscoveryInterface::GetDiscoveryInterface())
     {}
 
    protected:
@@ -25,9 +26,6 @@ class RpcClient
     virtual typename RpcService::Stub GetStub()
     {
         auto adr = discovery_iface.get()->GetServiceAddr(GetServiceKey()).AddrFull();
-#if BES_ENV == 0
-        BES_LOG(TRACE) << "Svc '" << GetServiceKey() << "' resolved to '" << adr << "'";
-#endif
         auto channel = grpc::CreateChannel(adr, grpc::InsecureChannelCredentials());
         return typename RpcService::Stub(channel);
     }
@@ -39,9 +37,9 @@ class RpcClient
     virtual std::string const& GetServiceKey() = 0;
 
     // Service discovery interface; really should only be used for building the stub
-    std::shared_ptr<bes::service::discovery::DiscoveryInterface> discovery_iface;
+    std::shared_ptr<bes::app::discovery::DiscoveryInterface> discovery_iface;
 };
 
-}  // namespace bes::service
+}  // namespace bes::rpc
 
 #endif

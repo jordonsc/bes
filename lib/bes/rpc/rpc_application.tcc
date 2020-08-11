@@ -1,5 +1,5 @@
-#ifndef BES_SERVICE_RPC_APPLICATION_H
-#define BES_SERVICE_RPC_APPLICATION_H
+#ifndef BES_RPC_RPC_APPLICATION_H
+#define BES_RPC_RPC_APPLICATION_H
 
 #include <bes/app.h>
 
@@ -9,7 +9,7 @@
 #include "exception.h"
 #include "rpc_controller.tcc"
 
-namespace bes::service {
+namespace bes::rpc {
 
 template <class RpcService>
 class RpcApplication : public bes::app::Application
@@ -22,7 +22,7 @@ class RpcApplication : public bes::app::Application
    protected:
     using Application::Application;
 
-    std::unique_ptr<bes::service::RpcController<RpcService>> rpc_ctrl;
+    std::unique_ptr<bes::rpc::RpcController<RpcService>> rpc_ctrl;
 
     /**
      * Bind the server to a given IP address and run it.
@@ -51,7 +51,7 @@ void RpcApplication<RpcService>::Run()
         throw bes::app::KernelPanicException("Panic! Attempted to rebuild service controller!");
     }
 
-    rpc_ctrl = std::make_unique<bes::service::RpcController<RpcService>>();
+    rpc_ctrl = std::make_unique<bes::rpc::RpcController<RpcService>>();
     BindServer();
 
     // Request the implementation now execute all RPC handlers
@@ -110,6 +110,6 @@ RpcApplication<RpcService>::~RpcApplication()
     RpcApplication<RpcService>::Shutdown();
 }
 
-}  // namespace bes::service
+}  // namespace bes::rpc
 
 #endif

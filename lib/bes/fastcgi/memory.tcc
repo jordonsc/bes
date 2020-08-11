@@ -2,7 +2,8 @@
 #define BES_FASTCGI_MEMORY_H
 
 #include <bes/log.h>
-#include <stdint.h>
+
+#include <cstdint>
 
 #include "exception.h"
 #include "model.h"

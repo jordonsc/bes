@@ -1,6 +1,6 @@
 #include "pool_tracker.h"
 
-using namespace bes::service;
+using namespace bes::rpc;
 
 PoolTracker::PoolTracker() = default;
 
@@ -58,12 +58,12 @@ void PoolTracker::InstanceTerminating(void* tag)
     instances--;
 }
 
-size_t bes::service::PoolTracker::Count()
+size_t PoolTracker::Count()
 {
     return instances;
 }
 
-size_t bes::service::PoolTracker::Capacity()
+size_t PoolTracker::Capacity()
 {
     return capacity;
 }

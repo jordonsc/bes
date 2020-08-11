@@ -52,9 +52,9 @@ bes_cc_library(
     ],
 )
 
-# Service management
+# RPC service management
 bes_cc_library(
-    name = "service",
+    name = "rpc",
     deps = [
         ":app",
         ":core",

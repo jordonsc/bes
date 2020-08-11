@@ -1,5 +1,4 @@
-bazel-out
-bazel-build/*
+bazel-*
 __pycache__
 
 !.gitkeep
