@@ -44,6 +44,11 @@ class DuplicateBlockNodeException : public IndexErrorException
     using IndexErrorException::IndexErrorException;
 };
 
+class DuplicateMacroNodeException : public IndexErrorException
+{
+    using IndexErrorException::IndexErrorException;
+};
+
 class ValueErrorException : public TemplateException
 {
     using TemplateException::TemplateException;

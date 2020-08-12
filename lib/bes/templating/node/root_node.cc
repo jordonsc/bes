@@ -1,5 +1,7 @@
 #include "root_node.h"
 
+#include <bes/templating/node/macro_node.h>
+
 using namespace bes::templating::node;
 
 void RootNode::Render(std::ostringstream& ss, data::Context& ctx, data::TemplateStack& ts) const

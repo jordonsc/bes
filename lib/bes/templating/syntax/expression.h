@@ -29,6 +29,8 @@ struct Expression
         IF,
         VALUE,
         BLOCK,
+        MACRO,
+        FUNCTION,   // value type that calls a macro
 
         // End tags
         ENDFOR,
@@ -36,6 +38,7 @@ struct Expression
         ELSE,
         ENDIF,
         ENDBLOCK,
+        ENDMACRO,
 
         // Single tags with no end
         EXTENDS,

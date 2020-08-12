@@ -24,11 +24,13 @@ class RootNode : public NamedNode
     std::string const& ExtendsTemplate() const;
     void SetExtends(std::string const& name);
 
+    // Block nodes
     void AddBlock(std::string const& key, std::shared_ptr<Node> const& node);
     void AllocateBlock(std::string const& key, Node* node);
     bool HasBlock(std::string const& key) const;
     bool RenderBlock(std::string const& key, std::ostringstream& ss, data::Context& ctx, data::TemplateStack& ts) const;
 
+    // Filters
     std::unordered_map<std::string, Filter>* filters = nullptr;
 
    protected:

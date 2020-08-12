@@ -48,3 +48,18 @@ std::shared_ptr<ShellInterface> const& Context::GetValue(std::string const& key)
 
     throw MissingContextException("Context item '" + key + "' does not exist");
 }
+
+void Context::AddMacro(std::string const& key, node::Node const* node)
+{
+    macros[key] = node;
+}
+
+bool Context::HasMacro(std::string const& key) const
+{
+    return macros.find(key) != macros.end();
+}
+
+bes::templating::node::Node const* Context::GetMacro(std::string const& key) const
+{
+    return macros.at(key);
+}

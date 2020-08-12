@@ -3,10 +3,13 @@
 
 #include <list>
 
+#include "../exception.h"
 #include "../rendering_interface.h"
 
 namespace bes::templating::node {
+
 class RootNode;
+
 }  // namespace bes::templating::node
 
 namespace bes::templating::data {

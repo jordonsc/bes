@@ -14,7 +14,19 @@ class ValueNode : public ExpressionNode
 
     void Render(std::ostringstream& ss, data::Context& ctx, data::TemplateStack& ts) const override
     {
-        if (!expr.filters.empty()) {
+        if (expr.right.symbol_type == syntax::Symbol::SymbolType::FUNCTION) {
+            /// Call to macro
+            MacroNode const* macro;
+            try {
+                macro = dynamic_cast<MacroNode const*>(ctx.GetMacro(expr.left.Value<std::string>()));
+            } catch (std::exception& e) {
+                throw TemplateException("Call to undefined macro: " + expr.left.Value<std::string>() + "; " + e.what());
+            }
+
+            macro->RenderMacro(ss, ctx, ts, expr.right.items);
+
+        } else if (!expr.filters.empty()) {
+            /// Filtered value
             std::ostringstream tmp;
             data::SymbolShell(expr.left, ctx).Render(tmp);
             std::string filter_data = tmp.str();
@@ -25,7 +37,7 @@ class ValueNode : public ExpressionNode
                 for (auto const& filter_name : expr.filters) {
                     auto const& it = base->filters->find(filter_name);
                     if (it == base->filters->end()) {
-                        throw TemplateException("Reference to undefined filter: " + filter_name);
+                        throw TemplateException("Call to undefined filter: " + filter_name);
                     }
                     it->second(filter_data);
                 }
@@ -33,6 +45,7 @@ class ValueNode : public ExpressionNode
 
             ss << filter_data;
         } else {
+            /// Raw value
             data::SymbolShell(expr.left, ctx).Render(ss);
         }
     }

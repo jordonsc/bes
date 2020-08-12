@@ -10,6 +10,7 @@
 #include "node/for_node.h"
 #include "node/if_node.h"
 #include "node/include_node.h"
+#include "node/macro_node.h"
 #include "node/root_node.h"
 #include "node/text_node.h"
 #include "node/value_node.h"

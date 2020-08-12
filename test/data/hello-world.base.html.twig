@@ -1,3 +1,4 @@
+{% include "macros" -%}
 <html>
 <head>
     <title>
@@ -8,5 +9,6 @@
 <body>
     {%- block body %}No Body{% endblock %}
     {% include "snippet_ext" %}
+    {{- foo("Hello", doc.title, 42) -}}
 </body>
 </html>

@@ -46,6 +46,18 @@ bes::templating::syntax::Symbol::Symbol(std::string const& str)
             Text::Trim(part);
             items.emplace_back(Symbol(part));
         }
+    } else if (first == '(') {
+        // Array
+        symbol_type = SymbolType::FUNCTION;
+        if (last != ')') {
+            throw MalformedSymbolException(str, "unterminated function syntax");
+        }
+
+        auto parts = Text::Split(std::string(str, 1, str.length() - 2), ",");
+        for (auto& part : parts) {
+            Text::Trim(part);
+            items.emplace_back(Symbol(part));
+        }
     } else if (first >= '0' && first <= '9') {
         // Numeric literal
         float v = 0;

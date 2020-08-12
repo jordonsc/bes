@@ -106,6 +106,9 @@ syntax::Expression Parser::ParseInner(node::Node& node, std::string const& conte
     return {};
 }
 
+/**
+ * Sub-parser for tag expressions.
+ */
 void Parser::ParseExpression(syntax::Expression const& exp, node::Node& node, std::string const& content,
                              size_t& position, node::RootNode* root)
 {
@@ -160,6 +163,23 @@ void Parser::ParseExpression(syntax::Expression const& exp, node::Node& node, st
                                                  "', found: " + end_tag.raw);
                 }
 
+                node.AllocateNode(dynamic_cast<node::Node*>(sub_node));
+            }
+            break;
+        case Expression::Clause::MACRO:
+            // macro .. endmacro
+            {
+                auto* sub_node = new node::MacroNode(exp, root);
+                Expression end_tag = ParseInner(dynamic_cast<node::Node&>(*sub_node), content, position, root);
+
+                if (end_tag.clause != Expression::Clause::ENDMACRO) {
+                    throw MissingEndTagException("Missing or incorrect end-tag for macro '" + exp.raw +
+                                                 "', found: " + end_tag.raw);
+                }
+
+                // We don't really need to macro to stay in-place, however because each template is detached from any
+                // extended/inherited, we'll need to add the node to the TemplateStack during rendering - thus, we keep
+                // this inline as any other node
                 node.AllocateNode(dynamic_cast<node::Node*>(sub_node));
             }
             break;

@@ -19,6 +19,7 @@ struct Symbol
         VARIABLE,
         LITERAL,
         ARRAY,
+        FUNCTION,
     };
 
     enum class DataType : char

@@ -78,6 +78,7 @@ TEST(TemplatingRenderTest, BasicRender)
     engine.LoadFile("base", "hello-world.base.html.twig");
     engine.LoadFile("snippet_ext", "snippet_ext.html.twig");
     engine.LoadFile("snippet_base", "snippet_base.html.twig");
+    engine.LoadFile("macros", "macros.html.twig");
 
     ctx.Set("doc", doc);
 

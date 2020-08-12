@@ -35,6 +35,14 @@ TEST(TemplatingTextTest, StringSplitArgs)
         EXPECT_EQ(out[1], "\"Hello World\"");
     }
 
+    {
+        auto out = Text::SplitArgs(" omg(\"hello boys\", hahaha) \"Hello World\"");
+        EXPECT_EQ(3, out.size());
+        EXPECT_EQ(out[0], "omg");
+        EXPECT_EQ(out[1], "(\"hello boys\", hahaha)");
+        EXPECT_EQ(out[2], "\"Hello World\"");
+    }
+
     EXPECT_THROW(Text::SplitArgs(" [hello, boys \"Hello World\""), bes::templating::TemplateException);
     EXPECT_THROW(Text::SplitArgs(" [hello, boys] \"Hello World"), bes::templating::TemplateException);
 }

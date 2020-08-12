@@ -12,9 +12,9 @@ namespace bes::templating::node {
  */
 class IncludeNode : public NamedNode
 {
+   public:
     using NamedNode::NamedNode;
 
-   public:
     void Render(std::ostringstream& ss, bes::templating::data::Context& ctx, data::TemplateStack& ts) const override
     {
         ctx.IncreaseStack();

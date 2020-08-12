@@ -11,6 +11,7 @@ Expression::Expression(std::string const& str)
     char pos = 0;
     auto parts = bes::templating::Text::SplitArgs(str);
     bool neg = false;
+    bool no_op = false;
     bool expect_filter = false;
 
     if (parts.empty()) {
@@ -21,6 +22,16 @@ Expression::Expression(std::string const& str)
         if (pos && end_tag && clause != Clause::ELIF) {
             // Only "elif" end tags contain additional parts
             throw MalformedExpressionException(str, "bad use of a closing tag");
+        }
+
+        /*
+         * Function-style syntax (eg `{{ mymacro(foo, bar) }}`).
+         *
+         * The parentheses are considered the right side, and there is no operator here so we'll skip the operator
+         * phase by incrementing `pos`.
+         */
+        if (part.length() > 1 && part[0] == '(' && pos == 1) {
+            ++pos;
         }
 
         if (pos == 0) {
@@ -38,6 +49,11 @@ Expression::Expression(std::string const& str)
                 ValidateClause(neg, str);
                 clause = Clause::FOR;
                 continue;
+            } else if (part == "macro") {
+                ValidateClause(neg, str);
+                clause = Clause::MACRO;
+                no_op = true;
+                continue;
             } else if (part == "if") {
                 ValidateClause(neg, str);
                 clause = Clause::IF;
@@ -50,6 +66,11 @@ Expression::Expression(std::string const& str)
             } else if (part == "endfor") {
                 ValidateClause(neg, str);
                 clause = Clause::ENDFOR;
+                end_tag = true;
+                continue;
+            } else if (part == "endmacro") {
+                ValidateClause(neg, str);
+                clause = Clause::ENDMACRO;
                 end_tag = true;
                 continue;
             } else if (part == "endif") {
@@ -79,6 +100,11 @@ Expression::Expression(std::string const& str)
             negated = neg;
             left = Symbol(part);
             neg = false;
+
+            // Expressions that skip the operator -
+            if (no_op) {
+                ++pos;
+            }
         } else if (pos == 1) {
             // POS 1: OPERATOR
             if (part == "|") {
@@ -203,6 +229,8 @@ Expression::Expression(std::string const& str)
         case Clause::NONE:
             if (!left.items.empty() && right.items.empty()) {
                 clause = Clause::VALUE;
+            } else if (!left.items.empty() && right.symbol_type == Symbol::SymbolType::FUNCTION) {
+                clause = Clause::FUNCTION;
             } else {
                 throw MalformedExpressionException(str, "null control type");
             }
@@ -248,6 +276,27 @@ Expression::Expression(std::string const& str)
             if (right.symbol_type != Symbol::SymbolType::ARRAY && right.symbol_type != Symbol::SymbolType::VARIABLE) {
                 throw MalformedSymbolException(str, "for loops require an array or variable on the right");
             }
+            break;
+        case Clause::MACRO:
+            if (op != Expression::Operator::NONE) {
+                throw MalformedSymbolException(str, "macro block cannot have an operator");
+            }
+
+            if (left.symbol_type != Symbol::SymbolType::VARIABLE) {
+                throw MalformedSymbolException(str, "macro blocks require a variable on the left");
+            }
+
+            if (right.symbol_type != Symbol::SymbolType::FUNCTION) {
+                throw MalformedSymbolException(str, "macro block expects function syntax");
+            }
+
+            // All elements in the function array must be a "variable" type (may have zero args, though)
+            for (auto& item : right.items) {
+                auto sym = std::any_cast<syntax::Symbol>(item);
+                if (sym.symbol_type != Symbol::SymbolType::VARIABLE) {
+                    throw MalformedSymbolException(str, "all macro block arguments must be variables");
+                }
+            }
 
         default:
             break;
@@ -264,6 +313,12 @@ void Expression::ValidateComparisonOperator(bool neg, std::string const& str) co
     }
 }
 
+/**
+ * Validates that the "clause" part of the expression is valid:
+ *
+ * - Cannot have already been negated (eg "not for ...")
+ * - Must not already have a clause defined
+ */
 void Expression::ValidateClause(bool neg, std::string const& str) const
 {
     if (neg) {

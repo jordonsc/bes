@@ -57,7 +57,7 @@ struct Text
         char boundary = 0;
 
         for (char c : str) {
-            if ((c == ' ' || c == '|') && (!boundary || boundary == ' ')) {
+            if ((c == ' ' || c == '|' || c == '(') && (!boundary || boundary == ' ')) {
                 if (token_len) {
                     tokens.push_back(token.str());
                     token.str(std::string());
@@ -65,7 +65,11 @@ struct Text
                     boundary = 0;
                 }
 
-                if (c == '|') {
+                if (c == '(') {
+                    boundary = ')';
+                    token << c;
+                    token_len = 1;
+                } else if (c == '|') {
                     tokens.push_back("|");
                 }
 
@@ -82,6 +86,8 @@ struct Text
                 boundary = '"';
             } else if (token_len == 0 && c == '[') {
                 boundary = ']';
+            } else if (token_len == 0 && c == '(') {
+                boundary = ')';
             }
 
             ++token_len;

@@ -17,6 +17,34 @@ class IfNode : public ExpressionNode
    public:
     using ExpressionNode::ExpressionNode;
 
+    void Render(std::ostringstream& ss, data::Context& ctx, data::TemplateStack& ts) const override
+    {
+        using CtrlType = bes::templating::syntax::Expression::Clause;
+
+        // Check if a previous IF control block succeeded, whereby an ELSE block cannot execute
+        if ((expr.clause == CtrlType::ELIF || expr.clause == CtrlType::ELSE) && (ctx.GetValue("_last_if")->IsTrue())) {
+            // A previous IF/ELIF tag succeeded
+            return;
+        }
+
+        // Check the result of the expression and store it for future ELIF/ELSE blocks
+        if (expr.clause != bes::templating::syntax::Expression::Clause::ELSE) {
+            bool condition_state = GetConditionState(ctx);
+            ctx.SetValue("_last_if", std::make_shared<bes::templating::data::StandardShell<bool>>(condition_state));
+
+            if (!condition_state) {
+                return;
+            }
+        }
+
+        // Process children
+        ctx.IncreaseStack();
+        for (auto& node : child_nodes) {
+            node->Render(ss, ctx, ts);
+        }
+        ctx.DecreaseStack();
+    }
+
    protected:
     inline static std::string RenderSymbol(bes::templating::syntax::Symbol const& s, data::Context& context)
     {
@@ -85,35 +113,7 @@ class IfNode : public ExpressionNode
 
         return condition_state;
     }
-
-    void Render(std::ostringstream& ss, data::Context& ctx, data::TemplateStack& ts) const override
-    {
-        using CtrlType = bes::templating::syntax::Expression::Clause;
-
-        // Check if a previous IF control block succeeded, whereby an ELSE block cannot execute
-        if ((expr.clause == CtrlType::ELIF || expr.clause == CtrlType::ELSE) && (ctx.GetValue("_last_if")->IsTrue())) {
-            // A previous IF/ELIF tag succeeded
-            return;
-        }
-
-        // Check the result of the expression and store it for future ELIF/ELSE blocks
-        if (expr.clause != bes::templating::syntax::Expression::Clause::ELSE) {
-            bool condition_state = GetConditionState(ctx);
-            ctx.SetValue("_last_if", std::make_shared<bes::templating::data::StandardShell<bool>>(condition_state));
-
-            if (!condition_state) {
-                return;
-            }
-        }
-
-        // Process children
-        ctx.IncreaseStack();
-        for (auto& node : child_nodes) {
-            node->Render(ss, ctx, ts);
-        }
-        ctx.DecreaseStack();
-    }
-};  // namespace bes::templating::node
+};
 
 }  // namespace bes::templating::node
 

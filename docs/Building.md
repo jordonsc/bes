@@ -36,3 +36,8 @@ As above, but with the `test` Bazel command:
 
 The `.bazelrc` file will instruct the test command output only to be verbose on failure.
 
+### Redis Live Tests
+If you want to run the live Redis tests, run Redis first:
+
+    docker images | grep redis > /dev/null || docker pull redis:latest
+    docker run -d --net host redis

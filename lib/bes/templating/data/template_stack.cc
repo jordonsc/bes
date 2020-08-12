@@ -1,5 +1,7 @@
 #include "template_stack.h"
 
+#include <utility>
+
 using namespace bes::templating::data;
 
 TemplateStack::TemplateStack(bes::templating::RenderingInterface* eng) : rendering_engine(eng)

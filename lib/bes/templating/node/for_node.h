@@ -19,32 +19,6 @@ class ForNode : public ExpressionNode
    public:
     using ExpressionNode::ExpressionNode;
 
-   protected:
-    /**
-     * Recursive function to pull RHS items from the context
-     */
-    [[nodiscard]] std::shared_ptr<data::ShellInterface> ShellFromContext(
-        std::shared_ptr<data::ShellInterface> const& item, size_t pos = 1) const
-    {
-        std::shared_ptr<data::ShellInterface> sub = item->ChildNode(std::any_cast<std::string>(expr.right.items[pos]));
-
-        if (pos == expr.right.items.size() - 1) {
-            return sub;
-        } else {
-            return ShellFromContext(sub, pos + 1);
-        }
-    }
-
-    std::shared_ptr<data::ShellInterface> GetRhsShell(data::Context& ctx) const
-    {
-        std::shared_ptr<data::ShellInterface> item = ctx.GetValue(std::any_cast<std::string>(expr.right.items[0]));
-        if (expr.right.items.size() > 1) {
-            return ShellFromContext(item);
-        } else {
-            return item;
-        }
-    }
-
     void Render(std::ostringstream& ss, data::Context& ctx, data::TemplateStack& ts) const override
     {
         ctx.IncreaseStack();
@@ -91,6 +65,32 @@ class ForNode : public ExpressionNode
         }
 
         ctx.DecreaseStack();
+    }
+
+   protected:
+    /**
+     * Recursive function to pull RHS items from the context
+     */
+    [[nodiscard]] std::shared_ptr<data::ShellInterface> ShellFromContext(
+        std::shared_ptr<data::ShellInterface> const& item, size_t pos = 1) const
+    {
+        std::shared_ptr<data::ShellInterface> sub = item->ChildNode(std::any_cast<std::string>(expr.right.items[pos]));
+
+        if (pos == expr.right.items.size() - 1) {
+            return sub;
+        } else {
+            return ShellFromContext(sub, pos + 1);
+        }
+    }
+
+    std::shared_ptr<data::ShellInterface> GetRhsShell(data::Context& ctx) const
+    {
+        std::shared_ptr<data::ShellInterface> item = ctx.GetValue(std::any_cast<std::string>(expr.right.items[0]));
+        if (expr.right.items.size() > 1) {
+            return ShellFromContext(item);
+        } else {
+            return item;
+        }
     }
 };
 

@@ -18,6 +18,7 @@ Key Jinja2 functionality supported includes:
 * Comment tags `{# ... #}`
 * Block tags and template extensions
 * Include tags
+* Macros (default values not supported)
 
 ### Expressions
 * Member object referencing {{ object.member_object.sub_member }}
@@ -38,7 +39,6 @@ Key Jinja2 functionality supported includes:
 * `trim`, `rtrim` and `ltrim` for trimming whitespace
 * `nl2br` and `nl2p` for converting line breaks to `<br/>` or `<p>..</p>` tags
 
-
 ### Other
 * White-space controls `{{- ... -}}`
 * A `loop` object is made available inside loops containing member objects:
@@ -55,7 +55,6 @@ Not Supported
 Key Jinja2 features not supported and on the _immediate_ road-map:
 * Assignment operators
 * Mathematical operators
-* Macros
 
 Any of the above may be added in the future (request it and it'll happen).
 
