@@ -18,9 +18,8 @@ class BlockNode : public NamedNode
     void Render(std::ostringstream& ss, data::Context& ctx, data::TemplateStack& ts) const override
     {
         ctx.IncreaseStack();
-        ts.NextChild();
 
-        auto const* child = ts.GetChildTemplate();
+        auto const* child = ts.GetNextChildTemplate();
 
         if (child != nullptr && child->HasBlock(name)) {
             // Render to a temp context variable for 'super'
@@ -30,7 +29,10 @@ class BlockNode : public NamedNode
             }
 
             ctx.SetValue("super", std::make_shared<data::StandardShell<std::string>>(temp.str()));
+
+            ts.NextChild();
             child->RenderBlock(name, ss, ctx, ts);
+            ts.PrevChild();
         } else {
             // Render directly to output
             for (auto& node : child_nodes) {
@@ -38,7 +40,6 @@ class BlockNode : public NamedNode
             }
         }
 
-        ts.PrevChild();
         ctx.DecreaseStack();
     }
 };

@@ -23,6 +23,7 @@ class TemplateStack
     /// Stack of templates used when extending templates
     void PrependTemplate(bes::templating::node::RootNode const* tmp);
     [[nodiscard]] bes::templating::node::RootNode const* GetChildTemplate() const;
+    [[nodiscard]] bes::templating::node::RootNode const* GetNextChildTemplate();
     void NextChild();
     void PrevChild();
 

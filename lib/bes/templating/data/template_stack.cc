@@ -1,7 +1,5 @@
 #include "template_stack.h"
 
-#include <utility>
-
 using namespace bes::templating::data;
 
 TemplateStack::TemplateStack(bes::templating::RenderingInterface* eng) : rendering_engine(eng)
@@ -19,6 +17,12 @@ void TemplateStack::PrependTemplate(bes::templating::node::RootNode const* tmp)
 bes::templating::node::RootNode const* TemplateStack::GetChildTemplate() const
 {
     return *template_iterator;
+}
+
+bes::templating::node::RootNode const* TemplateStack::GetNextChildTemplate()
+{
+    ++template_iterator;
+    return *(template_iterator--);
 }
 
 void TemplateStack::NextChild()
