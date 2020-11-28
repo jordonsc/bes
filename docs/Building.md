@@ -11,13 +11,13 @@ If you're using an OS that supports multiple versions, you can either symlink to
 on which to use. Consider:
 
     # Ensure Bazel looks to the correct GCC version:
-    export CC="/usr/bin/gcc-8"
+    export CC="/usr/bin/gcc-9"
     
     # -- OR -- 
 
-    # Set GCC to use GCC-8 system wide
-    ln -sf /usr/bin/gcc-8 /usr/bin/gcc
-    ln -sf /usr/bin/g++-8 /usr/bin/g++
+    # Set GCC to use GCC-9 system wide
+    ln -sf /usr/bin/gcc-9 /usr/bin/gcc
+    ln -sf /usr/bin/g++-9 /usr/bin/g++
 
 
 Building Libraries
