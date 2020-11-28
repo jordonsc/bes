@@ -3,7 +3,6 @@
 
 #include <bes/log.h>
 #include <bes/net.h>
-#include <grpcpp/grpcpp.h>
 
 #include <memory>
 #include <shared_mutex>
