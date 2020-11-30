@@ -13,7 +13,7 @@ class SessionInterface
     /**
      * Generate a unique session ID and create a blank session.
      */
-    virtual Session CreateSession() = 0;
+    virtual Session CreateSession(std::string const& ns = "S") = 0;
 
     /**
      * Get a session.
@@ -37,7 +37,7 @@ class SessionInterface
     /**
      * Generate a session key.
      *
-     * This should result in a big, random value that has a low chance of collions, but you should always check for a
+     * This should result in a big, random value that has a low chance of collisions, but you should always check for a
      * collision and re-run if you get a conflict.
      *
      * `ns` is a prefix to be used as a namespace, or cool looks - your choice.

@@ -140,6 +140,9 @@ void TemplateApp::Run()
     // Allow the app to add a session manager or other configuration
     ConfigureServer(*(svc.get()));
 
+    auto session_cookie = Kernel().Config().GetOr<std::string>("bsn", "web", "sessions", "cookie");
+    auto session_prefix = Kernel().Config().GetOr<std::string>("S", "web", "sessions", "prefix");
+
     svc->Run(bes::net::Address(Kernel().Config().GetOr<std::string>("0.0.0.0", "server", "bind"),
                                Kernel().Config().GetOr<uint16_t>(9000, "server", "listen")),
              debug_mode);

@@ -21,7 +21,7 @@ class RedisSessionMgr : public SessionInterface
 
     void SetSessionTtl(uint64_t ttl) override;
 
-    [[nodiscard]] Session CreateSession() override;
+    [[nodiscard]] Session CreateSession(std::string const& ns = "S") override;
     [[nodiscard]] Session GetSession(std::string const& id) override;
     void PersistSession(Session const& session) override;
 

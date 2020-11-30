@@ -47,18 +47,22 @@ bool Request::ProcessRecord()
     // Select the appropriate responder
     switch (header.type) {
         case model::RecordType::BEGIN_REQUEST:
+            BES_LOG(DEBUG) << "FCGI: processing BEGIN";
             ProcessBeginRequest(header);
             return true;
 
         case model::RecordType::ABORT_REQUEST:
+            BES_LOG(DEBUG) << "FCGI: processing ABORT";
             transceiver.SkipRecord(header);
             throw AbortException("Server aborted request");
 
         case model::RecordType::PARAMS:
+            BES_LOG(DEBUG) << "FCGI: processing PARAMS";
             ProcessParams(header);
             return true;
 
         case model::RecordType::IN:
+            BES_LOG(DEBUG) << "FCGI: processing IN";
             ProcessIn(header);
             return false;
 
@@ -76,15 +80,13 @@ void Request::ProcessBeginRequest(model::Header const& header)
 {
     ValidateRecordLength(header, sizeof(model::BeginRequest));
 
-    model::BeginRequest begin_request = transceiver.ReadModel<model::BeginRequest>();
+    auto begin_request = transceiver.ReadModel<model::BeginRequest>();
 
     role = begin_request.role;
     flags = begin_request.flags;
     request_id = header.request_id;
 
     transceiver.ConsumePadding(header);
-
-    return;
 }
 
 /**
@@ -94,8 +96,10 @@ void Request::ProcessParams(model::Header const& header)
 {
     size_t read_counter = 0;
     while (read_counter < header.content_length) {
-        int32_t name_len = GetVariableSizeLength(read_counter);
-        int32_t value_len = GetVariableSizeLength(read_counter);
+        auto name_len = GetVariableSizeLength(read_counter);
+        auto value_len = GetVariableSizeLength(read_counter);
+
+        BES_LOG(DEBUG) << "FCGI: param segment: Name: " << name_len << ", Value: " << value_len;
 
         char data_name[name_len];
         transceiver.Stream().ReadBytes(data_name, name_len);
@@ -106,12 +110,18 @@ void Request::ProcessParams(model::Header const& header)
             transceiver.Stream().ReadBytes(data_value, value_len);
             read_counter += value_len;
             params.insert_or_assign(std::string(data_name, name_len), std::string(data_value, value_len));
+            BES_LOG(DEBUG) << "FCGI: PARAM <" << std::string(data_name, name_len) << "> (" << name_len << ") '"
+                             << std::string(data_value, value_len) << "' (" << value_len << ")";
+
         } else {
             params.insert_or_assign(std::string(data_name, name_len), std::string());
+            BES_LOG(DEBUG) << "FCGI: PARAM <" << std::string(data_name, name_len) << "> (" << name_len << ") nil";
         }
     }
 
+    BES_LOG(DEBUG) << "FCGI: validating";
     ValidateRecordLength(header, read_counter);
+    BES_LOG(DEBUG) << "FCGI: consuming";
     transceiver.ConsumePadding(header);
 }
 
@@ -130,16 +140,25 @@ void Request::ProcessIn(model::Header const& header)
 /**
  * Ensure we are receiving the expected record length for fixed-length records.
  */
-Request& Request::ValidateRecordLength(model::Header const& header, size_t expected)
+Request& Request::ValidateRecordLength(model::Header const& header, size_t found)
 {
-    if (header.content_length != expected) {
-        throw PayloadException("FastCGI record length mismatch. Expected: " + std::to_string(expected) +
-                               ", actual: " + std::to_string(header.content_length));
+    if (header.content_length != found) {
+        throw PayloadException("FastCGI record length mismatch. Read: " + std::to_string(found) +
+                               ", expected: " + std::to_string(header.content_length));
     }
 
     return *this;
 }
 
+/**
+ * Reads either 1 or 4 bytes, depending on the first bit received.
+ *
+ * The very first bit defines if we're using 8-bit or 32-bit encoding.
+ *  - If it's zero, we're using an 8-bit value (really a 7-bit number, so a max-length of 127)
+ *  - If it's non-zero, we're using a 32-bit value (really 31-bit, max length 2.1e9)
+ *
+ * See also: http://www.mit.edu/~yandros/doc/specs/fcgi-spec.html#S3.4
+ */
 uint32_t Request::GetVariableSizeLength(size_t& read_counter)
 {
     // 32-bit buffer, but we might only use one byte
@@ -155,7 +174,12 @@ uint32_t Request::GetVariableSizeLength(size_t& read_counter)
     // 32-bit size
     transceiver.Stream().ReadBytes(buffer + 1, 3);
     read_counter += 4;
-    return bes_endian_u32(*buffer, true);
+
+    uint32_t value;
+    buffer[0] ^= 128;   // zero-out the first bit which is the byte-count indicator
+    std::memcpy(&value, buffer, 4);
+
+    return bes_endian_u32(value, true);
 }
 
 model::Role Request::Role() const

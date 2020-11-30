@@ -122,7 +122,7 @@ void WebResponder::RenderResponse(HttpResponse const& resp, HttpRequest const& r
 
     // Check for a session, add a session cookie if we have a session
     if (req.HasSession()) {
-        Cookie session_cookie(SESSION_KEY, req.GetSession().SessionId());
+        Cookie session_cookie(*(request.container.Get<std::string>(SESSION_COOKIE_KEY)), req.GetSession().SessionId());
         session_cookie.HttpOnly(true);
         if (*(request.container.Get<bool>(SESSION_SECURE_KEY))) {
             session_cookie.Secure(true);

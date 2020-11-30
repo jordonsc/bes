@@ -43,7 +43,7 @@ class Request
     /**
      * Validate that the server is sending the expected record length for a fixed-length record.
      */
-    Request& ValidateRecordLength(model::Header const& header, size_t expected);
+    Request& ValidateRecordLength(model::Header const& header, size_t found);
 
     /**
      * Reads either 1 byte or 4 bytes of a variable-size field representing a data length.

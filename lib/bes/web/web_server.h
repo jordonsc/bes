@@ -32,6 +32,9 @@ class WebServer
     void SetSessionTtl(uint64_t ttl);
     void SetSessionSecure(bool);
 
+    void SetSessionPrefix(std::string const &prefix);
+    void SetSessionCookieName(std::string const &name);
+
    protected:
     std::unique_ptr<bes::fastcgi::Service> svc;
     std::shared_ptr<std::vector<std::shared_ptr<Router>>> routers;

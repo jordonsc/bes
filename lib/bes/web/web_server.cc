@@ -17,6 +17,8 @@ void WebServer::Run(bes::net::Address const& listen_addr, bool allow_dbg_renderi
     svc->container.Emplace<bool>(DEBUG_KEY, allow_dbg_rendering);
     svc->container.Emplace<uint64_t>(SESSION_TTL_KEY, session_ttl);
     svc->container.Emplace<bool>(SESSION_SECURE_KEY, session_secure);
+    svc->container.Emplace<std::string>(SESSION_PREFIX_KEY, SESSION_DEFAULT_PREFIX);
+    svc->container.Emplace<std::string>(SESSION_COOKIE_KEY, SESSION_DEFAULT_COOKIE);
     svc->SetRole<WebResponder>(bes::fastcgi::model::Role::RESPONDER);
     svc->Run(listen_addr);
 }
@@ -76,5 +78,23 @@ void WebServer::SetSessionSecure(bool secure)
             svc->container.Remove(SESSION_SECURE_KEY);
         }
         svc->container.Emplace<bool>(SESSION_SECURE_KEY, secure);
+    }
+}
+
+void WebServer::SetSessionPrefix(std::string const& prefix){
+    if (svc != nullptr) {
+        if (svc->container.Exists(SESSION_PREFIX_KEY)) {
+            svc->container.Remove(SESSION_PREFIX_KEY);
+        }
+        svc->container.Emplace<std::string>(SESSION_PREFIX_KEY, prefix);
+    }
+}
+
+void WebServer::SetSessionCookieName(std::string const& name){
+    if (svc != nullptr) {
+        if (svc->container.Exists(SESSION_COOKIE_KEY)) {
+            svc->container.Remove(SESSION_COOKIE_KEY);
+        }
+        svc->container.Emplace<std::string>(SESSION_COOKIE_KEY, name);
     }
 }

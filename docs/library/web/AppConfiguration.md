@@ -14,11 +14,13 @@ CLI Options
 Config Options
 --------------
 
-    web.build                   (string) Build version (as per --build CLI option_
+    web.build                   (string) Build version (the same as the --build CLI option)
     web.templating              (string) Path to templating schema
     web.routing                 (string) Path to routing schema
     web.sessions.secure         (bool)   Mark session cookies as `Secure` for HTTPS transport only
     web.sessions.ttl            (int)    Session TTL in seconds, zero for infinite
+    web.sessions.cookie         (string) Cookie name for session ID (default: bsn)
+    web.sessions.prefix         (string) All session IDs will will prefixed with this (default: S)
 
 ### Redis Session Configuration
 

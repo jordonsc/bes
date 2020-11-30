@@ -120,14 +120,14 @@ RedisSessionMgr& RedisSessionMgr::LogConnectStatus(std::string const& host, std:
     return *this;
 }
 
-Session RedisSessionMgr::CreateSession()
+Session RedisSessionMgr::CreateSession(std::string const& ns)
 {
     bool ok = false;
     std::string id;
     uint16_t attempts = 0;
 
     do {
-        id = SessionInterface::GenerateSessionKey();
+        id = SessionInterface::GenerateSessionKey(ns);
 
         // Commit a blank value to the DB to ensure there is no collision
         client.setnx("session:" + id, "-", [&ok](cpp_redis::reply& reply) {

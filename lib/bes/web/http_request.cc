@@ -194,7 +194,7 @@ Session& HttpRequest::GetSession() const
             return session;
         }
 
-        session = session_mgr->CreateSession();
+        session = session_mgr->CreateSession(*(base_request.container.Get<std::string>(SESSION_PREFIX_KEY)));
     }
 
     return session;
@@ -212,10 +212,12 @@ void HttpRequest::BootstrapSession()
         return;
     }
 
-    if (HasCookie(SESSION_KEY)) {
+    auto session_cookie = base_request.container.Get<std::string>(SESSION_COOKIE_KEY);
+
+    if (HasCookie(*session_cookie)) {
         // Session cookie exists, query manager for it
         try {
-            session = session_mgr->GetSession(GetCookie(SESSION_KEY));
+            session = session_mgr->GetSession(GetCookie(*session_cookie));
         } catch (SessionNotExistsException const&) {
             // Session has likely expired, create a new one
             session = session_mgr->CreateSession();
