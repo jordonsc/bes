@@ -15,7 +15,7 @@ using grpc::ServerBuilder;
 using grpc::ServerCompletionQueue;
 using grpc::ServerContext;
 using grpc::Status;
-using grpc_impl::ServerAsyncResponseWriter;
+using grpc::ServerAsyncResponseWriter;
 
 namespace bes::rpc {
 

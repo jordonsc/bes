@@ -16,8 +16,8 @@ on which to use. Consider:
     # -- OR -- 
 
     # Set GCC to use GCC-9 system wide
-    ln -sf /usr/bin/gcc-9 /usr/bin/gcc
-    ln -sf /usr/bin/g++-9 /usr/bin/g++
+    ln -sf gcc-9 /usr/bin/gcc
+    ln -sf g++-9 /usr/bin/g++
 
 
 Building Libraries

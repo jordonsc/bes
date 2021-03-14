@@ -24,10 +24,10 @@ def bes_deps():
     if "com_github_grpc_grpc" not in native.existing_rules():
         http_archive(
             name = "com_github_grpc_grpc",
-            sha256 = "4cbce7f708917b6e58b631c24c59fe720acc8fef5f959df9a58cdf9558d0a79b",
-            strip_prefix = "grpc-1.28.1",
+            sha256 = "51403542b19e9ed5d3b6551ce4a828e17883a1593d4ca408b098f04b0767d202",
+            strip_prefix = "grpc-1.36.2",
             urls = [
-                "https://github.com/grpc/grpc/archive/v1.28.1.tar.gz",
+                "https://github.com/grpc/grpc/archive/v1.36.2.tar.gz",
             ],
         )
 
@@ -52,12 +52,12 @@ def bes_deps():
         #    path = "../../random/cpp_redis",
         #)
 
-
 def bes_test_deps():
     if "gtest" not in native.existing_rules():
         http_archive(
             name = "gtest",
             strip_prefix = "googletest-1.10.x",
+            sha256 = "4d7cd95cdb0ef420eed163696a906cccd70964801ea611b2020f31177432c27d",
             urls = [
                 "https://github.com/google/googletest/archive/v1.10.x.tar.gz",
             ],
