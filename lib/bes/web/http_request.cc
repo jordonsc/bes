@@ -224,3 +224,13 @@ void HttpRequest::BootstrapSession()
         }
     }
 }
+
+bool HttpRequest::HasParam(std::string const& key) const
+{
+    return base_request.HasParam(key);
+}
+
+std::string const& HttpRequest::GetParam(std::string const& key) const
+{
+    return base_request.Param(key);
+}

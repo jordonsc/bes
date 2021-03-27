@@ -21,6 +21,15 @@ def bes_deps():
             remote = "https://github.com/jbeder/yaml-cpp.git",
         )
 
+    if "nlohmann-json" not in native.existing_rules():
+        http_archive(
+            name = "nlohmann-json",
+            strip_prefix = "json-3.9.1",
+            build_file = "@bes//bazel/nlohmann-json:BUILD",
+            sha256 = "4cf0df69731494668bdd6460ed8cb269b68de9c19ad8c27abc24cd72605b2d5b",
+            urls = ["https://github.com/nlohmann/json/archive/refs/tags/v3.9.1.tar.gz"],
+        )
+
     if "com_github_grpc_grpc" not in native.existing_rules():
         http_archive(
             name = "com_github_grpc_grpc",
@@ -47,10 +56,6 @@ def bes_deps():
             branch = "bazel-fixes",
             remote = "https://github.com/jordonsc/cpp_redis.git",
         )
-        #native.local_repository(
-        #    name = "cpp_redis",
-        #    path = "../../random/cpp_redis",
-        #)
 
 def bes_test_deps():
     if "gtest" not in native.existing_rules():

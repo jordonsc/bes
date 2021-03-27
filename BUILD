@@ -25,7 +25,7 @@ bes_cc_library(
     name = "core",
     deps = [
         ":log",
-        "@yaml-cpp//:yaml-cpp",
+        "@yaml-cpp",
     ],
 )
 
@@ -81,7 +81,7 @@ bes_cc_library(
         ":fastcgi",
         ":log",
         ":net",
-        "@yaml-cpp//:yaml-cpp",
+        "@yaml-cpp",
     ],
 )
 
@@ -93,7 +93,7 @@ bes_cc_library(
         ":net",
         ":web",
         "@cpp_redis",
-        "@yaml-cpp//:yaml-cpp",
+        "@yaml-cpp",
     ],
 )
 
@@ -104,6 +104,7 @@ bes_cc_library(
         ":app",
         ":templating",
         ":web",
-        "@yaml-cpp//:yaml-cpp",
+        "@nlohmann-json",
+        "@yaml-cpp",
     ],
 )

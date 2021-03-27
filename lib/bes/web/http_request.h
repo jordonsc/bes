@@ -23,42 +23,52 @@ class HttpRequest
     /**
      * URI _not_ including the query-string
      */
-    std::string const& Uri() const;
+    [[nodiscard]] std::string const& Uri() const;
 
     /**
      * Query-string segment of the URI (everything after the ?)
      */
-    std::string const& QueryString() const;
+    [[nodiscard]] std::string const& QueryString() const;
 
     /**
      * HTTP Method of request (GET, POST, etc)
      */
-    Http::Method const& Method() const;
+    [[nodiscard]] Http::Method const& Method() const;
 
     /**
      * Check if we have a query-string parameter (aka "GET" param)
      */
-    bool HasQueryParam(std::string const& key) const;
+    [[nodiscard]] bool HasQueryParam(std::string const& key) const;
 
     /**
      * Get the value of a query-string parameter, throwing a std::out_of_range exception if it doesn't exist.
      */
-    std::string const& QueryParam(std::string const& key) const;
+    [[nodiscard]] std::string const& QueryParam(std::string const& key) const;
 
     /**
      * Check for a cookie :)
      */
-    bool HasCookie(std::string const& key) const;
+    [[nodiscard]] bool HasCookie(std::string const& key) const;
 
     /**
      * Get the value of a cookie, throwing a std::out_of_range exception if it doesn't exist.
      */
-    std::string const& GetCookie(std::string const& key) const;
+    [[nodiscard]] std::string const& GetCookie(std::string const& key) const;
+
+    /**
+     * Check for a FastCGI parameter
+     */
+    [[nodiscard]] bool HasParam(std::string const& key) const;
+
+    /**
+     * Get the value of a FastCGI parameter, throwing a std::out_of_range exception if it doesn't exist.
+     */
+    [[nodiscard]] std::string const& GetParam(std::string const& key) const;
 
     /**
      * Check if we have an existing session.
      */
-    bool HasSession() const;
+    [[nodiscard]] bool HasSession() const;
 
     /**
      * Get the session, create one if it didn't exist.

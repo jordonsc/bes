@@ -1,15 +1,17 @@
 #ifndef BES_WEB_TEMPLATING_TEMPLATING_CONTROLLER_H
 #define BES_WEB_TEMPLATING_TEMPLATING_CONTROLLER_H
 
-#include <memory>
-#include <unordered_map>
-
 #include <bes/templating.h>
 #include <bes/web.h>
+
+#include <memory>
+#include <nlohmann/json.hpp>
+#include <unordered_map>
 
 namespace bes::web {
 
 using Ctx = bes::templating::data::ContextBuilder;
+using json = nlohmann::json;
 
 class TemplatingController
 {
@@ -17,19 +19,24 @@ class TemplatingController
     explicit TemplatingController(std::shared_ptr<bes::templating::Engine>);
 
    protected:
-    HttpResponse Response(std::string const& templ, bes::templating::data::ContextBuilder const& ctx);
+    [[nodiscard]] HttpResponse Response(std::string const& templ,
+                                        bes::templating::data::ContextBuilder const& ctx) const;
 
-    HttpResponse Response(std::string const& templ, bes::templating::data::ContextBuilder const& ctx,
-                          HttpResponse &&resp);
+    [[nodiscard]] HttpResponse Response(std::string const& templ, bes::templating::data::ContextBuilder const& ctx,
+                                        HttpResponse&& resp) const;
 
-    HttpResponse Response(std::string const& templ, bes::templating::data::ContextBuilder const& ctx,
-                          bes::web::Http::Status status);
+    [[nodiscard]] HttpResponse Response(std::string const& templ, bes::templating::data::ContextBuilder const& ctx,
+                                        bes::web::Http::Status status) const;
 
-    HttpResponse Response(std::string const& templ, bes::templating::data::ContextBuilder const& ctx,
-                          std::string const& content_type);
+    [[nodiscard]] HttpResponse Response(std::string const& templ, bes::templating::data::ContextBuilder const& ctx,
+                                        std::string const& content_type) const;
 
-    HttpResponse Response(std::string const& templ, bes::templating::data::ContextBuilder const& ctx,
-                          bes::web::Http::Status status, std::string const& content_type);
+    [[nodiscard]] HttpResponse Response(std::string const& templ, bes::templating::data::ContextBuilder const& ctx,
+                                        bes::web::Http::Status status, std::string const& content_type) const;
+
+    [[nodiscard]] HttpResponse JsonResponse(json const& j) const;
+
+    [[nodiscard]] HttpResponse JsonResponse(json const& j, bes::web::Http::Status status) const;
 
     std::shared_ptr<bes::templating::Engine> renderer;
 };
