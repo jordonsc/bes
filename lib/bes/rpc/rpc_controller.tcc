@@ -29,6 +29,7 @@ template <class ServiceClass>
 class RpcController
 {
    public:
+    explicit RpcController(void* application);
     ~RpcController();
 
     /**
@@ -47,6 +48,7 @@ class RpcController
     void Shutdown();
 
    private:
+    void* application;
     bool svr_alive = false;
     std::vector<std::unique_ptr<grpc::ServerCompletionQueue>> cq_vec;
     std::vector<std::unique_ptr<grpc::ServerCompletionQueue>>::const_iterator cq_index;
@@ -131,7 +133,7 @@ void RpcController<ServiceClass>::HandleRpc(threadsize_t const max_threads)
                     break;
                 }
 
-                (new HandlerT(&service, cq.get(), &tracker))->Proceed();
+                (new HandlerT(&service, cq.get(), &tracker, application))->Proceed();
             }
 
             /**
@@ -191,6 +193,10 @@ inline void RpcController<ServiceClass>::Shutdown()
         }
     }
 }
+
+template <class ServiceClass>
+RpcController<ServiceClass>::RpcController(void* application) : application(application)
+{}
 
 }  // namespace bes::rpc
 

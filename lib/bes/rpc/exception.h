@@ -39,7 +39,7 @@ class RpcCallException : public RpcException
     /**
      * Logs an RPC failure if the status is not OK, otherwise does nothing.
      */
-    void LogRpcReply(std::string const& prefix)
+    void LogRpcReply(std::string const& prefix) const
     {
         if (!rpc_status.ok()) {
             std::stringstream details;

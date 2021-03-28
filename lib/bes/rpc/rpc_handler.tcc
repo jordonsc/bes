@@ -11,11 +11,11 @@
 #include "pool_tracker.h"
 
 using grpc::Server;
+using grpc::ServerAsyncResponseWriter;
 using grpc::ServerBuilder;
 using grpc::ServerCompletionQueue;
 using grpc::ServerContext;
 using grpc::Status;
-using grpc::ServerAsyncResponseWriter;
 
 namespace bes::rpc {
 
@@ -31,7 +31,7 @@ class RpcHandler
    public:
     // Take in the "service" instance (in this case representing an asynchronous server) and the completion queue
     // used for asynchronous communication with the gRPC runtime.
-    RpcHandler(SyncSvcT* svc, ServerCompletionQueue* cq, PoolTracker* trk);
+    RpcHandler(SyncSvcT* svc, ServerCompletionQueue* cq, PoolTracker* trk, void* app);
 
     virtual ~RpcHandler();
 
@@ -71,6 +71,9 @@ class RpcHandler
     // to send metadata back to the client.
     ServerContext context;
 
+    // Reference to the application
+    void* application;
+
    private:
     // State of the request
     enum class CallStatus
@@ -82,8 +85,9 @@ class RpcHandler
 };
 
 template <class SyncSvcT, class RequestT, class ResponseT>
-inline RpcHandler<SyncSvcT, RequestT, ResponseT>::RpcHandler(SyncSvcT* svc, ServerCompletionQueue* cq, PoolTracker* trk)
-    : service(svc), completion_queue(cq), tracker(trk), responder(&context)
+inline RpcHandler<SyncSvcT, RequestT, ResponseT>::RpcHandler(SyncSvcT* svc, ServerCompletionQueue* cq, PoolTracker* trk,
+                                                             void* application)
+    : service(svc), completion_queue(cq), tracker(trk), responder(&context), application(application)
 {
     // New instance is offering capacity
     tracker->InstanceSpawning(this);

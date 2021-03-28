@@ -51,7 +51,7 @@ void RpcApplication<RpcService>::Run()
         throw bes::app::KernelPanicException("Panic! Attempted to rebuild service controller!");
     }
 
-    rpc_ctrl = std::make_unique<bes::rpc::RpcController<RpcService>>();
+    rpc_ctrl = std::make_unique<bes::rpc::RpcController<RpcService>>(this);
     BindServer();
 
     // Request the implementation now execute all RPC handlers
