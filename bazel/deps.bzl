@@ -53,8 +53,10 @@ def bes_deps():
         # Sorry - fixing the Bazel support for this, will try to get the author to merge soon
         git_repository(
             name = "cpp_redis",
-            branch = "bazel-fixes",
+            #branch = "bazel-fixes",
             remote = "https://github.com/jordonsc/cpp_redis.git",
+            commit = "1dec935453ac21dc7786b6a6f104f0d07d0529e4",
+            shallow_since = "1589885515 +1000",
         )
 
 def bes_test_deps():
