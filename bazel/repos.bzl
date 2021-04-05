@@ -1,23 +1,13 @@
-""" Loads immediate dependencies """
-
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
-def bes_deps():
+def bes_repos():
     if "yaml-cpp" not in native.existing_rules():
-        #http_archive(
-        #    name = "yaml-cpp",
-        #    sha256 = "77ea1b90b3718aa0c324207cb29418f5bced2354c2e483a9523d98c3460af1ed",
-        #    strip_prefix = "yaml-cpp-yaml-cpp-0.6.3",
-        #    urls = [
-        #        "https://github.com/jbeder/yaml-cpp/archive/yaml-cpp-0.6.3.tar.gz",
-        #    ],
-        #)
-
         # Bazel files are missing in the most recent release, need a commit after they added them
         git_repository(
             name = "yaml-cpp",
             commit = "26faac387c237ccac75a56925c6858baf8ccda1b",
+            shallow_since = "1585522435 -0500",
             remote = "https://github.com/jbeder/yaml-cpp.git",
         )
 
@@ -41,15 +31,6 @@ def bes_deps():
         )
 
     if "cpp_redis" not in native.existing_rules():
-        #http_archive(
-        #    name = "cpp_redis",
-        #    #sha256 = "4cbce7f708917b6e58b631c24c59fe720acc8fef5f959df9a58cdf9558d0a79b",
-        #    strip_prefix = "cpp_redis-x.x.x",
-        #    urls = [
-        #        "xxx",
-        #    ],
-        #)
-
         # Sorry - fixing the Bazel support for this, will try to get the author to merge soon
         git_repository(
             name = "cpp_redis",
@@ -59,7 +40,17 @@ def bes_deps():
             shallow_since = "1589885515 +1000",
         )
 
-def bes_test_deps():
+#    if "google_cloud" not in native.existing_rules():
+#        http_archive(
+#            name = "gcp_client_libs",
+#            #sha256 = "51403542b19e9ed5d3b6551ce4a828e17883a1593d4ca408b098f04b0767d202",
+#            strip_prefix = "google-cloud-cpp-1.26.0",
+#            urls = [
+#                "https://github.com/googleapis/google-cloud-cpp/archive/refs/tags/v1.26.0.tar.gz",
+#            ],
+#        )
+
+def bes_test_repos():
     if "gtest" not in native.existing_rules():
         http_archive(
             name = "gtest",

@@ -52,6 +52,15 @@ bes_cc_library(
     ],
 )
 
+# Database Abstraction
+bes_cc_library(
+    name = "dbal",
+    deps = [
+        ":core",
+        ":log",
+    ],
+)
+
 # RPC service management
 bes_cc_library(
     name = "rpc",

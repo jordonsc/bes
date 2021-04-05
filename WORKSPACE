@@ -1,22 +1,11 @@
 workspace(name = "bes")
 
-### LOCAL DEPS ###
-load("//bazel:deps.bzl", "bes_deps", "bes_test_deps")
+load("//bazel:repos.bzl", "bes_repos", "bes_test_repos")
+bes_repos()
+bes_test_repos()
 
-bes_deps()
+load("//bazel:deps-primary.bzl", "bes_primary_deps")
+bes_primary_deps()
 
-bes_test_deps()
-
-### GRPC ###
-load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", "grpc_deps")
-
-grpc_deps()
-
-load("@com_github_grpc_grpc//bazel:grpc_extra_deps.bzl", "grpc_extra_deps")
-
-grpc_extra_deps()
-
-### CPP_REDIS ###
-load("@cpp_redis//bazel:deps.bzl", "cpp_redis_deps")
-
-cpp_redis_deps()
+load("//bazel:deps-secondary.bzl", "bes_secondary_deps")
+bes_secondary_deps()
