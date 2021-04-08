@@ -55,9 +55,13 @@ bes_cc_library(
 # Database Abstraction
 bes_cc_library(
     name = "dbal",
+    linkops = [
+        "-lcassandra",
+    ],
     deps = [
         ":core",
         ":log",
+        "@com_github_googleapis_google_cloud_cpp//:bigtable",
     ],
 )
 

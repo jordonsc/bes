@@ -5,8 +5,8 @@ load("@bes//bazel:build.bzl", "COPTS", "LINKOPTS")
 cc_library(
     name = "nlohmann-json",
     hdrs = glob([
-        "include/**/**/*.h",
-        "include/**/**/*.hpp",
+        "include/**/*.h",
+        "include/**/*.hpp",
     ]),
     copts = COPTS,
     includes = ["include"],

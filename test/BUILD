@@ -51,6 +51,22 @@ cc_test(
 )
 
 cc_test(
+    name = "dbal",
+    size = "small",
+    srcs = [
+        "dbal/cassandra.cc",
+        "test.cc",
+    ],
+    copts = COPTS,
+    linkopts = LINKOPTS,
+    tags = ["integration"],
+    deps = [
+        "//:dbal",
+        "@gtest",
+    ],
+)
+
+cc_test(
     name = "templating",
     size = "small",
     srcs = glob([
@@ -90,6 +106,7 @@ cc_test(
     ],
     copts = COPTS,
     linkopts = LINKOPTS,
+    tags = ["integration"],
     deps = [
         "//:web.redis",
         "@gtest",

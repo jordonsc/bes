@@ -6,7 +6,7 @@ LINKOPTS = [
     "-pthread",
 ]
 
-def bes_cc_library(name, deps = []):
+def bes_cc_library(name, deps = [], copts = [], linkops = []):
     native.cc_library(
         name = name,
         srcs = native.glob(["lib/bes/" + name + "/**/*.cc"]),
@@ -15,8 +15,8 @@ def bes_cc_library(name, deps = []):
             "lib/bes/" + name + "/**/*.h",
             "lib/bes/" + name + "/**/*.tcc",
         ]),
-        copts = COPTS,
-        linkopts = LINKOPTS,
+        copts = COPTS + copts,
+        linkopts = LINKOPTS + linkops,
         includes = ["lib"],
         deps = deps,
         visibility = ["//visibility:public"],

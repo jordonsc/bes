@@ -40,15 +40,15 @@ def bes_repos():
             shallow_since = "1589885515 +1000",
         )
 
-#    if "google_cloud" not in native.existing_rules():
-#        http_archive(
-#            name = "gcp_client_libs",
-#            #sha256 = "51403542b19e9ed5d3b6551ce4a828e17883a1593d4ca408b098f04b0767d202",
-#            strip_prefix = "google-cloud-cpp-1.26.0",
-#            urls = [
-#                "https://github.com/googleapis/google-cloud-cpp/archive/refs/tags/v1.26.0.tar.gz",
-#            ],
-#        )
+    if "com_github_googleapis_google_cloud_cpp" not in native.existing_rules():
+        http_archive(
+            name = "com_github_googleapis_google_cloud_cpp",
+            sha256 = "b61ced7ae18cb4a296377fcba17683319c06c7626c889be9acb4f44e21568f3c",
+            strip_prefix = "google-cloud-cpp-1.26.0",
+            urls = [
+                "https://github.com/googleapis/google-cloud-cpp/archive/refs/tags/v1.26.0.tar.gz",
+            ],
+        )
 
 def bes_test_repos():
     if "gtest" not in native.existing_rules():
