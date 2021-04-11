@@ -58,12 +58,12 @@ void PoolTracker::InstanceTerminating(void* tag)
     instances--;
 }
 
-size_t PoolTracker::Count()
+size_t PoolTracker::Count() const
 {
     return instances;
 }
 
-size_t PoolTracker::Capacity()
+size_t PoolTracker::Capacity() const
 {
     return capacity;
 }

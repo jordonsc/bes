@@ -1,8 +1,8 @@
 #include "connection.h"
 
-#include "../exception.h"
+#include "../../exception.h"
 
-using namespace bes::dbal::cassandra;
+using namespace bes::dbal::wide::cassandra;
 
 Connection::Connection(std::string hosts) : hosts(std::move(hosts))
 {

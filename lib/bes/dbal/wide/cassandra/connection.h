@@ -1,12 +1,12 @@
-#ifndef BES_DBAL_CASSANDRA_CONNECTION_H
-#define BES_DBAL_CASSANDRA_CONNECTION_H
+#ifndef BES_DBAL_WIDE_CASSANDRA_CONNECTION_H
+#define BES_DBAL_WIDE_CASSANDRA_CONNECTION_H
 
 #include <memory>
 #include <string>
 
 #include "cassandra.h"
 
-namespace bes::dbal::cassandra {
+namespace bes::dbal::wide::cassandra {
 
 class Connection
 {
@@ -25,6 +25,6 @@ class Connection
     bool connected = false;
 };
 
-}  // namespace bes::dbal::cassandra
+}  // namespace bes::dbal::wide::cassandra
 
 #endif

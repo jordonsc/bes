@@ -1,9 +1,9 @@
-#ifndef BES_DBAL_GCP_CREDENTIALS_H
-#define BES_DBAL_GCP_CREDENTIALS_H
+#ifndef BES_DBAL_WIDE_GCP_CREDENTIALS_H
+#define BES_DBAL_WIDE_GCP_CREDENTIALS_H
 
 #include <string>
 
-namespace bes::dbal::bigtable {
+namespace bes::dbal::wide::bigtable {
 
 class Credentials {
    public:

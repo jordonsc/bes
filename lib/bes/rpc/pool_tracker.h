@@ -36,9 +36,9 @@ class PoolTracker final
      */
     void InstanceTerminating(void* tag);
 
-    size_t Count();
+    size_t Count() const;
 
-    size_t Capacity();
+    size_t Capacity() const;
 
    private:
     enum class InstState
