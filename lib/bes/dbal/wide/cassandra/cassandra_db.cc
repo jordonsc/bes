@@ -1,13 +1,21 @@
 #include "cassandra_db.h"
 
+#include <shared_mutex>
 #include <utility>
 
 using namespace bes::dbal::wide;
+using cassandra::Connection;
 
 Cassandra::Cassandra(cassandra::Connection&& connection) : connection(connection) {}
-Cassandra::Cassandra(std::string hosts) : connection(cassandra::Connection(std::move(hosts))) {}
+Cassandra::Cassandra(std::string hosts) : connection(Connection(std::move(hosts))) {}
 
-std::string Cassandra::GetServerVersion()
+Cassandra::Cassandra(cassandra::Connection&& con, Context&& c) : WideColumnDb(c), connection(std::move(con)) {}
+Cassandra::Cassandra(std::string hosts, Context&& c) : WideColumnDb(c), connection(Connection(std::move(hosts))) {}
+
+Cassandra::Cassandra(cassandra::Connection&& con, Context const& c) : WideColumnDb(c), connection(std::move(con)) {}
+Cassandra::Cassandra(std::string hosts, Context const& c) : WideColumnDb(c), connection(Connection(std::move(hosts))) {}
+
+std::string Cassandra::GetServerVersion() const
 {
     ValidateConnection();
 
@@ -55,8 +63,33 @@ std::string Cassandra::GetServerVersion()
     }
 }
 
-void Cassandra::ExecuteQuerySync(const std::string& cql)
+void Cassandra::SetKeyspace(std::string const& value)
 {
+    std::unique_lock lock(ks_mutex);
+    keyspace = value;
+}
+
+std::string const& Cassandra::GetKeyspace() const
+{
+    std::shared_lock lock(ks_mutex);
+
+    if (keyspace.empty()) {
+        // Keyspace not defined, will need to check if it exists in the context
+        try {
+            auto const& ks = context.GetParameter(cassandra::KEYSPACE_PARAM);
+            keyspace = ks;
+            return keyspace;
+        } catch (std::exception const&) {
+            throw DbalException("Cassandra keyspace is not defined");
+        }
+    } else {
+        return keyspace;
+    }
+}
+
+void Cassandra::ExecuteQuerySync(std::string const& cql) const
+{
+    // TODO: turn this into an RAII-controlled object
     CassError rc;
     CassFuture* future;
     CassStatement* statement = cass_statement_new(cql.c_str(), 0);
@@ -81,10 +114,70 @@ void Cassandra::ExecuteQuerySync(const std::string& cql)
     cass_statement_free(statement);
 }
 
-void Cassandra::CreateTable(std::string table_name, Schema schema, bool if_not_exists)
+void Cassandra::CreateKeyspace(cassandra::Keyspace const& ks, bool if_not_exists) const
+{
+    /*
+     * CREATE  KEYSPACE [IF NOT EXISTS] keyspace_name
+     * WITH REPLICATION = {
+     *    'class' : 'SimpleStrategy', 'replication_factor' : N
+     *   | 'class' : 'NetworkTopologyStrategy',
+     *     'dc1_name' : N [, ...]
+     * }
+     * [AND DURABLE_WRITES =  true|false] ;
+     */
+    std::string cql = if_not_exists ? "CREATE KEYSPACE IF NOT EXISTS " : "CREATE KEYSPACE ";
+    cql.append(ks.name).append(" WITH REPLICATION = {'class': '");
+    switch (ks.replication_strategy) {
+        default:
+        case cassandra::ReplicationStrategy::SIMPLE:
+            cql.append("SimpleStrategy");
+            break;
+        case cassandra::ReplicationStrategy::NETWORK_TOPOLOGY:
+            cql.append("NetworkTopologyStrategy");
+            break;
+    }
+    cql.append("', 'replication_factor': ").append(std::to_string(ks.replication_factor));
+
+    if (ks.replication_strategy == cassandra::ReplicationStrategy::NETWORK_TOPOLOGY && !ks.dc_replication.empty()) {
+        for (auto const& it : ks.dc_replication) {
+            cql.append(", ").append(it.first).append(": ").append(std::to_string(it.second));
+        }
+    }
+    cql.append("}");
+
+    if (ks.replication_strategy != cassandra::ReplicationStrategy::SIMPLE) {
+        if (ks.durable_writes) {
+            cql.append(" AND DURABLE_WRITES = true");
+        } else {
+            cql.append(" AND DURABLE_WRITES = false");
+        }
+    }
+
+    cql.append(";");
+
+    ExecuteQuerySync(cql);
+}
+
+void Cassandra::DropKeyspace(const std::string& ks_name, bool if_exists) const
+{
+    /*
+     * DROP KEYSPACE [IF EXISTS] keyspace_name;
+     */
+    std::string cql = if_exists ? "DROP KEYSPACE IF EXISTS " : "DROP KEYSPACE ";
+    cql.append(ks_name);
+
+    ExecuteQuerySync(cql);
+}
+
+void Cassandra::CreateTable(std::string const& table_name, Schema const& schema, bool if_not_exists) const
 {
     std::string cql = if_not_exists ? "CREATE TABLE IF NOT EXISTS " : "CREATE TABLE ";
-    cql.append(table_name).append(" (").append(GetFieldCql(schema.primary_key)).append(" PRIMARY KEY");
+    cql.append(GetKeyspace())
+        .append(".")
+        .append(table_name)
+        .append(" (")
+        .append(GetFieldCql(schema.primary_key))
+        .append(" PRIMARY KEY");
     for (auto const& f : schema.fields) {
         cql.append(", ").append(GetFieldCql(f));
     }
@@ -93,7 +186,7 @@ void Cassandra::CreateTable(std::string table_name, Schema schema, bool if_not_e
     ExecuteQuerySync(cql);
 }
 
-void Cassandra::DropTable(std::string table_name, bool if_exists) {}
+void Cassandra::DropTable(std::string const& table_name, bool if_exists) const {}
 
 [[nodiscard]] const char* Cassandra::FieldType(Datatype const& dt)
 {
@@ -118,11 +211,12 @@ void Cassandra::DropTable(std::string table_name, bool if_exists) {}
 std::string Cassandra::GetFieldCql(Field const& f)
 {
     std::string r = f.ns;
-    r.append(".").append(f.qualifier).append(" ").append(FieldType(f.datatype));
+    r.append("_").append(f.qualifier).append(" ").append(FieldType(f.datatype));
+
     return r;
 }
 
-void Cassandra::ValidateConnection()
+void Cassandra::ValidateConnection() const
 {
     if (!connection.IsConnected()) {
         throw NotConnectedException("Not connected to server");

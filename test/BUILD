@@ -59,7 +59,10 @@ cc_test(
     ],
     copts = COPTS,
     linkopts = LINKOPTS,
-    tags = ["integration"],
+    tags = [
+        "exclusive",
+        "integration",
+    ],
     deps = [
         "//:dbal",
         "@gtest",
