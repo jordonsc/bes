@@ -4,8 +4,14 @@
 
 using namespace bes::dbal::wide::cassandra;
 
-Connection::Connection(std::string hosts) : hosts(std::move(hosts))
+Connection::Connection(std::string hosts, bool own_logging) : hosts(std::move(hosts))
 {
+    if (own_logging) {
+        // Pipe the Cassandra driver logging into the Bes logger
+        cass_log_set_level(CASS_LOG_TRACE);
+        cass_log_set_callback(Connection::DriverLog, this->log_data);
+    }
+
     // Build new cluster under RAII control
     cluster.reset(cass_cluster_new(), [](CassCluster* r) {
         cass_cluster_free(r);
@@ -51,4 +57,28 @@ CassSession* Connection::GetSessionPtr() const
 bool Connection::IsConnected() const
 {
     return connected;
+}
+
+void Connection::DriverLog(CassLogMessage const* message, void* data)
+{
+    BES_LOG_LVL(Connection::CassToBesSeverity(message->severity)) << "CASS: " << message->message;
+}
+
+bes::log::Severity Connection::CassToBesSeverity(CassLogLevel s)
+{
+    switch (s) {
+        default:
+        case CASS_LOG_INFO:
+            return bes::log::Severity::INFO;
+        case CASS_LOG_TRACE:
+            return bes::log::Severity::TRACE;
+        case CASS_LOG_DEBUG:
+            return bes::log::Severity::DEBUG;
+        case CASS_LOG_WARN:
+            return bes::log::Severity::WARNING;
+        case CASS_LOG_ERROR:
+            return bes::log::Severity::ERROR;
+        case CASS_LOG_CRITICAL:
+            return bes::log::Severity::CRITICAL;
+    }
 }

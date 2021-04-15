@@ -87,37 +87,10 @@ std::string const& Cassandra::GetKeyspace() const
     }
 }
 
-void Cassandra::ExecuteQuerySync(std::string const& cql) const
-{
-    // TODO: turn this into an RAII-controlled object
-    CassError rc;
-    CassFuture* future;
-    CassStatement* statement = cass_statement_new(cql.c_str(), 0);
-
-    future = cass_session_execute(connection.GetSessionPtr(), statement);
-
-    try {
-        cass_future_wait(future);
-
-        rc = cass_future_error_code(future);
-        if (rc != CASS_OK) {
-            throw DbalException(GetFutureErrMsg(future));
-        }
-
-    } catch (std::exception const& e) {
-        cass_future_free(future);
-        cass_statement_free(statement);
-        throw DbalException(std::string("Error executing query: ").append(e.what()));
-    }
-
-    cass_future_free(future);
-    cass_statement_free(statement);
-}
-
 void Cassandra::CreateKeyspace(cassandra::Keyspace const& ks, bool if_not_exists) const
 {
     /*
-     * CREATE  KEYSPACE [IF NOT EXISTS] keyspace_name
+     * CREATE KEYSPACE [IF NOT EXISTS] keyspace_name
      * WITH REPLICATION = {
      *    'class' : 'SimpleStrategy', 'replication_factor' : N
      *   | 'class' : 'NetworkTopologyStrategy',
@@ -155,7 +128,8 @@ void Cassandra::CreateKeyspace(cassandra::Keyspace const& ks, bool if_not_exists
 
     cql.append(";");
 
-    ExecuteQuerySync(cql);
+    cassandra::Query q(cql);
+    q.ExecuteSync(connection);
 }
 
 void Cassandra::DropKeyspace(const std::string& ks_name, bool if_exists) const
@@ -166,11 +140,18 @@ void Cassandra::DropKeyspace(const std::string& ks_name, bool if_exists) const
     std::string cql = if_exists ? "DROP KEYSPACE IF EXISTS " : "DROP KEYSPACE ";
     cql.append(ks_name);
 
-    ExecuteQuerySync(cql);
+    cassandra::Query q(cql);
+    q.ExecuteSync(connection);
 }
 
 void Cassandra::CreateTable(std::string const& table_name, Schema const& schema, bool if_not_exists) const
 {
+    /*
+     * CREATE TABLE [IF NOT EXISTS] keyspace.table_name (
+     *    field_name field_type [PRIMARY KEY],
+     *    field_name field_type ...
+     * );
+     */
     std::string cql = if_not_exists ? "CREATE TABLE IF NOT EXISTS " : "CREATE TABLE ";
     cql.append(GetKeyspace())
         .append(".")
@@ -183,10 +164,21 @@ void Cassandra::CreateTable(std::string const& table_name, Schema const& schema,
     }
     cql.append(");");
 
-    ExecuteQuerySync(cql);
+    cassandra::Query q(cql);
+    q.ExecuteSync(connection);
 }
 
-void Cassandra::DropTable(std::string const& table_name, bool if_exists) const {}
+void Cassandra::DropTable(std::string const& table_name, bool if_exists) const
+{
+    /*
+     * DROP TABLE [IF EXISTS] keyspace.table_name;
+     */
+    std::string cql = if_exists ? "DROP TABLE IF EXISTS " : "DROP TABLE ";
+    cql.append(GetKeyspace()).append(".").append(table_name);
+
+    cassandra::Query q(cql);
+    q.ExecuteSync(connection);
+}
 
 [[nodiscard]] const char* Cassandra::FieldType(Datatype const& dt)
 {
@@ -223,11 +215,61 @@ void Cassandra::ValidateConnection() const
     }
 }
 
-std::string Cassandra::GetFutureErrMsg(CassFuture* future)
+/**
+ * Test function.
+ *
+ * @deprecated delete me.
+ */
+void Cassandra::CreateTestData(std::string const& tbl, int a, std::string const& b)
 {
-    const char* message;
-    size_t message_length;
-    cass_future_error_message(future, &message, &message_length);
+    auto cql = std::string("INSERT INTO ");
+    cql.append(GetKeyspace()).append(".").append(tbl).append(" (test_pk, test_str) VALUES (?, ?);");
 
-    return std::string(message, message_length);
+    cassandra::Query q(cql, 2);
+    q.Bind<int32_t>(a);
+    q.Bind<std::string>(b);
+
+    q.ExecuteSync(connection);
+}
+
+/**
+ * Test function.
+ *
+ * @deprecated delete me.
+ */
+std::string Cassandra::RetrieveTestData(std::string const& tbl, int a)
+{
+    auto cql = std::string("SELECT * FROM ");
+    cql.append(GetKeyspace()).append(".").append(tbl).append(" WHERE test_pk = ?;");
+
+    cassandra::Query q(cql, 1);
+    q.Bind<int32_t>(a);
+
+    std::string val;
+
+    auto result = q.GetResult(connection);
+
+    for (auto const& row : result) {
+        if (!val.empty()) {
+            val.append("; ");
+        }
+
+        for (auto const& cell : row) {
+            switch (cell.GetField().datatype) {
+                default:
+                    throw DbalException("oops");
+                case bes::dbal::wide::Datatype::Text:
+                    val.append("<").append(cell.Get<std::string>()).append("> ");
+                    break;
+                case bes::dbal::wide::Datatype::Int32:
+                    val.append("<").append(std::to_string(cell.Get<int32_t>())).append("> ");
+                    break;
+                case bes::dbal::wide::Datatype::Float32:
+                    val.append("<").append(std::to_string(cell.Get<float>())).append("> ");
+                    break;
+            }
+        }
+    }
+
+    return val;
 }

@@ -5,6 +5,7 @@
 #include "../wide_column_db.h"
 #include "connection.h"
 #include "keyspace.h"
+#include "query.tcc"
 
 namespace bes::dbal::wide {
 
@@ -32,19 +33,15 @@ class Cassandra : public WideColumnDb
     void CreateTable(std::string const& table_name, Schema const& schema, bool if_not_exists) const override;
     void DropTable(std::string const& table_name, bool if_exists) const override;
 
+    void CreateTestData(std::string const& tbl, int a, std::string const& b);
+    std::string RetrieveTestData(std::string const& tbl, int a);
+
    private:
     mutable std::shared_mutex ks_mutex;
     mutable std::string keyspace;
 
    protected:
     cassandra::Connection connection;
-
-    void ExecuteQuerySync(std::string const& cql) const;
-
-    /**
-     * Extracts and error message out of a future.
-     */
-    static std::string GetFutureErrMsg(CassFuture*);
 
     /**
      * Return the correct CQL name for a field Datatype.

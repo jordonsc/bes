@@ -11,12 +11,12 @@ namespace bes::dbal::wide {
 class Cell
 {
    public:
-    Cell(Field&& field, std::any&& data);
+    inline Cell(Field&& field, std::any&& data);
 
-    [[nodiscard]] Field const& GetField();
+    [[nodiscard]] inline Field const& GetField() const;
 
     template <class T>
-    [[nodiscard]] T const& Get() const&;
+    [[nodiscard]] T Get() const&;
 
     template <class T>
     [[nodiscard]] T&& Get() &&;
@@ -28,15 +28,15 @@ class Cell
 
 Cell::Cell(Field&& field, std::any&& data) : field(std::forward<Field>(field)), data(std::forward<std::any>(data)) {}
 
-Field const& Cell::GetField()
+Field const& Cell::GetField() const
 {
     return field;
 }
 
 template <class T>
-T const& Cell::Get() const&
+T Cell::Get() const&
 {
-    return std::any_cast<data>;
+    return std::any_cast<T>(data);
 }
 
 template <class T>

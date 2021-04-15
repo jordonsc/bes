@@ -119,11 +119,17 @@ struct NullStream : ::std::ostringstream
 std::ostream &operator<<(std::ostream &stream, bes::log::Severity const &s);
 
 /**
- * Primary entry-point for logging.
+ * Create a log entry with a fully-qualified log level.
  */
-#define BES_LOG(level)                                                                                      \
-    for (auto BES_LOG_INST = ::bes::log::Logger(::bes::log::Severity::level, __func__, __FILE__, __LINE__); \
-         BES_LOG_INST.Enabled(); BES_LOG_INST.Dispatch())                                                   \
+#define BES_LOG_LVL(level)                                                                                    \
+    for (auto BES_LOG_INST = ::bes::log::Logger(level, __func__, __FILE__, __LINE__); BES_LOG_INST.Enabled(); \
+         BES_LOG_INST.Dispatch())                                                                             \
     BES_LOG_INST.Stream()
+
+/**
+ * Primary entry-point for logging, allows short-hand severity:
+ *      BES_LOG(INFO) << "Test Log";
+ */
+#define BES_LOG(level) BES_LOG_LVL(::bes::log::Severity::level)
 
 #endif
