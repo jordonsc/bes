@@ -6,9 +6,9 @@ using namespace bes::dbal::wide::cassandra;
 
 ResultIterator::ResultIterator() : result(nullptr), has_data(false){};
 
-ResultIterator::ResultIterator(CassResult* r) : result(r), has_data(true)
+ResultIterator::ResultIterator(std::shared_ptr<CassResult> r) : result(std::move(r)), has_data(true)
 {
-    result_iterator.reset(cass_iterator_from_result(result), [](CassIterator* i) {
+    result_iterator.reset(cass_iterator_from_result(result.get()), [](CassIterator* i) {
         cass_iterator_free(i);
     });
 
@@ -54,7 +54,7 @@ ResultIterator const& ResultIterator::operator++() const
     has_data = cass_iterator_next(result_iterator.get());
 
     if (has_data) {
-        row_ptr = std::make_shared<Row>(cass_iterator_get_row(result_iterator.get()));
+        row_ptr = std::make_shared<RowT>(cass_iterator_get_row(result_iterator.get()));
     } else {
         row_ptr.reset();
     }

@@ -5,22 +5,22 @@
 #include <vector>
 
 #include "../../exception.h"
+#include "../result.tcc"
 #include "cassandra.h"
-#include "result.h"
+#include "result_iterator.h"
+#include "row_iterator.h"
 
 namespace bes::dbal::wide {
 class Cassandra;
+
+template <>
+inline size_t Result<cassandra::ResultIterator, std::shared_ptr<CassResult>>::RowCount() const
+{
+    return cass_result_row_count(data.get());
 }
+}  // namespace bes::dbal::wide
 
 namespace bes::dbal::wide::cassandra {
-
-enum class ExecMode
-{
-    PENDING,
-    EXEC_SYNC,
-    EXEC_ASYNC,
-    COMPLETE,
-};
 
 /**
  * RAII query container.
@@ -37,6 +37,14 @@ class Query
     void Bind(T v);
 
    private:
+    enum class ExecMode
+    {
+        PENDING,
+        EXEC_SYNC,
+        EXEC_ASYNC,
+        COMPLETE,
+    };
+
     /**
      * Throws a DbalException if the query is not in the correct state to execute.
      */
@@ -61,8 +69,8 @@ class Query
      * If called without parameters, it will assume you've first called ExecAsync() and throw an exception if you have
      * not.
      */
-    [[nodiscard]] Result GetResult();
-    [[nodiscard]] Result GetResult(Connection const& con);
+    [[nodiscard]] ResultT GetResult();
+    [[nodiscard]] ResultT GetResult(Connection const& con);
 
     /**
      * Waits for query to complete.
@@ -225,12 +233,15 @@ void Query::ExecValidation() const
     }
 }
 
-Result Query::GetResult()
+ResultT Query::GetResult()
 {
-    return Result(cass_future_get_result(future));
+    return ResultT(
+        std::shared_ptr<CassResult>(const_cast<CassResult*>(cass_future_get_result(future)), [](CassResult* item) {
+            cass_result_free(item);
+        }));
 }
 
-Result Query::GetResult(Connection const& con)
+ResultT Query::GetResult(Connection const& con)
 {
     ExecuteAsync(con);
     return GetResult();

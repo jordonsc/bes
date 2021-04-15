@@ -7,12 +7,19 @@
 #include "../cell.tcc"
 #include "cassandra.h"
 
-namespace bes::dbal::wide::cassandra {
-
+namespace bes::dbal::wide {
+template <class IteratorT, class DataT>
 class Row;
+}
+
+namespace bes::dbal::wide::cassandra {
 
 class RowIterator : public std::iterator<std::input_iterator_tag, Cell>
 {
+   private:
+    explicit RowIterator();
+    explicit RowIterator(CassRow const* row);
+
    public:
     using iterator_category = std::input_iterator_tag;
     using value_type = Cell;
@@ -30,15 +37,12 @@ class RowIterator : public std::iterator<std::input_iterator_tag, Cell>
     RowIterator const operator++(int) const;
 
    private:
-    explicit RowIterator();
-    explicit RowIterator(CassRow const* row);
-
     mutable bool has_data;
     CassRow const* row;
     mutable std::shared_ptr<CassIterator> row_iterator;
     mutable std::shared_ptr<Cell> cell;
 
-    friend class bes::dbal::wide::cassandra::Row;
+    friend class bes::dbal::wide::Row<RowIterator, CassRow const*>;
 };
 
 }  // namespace bes::dbal::wide::cassandra

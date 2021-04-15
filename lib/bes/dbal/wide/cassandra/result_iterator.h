@@ -4,24 +4,23 @@
 #include <iterator>
 #include <memory>
 
+#include "../row.tcc"
 #include "cassandra.h"
-#include "row.h"
+#include "result_templates.tcc"
 
 namespace bes::dbal::wide::cassandra {
 
-class Result;
-
-class ResultIterator : public std::iterator<std::input_iterator_tag, Row>
+class ResultIterator : public std::iterator<std::input_iterator_tag, RowT>
 {
    private:
     ResultIterator();
-    explicit ResultIterator(CassResult* r);
+    explicit ResultIterator(std::shared_ptr<CassResult> r);
 
    public:
     using iterator_category = std::input_iterator_tag;
-    using value_type = Row;
+    using value_type = RowT;
     using reference = value_type const&;
-    using pointer = std::shared_ptr<Row const>;
+    using pointer = std::shared_ptr<RowT const>;
     using difference_type = ptrdiff_t;
 
     reference operator*() const;
@@ -34,12 +33,12 @@ class ResultIterator : public std::iterator<std::input_iterator_tag, Row>
     ResultIterator const operator++(int) const;
 
    private:
-    mutable std::shared_ptr<Row> row_ptr;
-    CassResult* result;
+    mutable std::shared_ptr<RowT> row_ptr;
+    std::shared_ptr<CassResult> result;
     std::shared_ptr<CassIterator> result_iterator;
     mutable bool has_data;
 
-    friend class bes::dbal::wide::cassandra::Result;
+    friend class bes::dbal::wide::Result<ResultIterator, std::shared_ptr<CassResult>>;
 };
 
 }  // namespace bes::dbal::wide::cassandra
