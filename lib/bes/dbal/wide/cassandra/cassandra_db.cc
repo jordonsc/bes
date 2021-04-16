@@ -237,7 +237,7 @@ void Cassandra::createTestData(std::string const& tbl, int a, std::string const&
  *
  * @deprecated delete me.
  */
-std::string Cassandra::retrieveTestData(std::string const& tbl, int a)
+cassandra::ResultT Cassandra::retrieveTestData(std::string const& tbl, int a)
 {
     auto cql = std::string("SELECT * FROM ");
     cql.append(getKeyspace()).append(".").append(tbl).append(" WHERE test_pk = ?;");
@@ -245,31 +245,5 @@ std::string Cassandra::retrieveTestData(std::string const& tbl, int a)
     cassandra::Query q(cql, 1);
     q.bind<int32_t>(a);
 
-    std::string val;
-
-    auto result = q.getResult(connection);
-
-    for (auto const& row : result) {
-        if (!val.empty()) {
-            val.append("; ");
-        }
-
-        for (auto const& cell : row) {
-            switch (cell.getField().datatype) {
-                default:
-                    throw DbalException("oops");
-                case bes::dbal::wide::Datatype::Text:
-                    val.append("<").append(cell.as<std::string>()).append("> ");
-                    break;
-                case bes::dbal::wide::Datatype::Int32:
-                    val.append("<").append(std::to_string(cell.as<int32_t>())).append("> ");
-                    break;
-                case bes::dbal::wide::Datatype::Float32:
-                    val.append("<").append(std::to_string(cell.as<float>())).append("> ");
-                    break;
-            }
-        }
-    }
-
-    return val;
+    return q.getResult(connection);
 }

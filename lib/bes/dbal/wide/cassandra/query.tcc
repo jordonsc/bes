@@ -5,10 +5,12 @@
 #include <vector>
 
 #include "../../exception.h"
+#include "../cell.tcc"
 #include "../result.tcc"
 #include "cassandra.h"
 #include "result_iterator.h"
 #include "row_iterator.h"
+#include "utility.tcc"
 
 namespace bes::dbal::wide {
 class Cassandra;
@@ -18,6 +20,13 @@ inline size_t Result<cassandra::ResultIterator, std::shared_ptr<CassResult>>::ro
 {
     return cass_result_row_count(data.get());
 }
+
+template <>
+inline Cell Row<cassandra::RowIterator, CassRow const*>::operator[](size_t index)
+{
+    return cassandra::utility::createCellFromColumn(cass_row_get_column(data, index));
+}
+
 }  // namespace bes::dbal::wide
 
 namespace bes::dbal::wide::cassandra {
@@ -78,9 +87,14 @@ class Query
     void wait();
 
     /**
-     * Extracts and error message out of a future.
+     * Extracts an error message out of a future.
      */
-    std::string getFutureErrMsg(CassFuture*);
+    static std::string getFutureErrMsg(CassFuture*);
+
+    /**
+     * Extracts all field headers from a result.
+     */
+    static std::vector<Field> getColumnsForResult(CassResult const* result);
 
     std::string cql;
     std::vector<std::string> str_cache;
@@ -235,16 +249,78 @@ void Query::execValidation() const
 
 ResultT Query::getResult()
 {
-    return ResultT(
-        std::shared_ptr<CassResult>(const_cast<CassResult*>(cass_future_get_result(future)), [](CassResult* item) {
-            cass_result_free(item);
-        }));
+    auto cass_result = const_cast<CassResult*>(cass_future_get_result(future));
+    return ResultT(std::shared_ptr<CassResult>(cass_result,
+                                               [](CassResult* item) {
+                                                   cass_result_free(item);
+                                               }),
+                   getColumnsForResult(cass_result));
 }
 
 ResultT Query::getResult(Connection const& con)
 {
     executeAsync(con);
     return getResult();
+}
+
+std::vector<Field> Query::getColumnsForResult(const CassResult* result)
+{
+    auto col_count = cass_result_column_count(result);
+    std::vector<Field> fields;
+
+    for (size_t col_idx = 0; col_idx < col_count; ++col_idx) {
+        Field f;
+
+        char const* col_name;
+        size_t col_name_len;
+        cass_result_column_name(result, col_idx, &col_name, &col_name_len);
+
+        // The cass column name isn't null-terminated, which makes strchr() dangerous. Instead we'll convert to a C++
+        // string and use the class functions.
+        auto full_name = std::string(col_name, col_name_len);
+
+        auto pos = full_name.find('_');
+        if (pos == std::string::npos) {
+            // This shouldn't happen, all DBAL-controlled fields use the underscore to split namespace/qualifier.
+            // Might happen if we've retried a non-DBAL created field. We'll just put the value in the qualifier and
+            // leave the namespace blank.
+            f.qualifier = full_name;
+        } else {
+            f.ns = full_name.substr(0, pos);
+            f.qualifier = full_name.substr(pos + 1);
+        }
+
+        switch (cass_result_column_type(result, col_idx)) {
+            default:
+                throw bes::dbal::DbalException("Unknown or unsupported Cassandra value type");
+            case CASS_VALUE_TYPE_ASCII:
+            case CASS_VALUE_TYPE_VARCHAR:
+            case CASS_VALUE_TYPE_TEXT:
+            case CASS_VALUE_TYPE_BLOB:
+                f.datatype = Datatype::Text;
+                break;
+            case CASS_VALUE_TYPE_BOOLEAN:
+                f.datatype = Datatype::Boolean;
+                break;
+            case CASS_VALUE_TYPE_INT:
+                f.datatype = Datatype::Int32;
+                break;
+            case CASS_VALUE_TYPE_BIGINT:
+                f.datatype = Datatype::Int64;
+                break;
+            case CASS_VALUE_TYPE_FLOAT:
+                f.datatype = Datatype::Float32;
+                break;
+            case CASS_VALUE_TYPE_DOUBLE:
+            case CASS_VALUE_TYPE_DECIMAL:
+                f.datatype = Datatype::Float64;
+                break;
+        }
+
+        fields.push_back(std::move(f));
+    }
+
+    return fields;
 }
 
 }  // namespace bes::dbal::wide::cassandra

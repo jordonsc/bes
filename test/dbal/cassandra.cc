@@ -107,7 +107,24 @@ TEST(CassandraTest, RowCreation)
     db.createTable(TEST_TABLE, CreateTestSchema(), false);
 
     db.createTestData(TEST_TABLE, 5, "bar");
-    auto bar = db.retrieveTestData(TEST_TABLE, 5);
+    auto result = db.retrieveTestData(TEST_TABLE, 5);
 
-    ASSERT_EQ(bar, "bar");
+    ASSERT_EQ(result.rowCount(), 1);
+    ASSERT_EQ(result.columnCount(), 3);
+
+    // NB: PK then lexicographical ordering (I'm not sure how reliable this is)
+    ASSERT_EQ(result.getColumn(0).ns, "test");
+    ASSERT_EQ(result.getColumn(0).qualifier, "pk");
+    ASSERT_EQ(result.getColumn(0).datatype, Datatype::Int32);
+
+    ASSERT_EQ(result.getColumn(1).ns, "test");
+    ASSERT_EQ(result.getColumn(1).qualifier, "flt");
+    ASSERT_EQ(result.getColumn(1).datatype, Datatype::Float32);
+
+    ASSERT_EQ(result.getColumn(2).ns, "test");
+    ASSERT_EQ(result.getColumn(2).qualifier, "str");
+    ASSERT_EQ(result.getColumn(2).datatype, Datatype::Text);
+
+
+
 }

@@ -5,6 +5,7 @@
 #include "connection.h"
 #include "keyspace.h"
 #include "query.tcc"
+#include "types.h"
 
 namespace bes::dbal::wide {
 
@@ -33,7 +34,7 @@ class Cassandra : public WideColumnDb
     void dropTable(std::string const& table_name, bool if_exists) const override;
 
     void createTestData(std::string const& tbl, int a, std::string const& b);
-    std::string retrieveTestData(std::string const& tbl, int a);
+    cassandra::ResultT retrieveTestData(std::string const& tbl, int a);
 
    private:
     mutable std::shared_mutex ks_mutex;
