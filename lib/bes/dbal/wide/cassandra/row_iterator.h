@@ -5,7 +5,7 @@
 
 #include "../cell.tcc"
 #include "cassandra.h"
-#include "utility.tcc"
+#include "utility.h"
 
 namespace bes::dbal::wide {
 template <class IteratorT, class DataT>

@@ -46,7 +46,7 @@ RowIterator const& RowIterator::operator++() const
     has_data = cass_iterator_next(row_iterator.get());
 
     if (has_data) {
-        cell = std::make_shared<Cell>(utility::createCellFromColumn(cass_iterator_get_column(row_iterator.get())));
+        cell = std::make_shared<Cell>(Utility::createCellFromColumn(cass_iterator_get_column(row_iterator.get())));
     } else {
         cell.reset();
     }
