@@ -1,5 +1,4 @@
-#ifndef BES_DBAL_WIDE_DATATYPE_H
-#define BES_DBAL_WIDE_DATATYPE_H
+#pragma once
 
 namespace bes::dbal::wide {
 
@@ -19,5 +18,3 @@ enum class Datatype : char
 };
 
 }
-
-#endif

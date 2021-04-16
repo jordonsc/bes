@@ -1,5 +1,4 @@
-#ifndef BES_DBAL_WIDE_CASSANDRA_RESULT_H
-#define BES_DBAL_WIDE_CASSANDRA_RESULT_H
+#pragma once
 
 #include "../exception.h"
 
@@ -15,7 +14,7 @@ class Result
     [[nodiscard]] IteratorT begin() const;
     [[nodiscard]] IteratorT end() const;
 
-    [[nodiscard]] size_t RowCount() const;
+    [[nodiscard]] size_t rowCount() const;
 
    private:
     DataT data;
@@ -38,11 +37,9 @@ inline IteratorT Result<IteratorT, DataT>::end() const
 }
 
 template <class IteratorT, class DataT>
-inline size_t Result<IteratorT, DataT>::RowCount() const
+inline size_t Result<IteratorT, DataT>::rowCount() const
 {
     throw bes::dbal::DbalException("Unknown result counter");
 }
 
 }  // namespace bes::dbal::wide
-
-#endif

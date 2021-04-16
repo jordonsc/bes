@@ -1,5 +1,4 @@
-#ifndef BES_DBAL_WIDE_CASSANDRA_KEYSPACE_H
-#define BES_DBAL_WIDE_CASSANDRA_KEYSPACE_H
+#pragma once
 
 #include <string>
 #include <unordered_map>
@@ -32,4 +31,3 @@ struct Keyspace final
 
 }  // namespace bes::dbal::wide::cassandra
 
-#endif

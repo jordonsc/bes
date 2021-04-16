@@ -1,5 +1,4 @@
-#ifndef BES_DBAL_WIDE_GCP_BIGTABLE_H
-#define BES_DBAL_WIDE_GCP_BIGTABLE_H
+#pragma once
 
 #include "../../exception.h"
 #include "../wide_column_db.h"
@@ -16,7 +15,7 @@ class BigTable : public WideColumnDb
    public:
     explicit BigTable(bigtable::Credentials credentials);
 
-    void CreateTable(std::string const& table_name) {
+    void createTable(std::string const& table_name) {
         google::bigtable::v2::Cell cell;
 
 
@@ -28,4 +27,3 @@ class BigTable : public WideColumnDb
 
 }  // namespace bes::dbal::wide
 
-#endif

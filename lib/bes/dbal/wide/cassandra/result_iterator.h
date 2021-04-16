@@ -1,12 +1,11 @@
-#ifndef BES_DBAL_WIDE_CASSANDRA_RESULT_ITERATOR_H
-#define BES_DBAL_WIDE_CASSANDRA_RESULT_ITERATOR_H
+#pragma once
 
 #include <iterator>
 #include <memory>
 
 #include "../row.tcc"
 #include "cassandra.h"
-#include "result_templates.tcc"
+#include "types.h"
 
 namespace bes::dbal::wide::cassandra {
 
@@ -42,5 +41,3 @@ class ResultIterator : public std::iterator<std::input_iterator_tag, RowT>
 };
 
 }  // namespace bes::dbal::wide::cassandra
-
-#endif

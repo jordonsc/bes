@@ -1,5 +1,4 @@
-#ifndef BES_DBAL_WIDE_CASSANDRA_ROW_ITERATOR_H
-#define BES_DBAL_WIDE_CASSANDRA_ROW_ITERATOR_H
+#pragma once
 
 #include <iterator>
 #include <memory>
@@ -46,5 +45,3 @@ class RowIterator : public std::iterator<std::input_iterator_tag, Cell>
 };
 
 }  // namespace bes::dbal::wide::cassandra
-
-#endif

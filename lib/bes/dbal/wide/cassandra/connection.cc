@@ -9,7 +9,7 @@ Connection::Connection(std::string hosts, bool own_logging) : hosts(std::move(ho
     if (own_logging) {
         // Pipe the Cassandra driver logging into the Bes logger
         cass_log_set_level(CASS_LOG_TRACE);
-        cass_log_set_callback(Connection::DriverLog, this->log_data);
+        cass_log_set_callback(Connection::driverLog, this->log_data);
     }
 
     // Build new cluster under RAII control
@@ -44,27 +44,27 @@ Connection::Connection(std::string hosts, bool own_logging) : hosts(std::move(ho
     connected = true;
 }
 
-std::shared_ptr<CassSession> Connection::GetSession() const
+std::shared_ptr<CassSession> Connection::getSession() const
 {
     return session;
 }
 
-CassSession* Connection::GetSessionPtr() const
+CassSession* Connection::getSessionPtr() const
 {
     return session.get();
 }
 
-bool Connection::IsConnected() const
+bool Connection::isConnected() const
 {
     return connected;
 }
 
-void Connection::DriverLog(CassLogMessage const* message, void* data)
+void Connection::driverLog(CassLogMessage const* message, void* data)
 {
-    BES_LOG_LVL(Connection::CassToBesSeverity(message->severity)) << "CASS: " << message->message;
+    BES_LOG_LVL(Connection::cassToBesSeverity(message->severity)) << "CASS: " << message->message;
 }
 
-bes::log::Severity Connection::CassToBesSeverity(CassLogLevel s)
+bes::log::Severity Connection::cassToBesSeverity(CassLogLevel s)
 {
     switch (s) {
         default:

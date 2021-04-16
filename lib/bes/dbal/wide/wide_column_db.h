@@ -1,5 +1,4 @@
-#ifndef BES_DBAL_WIDE_WIDEDB_H
-#define BES_DBAL_WIDE_WIDEDB_H
+#pragma once
 
 #include "../context.h"
 #include "schema.h"
@@ -15,10 +14,10 @@ class WideColumnDb
     explicit WideColumnDb(Context const& c) : context(c) {}
     WideColumnDb() {}
 
-    virtual void CreateTable(std::string const& table_name, Schema const& schema, bool if_not_exists) const = 0;
-    virtual void DropTable(std::string const& table_name, bool if_exists) const = 0;
+    virtual void createTable(std::string const& table_name, Schema const& schema, bool if_not_exists) const = 0;
+    virtual void dropTable(std::string const& table_name, bool if_exists) const = 0;
 
-    [[nodiscard]] Context const& GetContext() const
+    [[nodiscard]] Context const& getContext() const
     {
         return context;
     }
@@ -28,5 +27,3 @@ class WideColumnDb
 };
 
 }  // namespace bes::dbal::wide
-
-#endif

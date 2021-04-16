@@ -1,5 +1,4 @@
-#ifndef BES_DBAL_WIDE_CELL_H
-#define BES_DBAL_WIDE_CELL_H
+#pragma once
 
 #include <any>
 #include <string>
@@ -13,13 +12,13 @@ class Cell
    public:
     inline Cell(Field&& field, std::any&& data);
 
-    [[nodiscard]] inline Field const& GetField() const;
+    [[nodiscard]] inline Field const& getField() const;
 
     template <class T>
-    [[nodiscard]] T Get() const&;
+    [[nodiscard]] T as() const&;
 
     template <class T>
-    [[nodiscard]] T&& Get() &&;
+    [[nodiscard]] T&& as() &&;
 
    protected:
     Field field;
@@ -28,23 +27,22 @@ class Cell
 
 Cell::Cell(Field&& field, std::any&& data) : field(std::forward<Field>(field)), data(std::forward<std::any>(data)) {}
 
-Field const& Cell::GetField() const
+Field const& Cell::getField() const
 {
     return field;
 }
 
 template <class T>
-T Cell::Get() const&
+T Cell::as() const&
 {
     return std::any_cast<T>(data);
 }
 
 template <class T>
-T&& Cell::Get() &&
+T&& Cell::as() &&
 {
     return std::any_cast<T>(data);
 }
 
 }  // namespace bes::dbal::wide
 
-#endif

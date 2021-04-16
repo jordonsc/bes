@@ -1,5 +1,4 @@
-#ifndef BES_DBAL_WIDE_CASSANDRA_CONNECTION_H
-#define BES_DBAL_WIDE_CASSANDRA_CONNECTION_H
+#pragma once
 
 #include <bes/log.h>
 
@@ -21,11 +20,11 @@ class Connection
      */
     explicit Connection(std::string hosts, bool own_logging = true);
 
-    [[nodiscard]] std::shared_ptr<CassSession> GetSession() const;
-    [[nodiscard]] CassSession* GetSessionPtr() const;
-    [[nodiscard]] bool IsConnected() const;
+    [[nodiscard]] std::shared_ptr<CassSession> getSession() const;
+    [[nodiscard]] CassSession* getSessionPtr() const;
+    [[nodiscard]] bool isConnected() const;
 
-    static void DriverLog(CassLogMessage const* message, void* data);
+    static void driverLog(CassLogMessage const* message, void* data);
     void* log_data = nullptr;
 
    protected:
@@ -36,9 +35,7 @@ class Connection
     bool connected = false;
 
    private:
-    static bes::log::Severity CassToBesSeverity(CassLogLevel);
+    static bes::log::Severity cassToBesSeverity(CassLogLevel);
 };
 
 }  // namespace bes::dbal::wide::cassandra
-
-#endif

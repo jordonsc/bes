@@ -1,5 +1,4 @@
-#ifndef BES_DBAL_WIDE_CASSANDRA_ROW_H
-#define BES_DBAL_WIDE_CASSANDRA_ROW_H
+#pragma once
 
 #include <utility>
 
@@ -36,5 +35,3 @@ inline IteratorT Row<IteratorT, DataT>::end() const
 }
 
 }  // namespace bes::dbal::wide
-
-#endif

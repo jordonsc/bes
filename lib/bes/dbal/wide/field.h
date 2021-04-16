@@ -1,5 +1,4 @@
-#ifndef BES_DBAL_WIDE_FIELD_H
-#define BES_DBAL_WIDE_FIELD_H
+#pragma once
 
 #include <string>
 
@@ -15,5 +14,3 @@ struct Field
 };
 
 }  // namespace bes::dbal::wide
-
-#endif

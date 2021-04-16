@@ -14,7 +14,7 @@ namespace bes::dbal::wide {
 class Cassandra;
 
 template <>
-inline size_t Result<cassandra::ResultIterator, std::shared_ptr<CassResult>>::RowCount() const
+inline size_t Result<cassandra::ResultIterator, std::shared_ptr<CassResult>>::rowCount() const
 {
     return cass_result_row_count(data.get());
 }
@@ -34,7 +34,7 @@ class Query
     virtual ~Query();
 
     template <class T>
-    void Bind(T v);
+    void bind(T v);
 
    private:
     enum class ExecMode
@@ -48,17 +48,17 @@ class Query
     /**
      * Throws a DbalException if the query is not in the correct state to execute.
      */
-    void ExecValidation() const;
+    void execValidation() const;
 
     /**
      * Runs the query against a connection.
      */
-    void ExecuteSync(Connection const& con);
+    void executeSync(Connection const& con);
 
     /**
      * Executes and returns immediately.
      */
-    void ExecuteAsync(Connection const& con);
+    void executeAsync(Connection const& con);
 
     /**
      * Get an iterable result object, which can be used to return row data.
@@ -69,18 +69,18 @@ class Query
      * If called without parameters, it will assume you've first called ExecAsync() and throw an exception if you have
      * not.
      */
-    [[nodiscard]] ResultT GetResult();
-    [[nodiscard]] ResultT GetResult(Connection const& con);
+    [[nodiscard]] ResultT getResult();
+    [[nodiscard]] ResultT getResult(Connection const& con);
 
     /**
      * Waits for query to complete.
      */
-    void Wait();
+    void wait();
 
     /**
      * Extracts and error message out of a future.
      */
-    std::string GetFutureErrMsg(CassFuture*);
+    std::string getFutureErrMsg(CassFuture*);
 
     std::string cql;
     std::vector<std::string> str_cache;
@@ -111,19 +111,19 @@ Query::~Query()
     }
 }
 
-void Query::ExecuteSync(Connection const& con)
+void Query::executeSync(Connection const& con)
 {
-    ExecValidation();
+    execValidation();
 
     try {
         mode = ExecMode::EXEC_SYNC;
-        future = cass_session_execute(con.GetSessionPtr(), statement);
+        future = cass_session_execute(con.getSessionPtr(), statement);
         cass_future_wait(future);
         mode = ExecMode::COMPLETE;
 
         CassError rc = cass_future_error_code(future);
         if (rc != CASS_OK) {
-            throw DbalException(GetFutureErrMsg(future));
+            throw DbalException(getFutureErrMsg(future));
         }
 
     } catch (std::exception const& e) {
@@ -131,19 +131,19 @@ void Query::ExecuteSync(Connection const& con)
     }
 }
 
-void Query::ExecuteAsync(Connection const& con)
+void Query::executeAsync(Connection const& con)
 {
-    ExecValidation();
+    execValidation();
 
     try {
         mode = ExecMode::EXEC_ASYNC;
-        future = cass_session_execute(con.GetSessionPtr(), statement);
+        future = cass_session_execute(con.getSessionPtr(), statement);
     } catch (std::exception const& e) {
         throw DbalException(std::string("Error executing query: ").append(e.what()));
     }
 }
 
-void Query::Wait()
+void Query::wait()
 {
     if (mode != ExecMode::EXEC_ASYNC) {
         throw bes::dbal::DbalException("Query is not running and cannot wait");
@@ -155,7 +155,7 @@ void Query::Wait()
 
         CassError rc = cass_future_error_code(future);
         if (rc != CASS_OK) {
-            throw DbalException(GetFutureErrMsg(future));
+            throw DbalException(getFutureErrMsg(future));
         }
 
     } catch (std::exception const& e) {
@@ -164,13 +164,13 @@ void Query::Wait()
 }
 
 template <class T>
-void Query::Bind(T v)
+void Query::bind(T v)
 {
     throw bes::dbal::DbalException("Unsupported data type for CQL bind");
 }
 
 template <>
-void Query::Bind<std::string>(std::string v)
+void Query::bind<std::string>(std::string v)
 {
     str_cache.push_back(std::move(v));
     cass_statement_bind_string(statement, q_pos, str_cache.back().c_str());
@@ -178,41 +178,41 @@ void Query::Bind<std::string>(std::string v)
 }
 
 template <>
-void Query::Bind<bool>(bool v)
+void Query::bind<bool>(bool v)
 {
     cass_statement_bind_bool(statement, q_pos, v ? cass_true : cass_false);
     ++q_pos;
 }
 
 template <>
-void Query::Bind<float>(float v)
+void Query::bind<float>(float v)
 {
     cass_statement_bind_float(statement, q_pos, v);
     ++q_pos;
 }
 
 template <>
-void Query::Bind<double>(double v)
+void Query::bind<double>(double v)
 {
     cass_statement_bind_double(statement, q_pos, v);
     ++q_pos;
 }
 
 template <>
-void Query::Bind<int32_t>(int32_t v)
+void Query::bind<int32_t>(int32_t v)
 {
     cass_statement_bind_int32(statement, q_pos, v);
     ++q_pos;
 }
 
 template <>
-void Query::Bind<int64_t>(int64_t v)
+void Query::bind<int64_t>(int64_t v)
 {
     cass_statement_bind_int64(statement, q_pos, v);
     ++q_pos;
 }
 
-std::string Query::GetFutureErrMsg(CassFuture* f)
+std::string Query::getFutureErrMsg(CassFuture* f)
 {
     const char* message;
     size_t message_length;
@@ -221,7 +221,7 @@ std::string Query::GetFutureErrMsg(CassFuture* f)
     return std::string(message, message_length);
 }
 
-void Query::ExecValidation() const
+void Query::execValidation() const
 {
     if (mode != ExecMode::PENDING) {
         throw bes::dbal::DbalException("Query execution already begun");
@@ -233,7 +233,7 @@ void Query::ExecValidation() const
     }
 }
 
-ResultT Query::GetResult()
+ResultT Query::getResult()
 {
     return ResultT(
         std::shared_ptr<CassResult>(const_cast<CassResult*>(cass_future_get_result(future)), [](CassResult* item) {
@@ -241,10 +241,10 @@ ResultT Query::GetResult()
         }));
 }
 
-ResultT Query::GetResult(Connection const& con)
+ResultT Query::getResult(Connection const& con)
 {
-    ExecuteAsync(con);
-    return GetResult();
+    executeAsync(con);
+    return getResult();
 }
 
 }  // namespace bes::dbal::wide::cassandra

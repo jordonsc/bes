@@ -18,6 +18,7 @@ must be highly trusted and/or only touch non-critical components.
 
 Documentation Contents
 ----------------------
+* [Contributing](docs/Contributing.md) - Includes code styles & naming conventions.
 * [Building](docs/Building.md)
 * [Performance](docs/Performance.md)
 * [Learning Resources](docs/Learning_Resources.md)
@@ -48,3 +49,6 @@ Non-critical dependencies:
 * GTest:
   * Running test suites
 
+DBAL Requirements:
+* Cassandra: Drivers are required on the OS; see the prerequisites in the [building documentation](docs/Building.md)
+* BigTable: Google Cloud APIs are included as a project dependency

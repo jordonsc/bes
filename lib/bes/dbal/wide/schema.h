@@ -1,5 +1,4 @@
-#ifndef BES_DBAL_WIDE_SCHEMA_H
-#define BES_DBAL_WIDE_SCHEMA_H
+#pragma once
 
 #include <vector>
 
@@ -19,4 +18,3 @@ struct Schema
 
 }  // namespace bes::dbal::wide
 
-#endif

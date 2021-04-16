@@ -1,5 +1,4 @@
-#ifndef BES_DBAL_WIDE_GCP_CREDENTIALS_H
-#define BES_DBAL_WIDE_GCP_CREDENTIALS_H
+#pragma once
 
 #include <string>
 
@@ -12,5 +11,3 @@ class Credentials {
 };
 
 }  // namespace bes::dbal
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef BES_DBAL_WIDE_CASSANDRA_RESULT_TEMPLATES_H
-#define BES_DBAL_WIDE_CASSANDRA_RESULT_TEMPLATES_H
+#pragma once
 
 #include <memory>
 
@@ -22,5 +21,3 @@ using ResultT = bes::dbal::wide::Result<ResultIterator, std::shared_ptr<CassResu
 using RowT = bes::dbal::wide::Row<RowIterator, CassRow const*>;
 
 }  // namespace bes::dbal::wide::cassandra
-
-#endif

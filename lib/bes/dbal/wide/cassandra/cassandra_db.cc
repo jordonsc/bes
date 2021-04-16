@@ -15,13 +15,13 @@ Cassandra::Cassandra(std::string hosts, Context&& c) : WideColumnDb(c), connecti
 Cassandra::Cassandra(cassandra::Connection&& con, Context const& c) : WideColumnDb(c), connection(std::move(con)) {}
 Cassandra::Cassandra(std::string hosts, Context const& c) : WideColumnDb(c), connection(Connection(std::move(hosts))) {}
 
-std::string Cassandra::GetServerVersion() const
+std::string Cassandra::getServerVersion() const
 {
-    ValidateConnection();
+    validateConnection();
 
     // Build statement and execute query
     CassStatement* statement = cass_statement_new("SELECT release_version FROM system.local", 0);
-    CassFuture* query_future = cass_session_execute(connection.GetSessionPtr(), statement);
+    CassFuture* query_future = cass_session_execute(connection.getSessionPtr(), statement);
 
     try {
         if (cass_future_error_code(query_future) == CASS_OK) {
@@ -63,13 +63,13 @@ std::string Cassandra::GetServerVersion() const
     }
 }
 
-void Cassandra::SetKeyspace(std::string const& value)
+void Cassandra::setKeyspace(std::string const& value)
 {
     std::unique_lock lock(ks_mutex);
     keyspace = value;
 }
 
-std::string const& Cassandra::GetKeyspace() const
+std::string const& Cassandra::getKeyspace() const
 {
     std::shared_lock lock(ks_mutex);
 
@@ -87,7 +87,7 @@ std::string const& Cassandra::GetKeyspace() const
     }
 }
 
-void Cassandra::CreateKeyspace(cassandra::Keyspace const& ks, bool if_not_exists) const
+void Cassandra::createKeyspace(cassandra::Keyspace const& ks, bool if_not_exists) const
 {
     /*
      * CREATE KEYSPACE [IF NOT EXISTS] keyspace_name
@@ -129,10 +129,10 @@ void Cassandra::CreateKeyspace(cassandra::Keyspace const& ks, bool if_not_exists
     cql.append(";");
 
     cassandra::Query q(cql);
-    q.ExecuteSync(connection);
+    q.executeSync(connection);
 }
 
-void Cassandra::DropKeyspace(const std::string& ks_name, bool if_exists) const
+void Cassandra::dropKeyspace(const std::string& ks_name, bool if_exists) const
 {
     /*
      * DROP KEYSPACE [IF EXISTS] keyspace_name;
@@ -141,10 +141,10 @@ void Cassandra::DropKeyspace(const std::string& ks_name, bool if_exists) const
     cql.append(ks_name);
 
     cassandra::Query q(cql);
-    q.ExecuteSync(connection);
+    q.executeSync(connection);
 }
 
-void Cassandra::CreateTable(std::string const& table_name, Schema const& schema, bool if_not_exists) const
+void Cassandra::createTable(std::string const& table_name, Schema const& schema, bool if_not_exists) const
 {
     /*
      * CREATE TABLE [IF NOT EXISTS] keyspace.table_name (
@@ -153,34 +153,34 @@ void Cassandra::CreateTable(std::string const& table_name, Schema const& schema,
      * );
      */
     std::string cql = if_not_exists ? "CREATE TABLE IF NOT EXISTS " : "CREATE TABLE ";
-    cql.append(GetKeyspace())
+    cql.append(getKeyspace())
         .append(".")
         .append(table_name)
         .append(" (")
-        .append(GetFieldCql(schema.primary_key))
+        .append(getFieldCql(schema.primary_key))
         .append(" PRIMARY KEY");
     for (auto const& f : schema.fields) {
-        cql.append(", ").append(GetFieldCql(f));
+        cql.append(", ").append(getFieldCql(f));
     }
     cql.append(");");
 
     cassandra::Query q(cql);
-    q.ExecuteSync(connection);
+    q.executeSync(connection);
 }
 
-void Cassandra::DropTable(std::string const& table_name, bool if_exists) const
+void Cassandra::dropTable(std::string const& table_name, bool if_exists) const
 {
     /*
      * DROP TABLE [IF EXISTS] keyspace.table_name;
      */
     std::string cql = if_exists ? "DROP TABLE IF EXISTS " : "DROP TABLE ";
-    cql.append(GetKeyspace()).append(".").append(table_name);
+    cql.append(getKeyspace()).append(".").append(table_name);
 
     cassandra::Query q(cql);
-    q.ExecuteSync(connection);
+    q.executeSync(connection);
 }
 
-[[nodiscard]] const char* Cassandra::FieldType(Datatype const& dt)
+[[nodiscard]] const char* Cassandra::fieldType(Datatype const& dt)
 {
     switch (dt) {
         case Datatype::Text:
@@ -200,17 +200,17 @@ void Cassandra::DropTable(std::string const& table_name, bool if_exists) const
     }
 }
 
-std::string Cassandra::GetFieldCql(Field const& f)
+std::string Cassandra::getFieldCql(Field const& f)
 {
     std::string r = f.ns;
-    r.append("_").append(f.qualifier).append(" ").append(FieldType(f.datatype));
+    r.append("_").append(f.qualifier).append(" ").append(fieldType(f.datatype));
 
     return r;
 }
 
-void Cassandra::ValidateConnection() const
+void Cassandra::validateConnection() const
 {
-    if (!connection.IsConnected()) {
+    if (!connection.isConnected()) {
         throw NotConnectedException("Not connected to server");
     }
 }
@@ -220,16 +220,16 @@ void Cassandra::ValidateConnection() const
  *
  * @deprecated delete me.
  */
-void Cassandra::CreateTestData(std::string const& tbl, int a, std::string const& b)
+void Cassandra::createTestData(std::string const& tbl, int a, std::string const& b)
 {
     auto cql = std::string("INSERT INTO ");
-    cql.append(GetKeyspace()).append(".").append(tbl).append(" (test_pk, test_str) VALUES (?, ?);");
+    cql.append(getKeyspace()).append(".").append(tbl).append(" (test_pk, test_str) VALUES (?, ?);");
 
     cassandra::Query q(cql, 2);
-    q.Bind<int32_t>(a);
-    q.Bind<std::string>(b);
+    q.bind<int32_t>(a);
+    q.bind<std::string>(b);
 
-    q.ExecuteSync(connection);
+    q.executeSync(connection);
 }
 
 /**
@@ -237,17 +237,17 @@ void Cassandra::CreateTestData(std::string const& tbl, int a, std::string const&
  *
  * @deprecated delete me.
  */
-std::string Cassandra::RetrieveTestData(std::string const& tbl, int a)
+std::string Cassandra::retrieveTestData(std::string const& tbl, int a)
 {
     auto cql = std::string("SELECT * FROM ");
-    cql.append(GetKeyspace()).append(".").append(tbl).append(" WHERE test_pk = ?;");
+    cql.append(getKeyspace()).append(".").append(tbl).append(" WHERE test_pk = ?;");
 
     cassandra::Query q(cql, 1);
-    q.Bind<int32_t>(a);
+    q.bind<int32_t>(a);
 
     std::string val;
 
-    auto result = q.GetResult(connection);
+    auto result = q.getResult(connection);
 
     for (auto const& row : result) {
         if (!val.empty()) {
@@ -255,17 +255,17 @@ std::string Cassandra::RetrieveTestData(std::string const& tbl, int a)
         }
 
         for (auto const& cell : row) {
-            switch (cell.GetField().datatype) {
+            switch (cell.getField().datatype) {
                 default:
                     throw DbalException("oops");
                 case bes::dbal::wide::Datatype::Text:
-                    val.append("<").append(cell.Get<std::string>()).append("> ");
+                    val.append("<").append(cell.as<std::string>()).append("> ");
                     break;
                 case bes::dbal::wide::Datatype::Int32:
-                    val.append("<").append(std::to_string(cell.Get<int32_t>())).append("> ");
+                    val.append("<").append(std::to_string(cell.as<int32_t>())).append("> ");
                     break;
                 case bes::dbal::wide::Datatype::Float32:
-                    val.append("<").append(std::to_string(cell.Get<float>())).append("> ");
+                    val.append("<").append(std::to_string(cell.as<float>())).append("> ");
                     break;
             }
         }
