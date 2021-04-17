@@ -29,12 +29,12 @@ class Cassandra : public WideColumnDb
     void createTable(std::string const& table_name, Schema const& schema, bool if_not_exists) const override;
     void dropTable(std::string const& table_name, bool if_exists) const override;
 
-    void update(std::string const& table_name, ValueList values) const override;
+    void insert(std::string const& table_name, ValueList values) const override;
     void update(std::string const& table_name, Value const& key, ValueList values) const override;
+    void retrieve(std::string const& table_name, Value const& key) const override;
+    void retrieve(std::string const& table_name, Value const& key, FieldList fields) const override;
     void remove(std::string const& table_name, Value const& key) const override;
-    void retrieve(const std::string& table_name, const Value& key) const override;
 
-    void createTestData(std::string const& tbl, int a, std::string const& b) const;
     cassandra::ResultT retrieveTestData(std::string const& tbl, int a) const;
 
    private:

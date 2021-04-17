@@ -80,9 +80,9 @@ TEST(CassandraTest, TableCreation)
     auto db = Cassandra(createContext());
     db.createKeyspace(cassandra::Keyspace(TEST_KEYSPACE), true);
 
-    std::vector<Field> fields;
-    fields.push_back({Datatype::Text, "test", "str"});
-    fields.push_back({Datatype::Float32, "test", "flt"});
+    FieldList fields;
+    fields.emplace_back(Datatype::Text, "test", "str");
+    fields.emplace_back(Datatype::Float32, "test", "flt");
 
     Schema s({Datatype::Int32, "test", "pk"}, std::move(fields));
 
@@ -110,7 +110,13 @@ TEST(CassandraTest, RowCreation)
     db.dropTable(TEST_TABLE, true);
     db.createTable(TEST_TABLE, createTestSchema(), false);
 
-    db.createTestData(TEST_TABLE, 5, "bar");
+    // Create test data, nb that we are omitting `flt` here, which should be a null value
+    ValueList v;
+    v.push_back(Value("test", "str", "bar"));
+    v.push_back(Value("test", "pk", 5));
+    // NB: both insert and update are "upsert" statements, you could have used db.update() here, too
+    db.insert(TEST_TABLE, std::move(v));
+
     auto result = db.retrieveTestData(TEST_TABLE, 5);
 
     EXPECT_EQ(result.rowCount(), 1);
@@ -184,4 +190,15 @@ TEST(CassandraTest, RowCreation)
     }
 
     EXPECT_EQ(cols, 3);
+
+    // Will update the table, adding a non-null value for `flt`
+    v.clear();
+    v.push_back(Value("test", "str", "hello world"));
+    v.push_back(Value("test", "flt", (Float32)123.456));
+    db.update(TEST_TABLE, Value("test", "pk", 5), std::move(v));
+
+    result = db.retrieveTestData(TEST_TABLE, 5);
+    first_row = result.getFirstRow();
+    ASSERT_FLOAT_EQ(first_row.value<Float32>("test", "flt"), (Float32)123.456);
+    ASSERT_EQ(first_row.value<Text>("test", "str"), "hello world");
 }

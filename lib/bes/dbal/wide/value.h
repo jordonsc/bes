@@ -10,9 +10,12 @@ namespace bes::dbal::wide {
 
 struct Value
 {
-    // TODO: look into using a reference for the string datatype
     Value(std::string ns, std::string qualifier, std::string value)
         : ns(std::move(ns)), qualifier(std::move(qualifier)), value(std::move(value)), datatype(Datatype::Text)
+    {}
+
+    Value(std::string ns, std::string qualifier, char const* value)
+        : ns(std::move(ns)), qualifier(std::move(qualifier)), value(std::string(value)), datatype(Datatype::Text)
     {}
 
     Value(std::string ns, std::string qualifier, Int32 value)
@@ -48,5 +51,7 @@ struct Value
 };
 
 using ValueList = std::vector<Value>;
+
+
 
 }  // namespace bes::dbal::wide

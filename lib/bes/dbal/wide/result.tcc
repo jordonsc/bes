@@ -10,7 +10,7 @@ class Result
 {
    public:
     Result() = delete;
-    explicit Result(DataT&& r, std::vector<Field>&& fields);
+    explicit Result(DataT&& r, std::vector<Field> fields);
 
     [[nodiscard]] IteratorT begin() const;
     [[nodiscard]] IteratorT end() const;
@@ -29,7 +29,8 @@ class Result
 };
 
 template <class IteratorT, class DataT>
-inline Result<IteratorT, DataT>::Result(DataT&& r, std::vector<Field>&& f) : data(std::forward<DataT>(r)), fields(f)
+inline Result<IteratorT, DataT>::Result(DataT&& r, std::vector<Field> f)
+    : data(std::forward<DataT>(r)), fields(std::move(f))
 {}
 
 template <class IteratorT, class DataT>

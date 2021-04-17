@@ -8,13 +8,10 @@ namespace bes::dbal::wide {
 
 struct Schema
 {
-    Field primary_key;
-    std::vector<Field> fields;
+    Schema(Field pk, FieldList fields) : primary_key(std::move(pk)), fields(std::move(fields)) {}
 
-    Schema(Field&& pk, std::vector<Field>&& fields)
-        : primary_key(std::forward<Field>(pk)), fields(std::forward<std::vector<Field>>(fields))
-    {}
+    Field primary_key;
+    FieldList fields;
 };
 
 }  // namespace bes::dbal::wide
-

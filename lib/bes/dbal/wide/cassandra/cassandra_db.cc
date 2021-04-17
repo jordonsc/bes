@@ -149,24 +149,6 @@ void Cassandra::validateConnection() const
  *
  * @deprecated delete me.
  */
-void Cassandra::createTestData(std::string const& tbl, int a, std::string const& b) const
-{
-    ValueList v;
-    v.push_back(Value("test", "str", b));
-    
-    // Tests expect a null value for `flt`
-    //v.push_back(Value("test", "flt", (float)123.456));
-
-    v.push_back(Value("test", "pk", a));
-
-    update(tbl, std::move(v));
-}
-
-/**
- * Test function.
- *
- * @deprecated delete me.
- */
 cassandra::ResultT Cassandra::retrieveTestData(std::string const& tbl, int a) const
 {
     auto cql = std::string("SELECT * FROM ");
@@ -178,22 +160,14 @@ cassandra::ResultT Cassandra::retrieveTestData(std::string const& tbl, int a) co
     return q.getResult(connection);
 }
 
-void Cassandra::update(std::string const& t, ValueList values) const
-{
-    update(t, Value(), std::move(values));
-}
-
-void Cassandra::update(std::string const& t, Value const& key, ValueList values) const
+void Cassandra::insert(std::string const& t, ValueList values) const
 {
     /*
-     * INSERT INTO keyspace.table_name (field [, field]) VALUES (? [, ?])
-     * WHERE field = ?;
+     * INSERT INTO keyspace.table_name (field [,field]) VALUES (? [,?]);
      */
     if (values.empty()) {
         throw DbalException("Cannot update without any values");
     }
-
-    size_t args = values.size();
 
     auto cql = std::string("INSERT INTO ");
     cql.append(getKeyspace()).append(".").append(t).append(" (");
@@ -207,38 +181,77 @@ void Cassandra::update(std::string const& t, Value const& key, ValueList values)
         }
         cql.append(getFieldCql(v, false));
     }
+
     cql.append(") VALUES (?");
     for (size_t i = 1; i < values.size(); ++i) {
         cql.append(", ?");
     }
+    cql.append(");");
 
-    if (key.datatype == Datatype::Null) {
-        // No PK (typical insert)
-        cql.append(");");
-    } else {
-        // PK - include a where clause
-        cql.append(") WHERE ");
-        cql.append(getFieldCql(key, false));
-        cql.append(" = ?;");
-        ++args;
-    }
+    cassandra::Query q(cql, values.size());
 
-    cassandra::Query q(cql, args);
-
+    // Bind values
     for (auto& v : values) {
         bindValue(q, std::move(v));
-    }
-
-    if (key.datatype != Datatype::Null) {
-        bindValue(q, key);
     }
 
     q.executeSync(connection);
 }
 
-void Cassandra::remove(std::string const& table_name, Value const& key) const {}
+void Cassandra::update(std::string const& t, Value const& key, ValueList values) const
+{
+    /*
+     * UPDATE keyspace.table_name SET field = ? [, field = ?] WHERE field = ?;
+     */
+    if (values.empty()) {
+        throw DbalException("Cannot update without any values");
+    }
 
-void Cassandra::retrieve(std::string const& table_name, Value const& key) const {}
+    auto cql = std::string("UPDATE ");
+    cql.append(getKeyspace()).append(".").append(t).append(" SET ");
+
+    bool first = true;
+    for (auto const& v : values) {
+        if (first) {
+            first = false;
+        } else {
+            cql.append(", ");
+        }
+        cql.append(getFieldCql(v, false)).append(" = ?");
+    }
+
+    cql.append(" WHERE ");
+    cql.append(getFieldCql(key, false));
+    cql.append(" = ?;");
+
+    cassandra::Query q(cql, values.size() + 1);
+
+    // Bind values
+    for (auto& v : values) {
+        bindValue(q, std::move(v));
+    }
+
+    // Bind PK
+    bindValue(q, key);
+
+    q.executeSync(connection);
+}
+
+void Cassandra::retrieve(std::string const& table_name, Value const& key) const
+{
+    auto cql = std::string("SELECT * FROM ");
+    cql.append(getKeyspace()).append(".").append(table_name).append(" WHERE ");
+    cql.append(getFieldCql(key)).append(" = ?;");
+
+    cassandra::Query q(cql, 1);
+    bindValue(q, key);
+
+    //return q.getResult(connection);
+}
+
+void Cassandra::retrieve(std::string const& table_name, Value const& key, FieldList fields) const {}
+
+void Cassandra::remove(std::string const& table_name, Value const& key) const {}
 
 void Cassandra::bindValue(cassandra::Query& q, Value v)
 {
