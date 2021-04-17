@@ -37,7 +37,7 @@ class ResultIterator : public std::iterator<std::input_iterator_tag, RowT>
     std::shared_ptr<CassIterator> result_iterator;
     mutable bool has_data;
 
-    friend class bes::dbal::wide::Result<ResultIterator, std::shared_ptr<CassResult>>;
+    friend class bes::dbal::wide::Result<ResultIterator, ResultDataType>;
 };
 
 }  // namespace bes::dbal::wide::cassandra

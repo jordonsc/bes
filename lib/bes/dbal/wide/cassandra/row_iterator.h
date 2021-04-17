@@ -5,6 +5,7 @@
 
 #include "../cell.tcc"
 #include "cassandra.h"
+#include "types.h"
 #include "utility.h"
 
 namespace bes::dbal::wide {
@@ -18,7 +19,7 @@ class RowIterator : public std::iterator<std::input_iterator_tag, Cell>
 {
    private:
     explicit RowIterator();
-    explicit RowIterator(CassRow const* row);
+    explicit RowIterator(RowDataType data);
 
    public:
     using iterator_category = std::input_iterator_tag;
@@ -39,10 +40,12 @@ class RowIterator : public std::iterator<std::input_iterator_tag, Cell>
    private:
     mutable bool has_data;
     CassRow const* row{};
+    ResultDataType result;
+    mutable size_t pos = 0;
     mutable std::shared_ptr<CassIterator> row_iterator;
     mutable std::shared_ptr<Cell> cell;
 
-    friend class bes::dbal::wide::Row<RowIterator, CassRow const*>;
+    friend class bes::dbal::wide::Row<RowIterator, RowDataType>;
 };
 
 }  // namespace bes::dbal::wide::cassandra

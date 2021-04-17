@@ -14,17 +14,56 @@
 
 namespace bes::dbal::wide {
 class Cassandra;
+using cassandra::Utility;
 
+/**
+ * Template specialisation for Result.rowCount()
+ */
 template <>
 inline size_t Result<cassandra::ResultIterator, std::shared_ptr<CassResult>>::rowCount() const
 {
     return cass_result_row_count(data.get());
 }
 
+/**
+ * Template specialisation for Row[]
+ */
 template <>
-inline Cell Row<cassandra::RowIterator, CassRow const*>::operator[](size_t index)
+inline Cell Row<cassandra::RowIterator, cassandra::RowDataType>::operator[](size_t index) const
 {
-    return cassandra::Utility::createCellFromColumn(cass_row_get_column(data, index));
+    if (data.first == nullptr) {
+        throw DbalException("Cannot index null row");
+    } else if (data.second == nullptr) {
+        throw DbalException("Cannot index row: missing result data");
+    }
+
+    auto const* col = cass_row_get_column(data.first, index);
+    if (cass_value_is_null(col)) {
+        throw NullValueException();
+    }
+
+    return Utility::createCellFromColumn(col, Utility::getFieldFromResult(data.second.get(), index));
+}
+
+/**
+ * Template specialisation for Row.value()
+ */
+template <>
+template <class ReturnType>
+ReturnType Row<cassandra::RowIterator, cassandra::RowDataType>::value(const std::string& ns,
+                                                                      const std::string& qualifier) const
+{
+    if (data.first == nullptr) {
+        throw DbalException("Cannot index null row");
+    }
+
+    std::string fqn = ns;
+    fqn += cassandra::NS_DELIMITER;
+    fqn.append(qualifier);
+
+    // Move-return the value from the Cell (nb: cell will not have real field data when pulling by name)
+    return cassandra::Utility::createCellFromColumn(cass_row_get_column_by_name(data.first, fqn.c_str()), Field())
+        .as<ReturnType>();
 }
 
 }  // namespace bes::dbal::wide

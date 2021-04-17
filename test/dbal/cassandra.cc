@@ -3,10 +3,16 @@
 
 #include <vector>
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-result"
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
+
 using namespace bes::dbal::wide;
 
 static char const* const TEST_SERVER = "localhost";
-static char const* const TEST_SERVER_VERSION = "3.11.10";
+static char const* const TEST_SERVER_VERSION = "3.";  // test server should be Cassandra 3.x
 static char const* const TEST_KEYSPACE = "test_ks";
 static char const* const TEST_TABLE = "test_table";
 
@@ -29,12 +35,12 @@ TEST(CassandraTest, ServerVersion)
 {
     // Constructed via connection rvalue copy
     auto db1 = Cassandra(cassandra::Connection(TEST_SERVER));
-    ASSERT_EQ(db1.getServerVersion(), TEST_SERVER_VERSION);
-    ASSERT_EQ(db1.getServerVersion(), TEST_SERVER_VERSION);  // ensure multiple queries work
+    ASSERT_EQ(db1.getServerVersion().substr(0, 2), TEST_SERVER_VERSION);
+    ASSERT_EQ(db1.getServerVersion().substr(0, 2), TEST_SERVER_VERSION);  // ensure consecutive queries work
 
     // Connection created by Cassandra class
     auto db2 = Cassandra(TEST_SERVER);
-    ASSERT_EQ(db1.getServerVersion(), TEST_SERVER_VERSION);
+    ASSERT_EQ(db1.getServerVersion().substr(0, 2), TEST_SERVER_VERSION);
 
     // Do some clean-up for subsequent tests, just in-case of bad/broken data from prior test runs
     db1.setKeyspace(TEST_KEYSPACE);
@@ -109,22 +115,75 @@ TEST(CassandraTest, RowCreation)
     db.createTestData(TEST_TABLE, 5, "bar");
     auto result = db.retrieveTestData(TEST_TABLE, 5);
 
-    ASSERT_EQ(result.rowCount(), 1);
+    EXPECT_EQ(result.rowCount(), 1);
     ASSERT_EQ(result.columnCount(), 3);
 
     // NB: PK then lexicographical ordering (I'm not sure how reliable this is)
-    ASSERT_EQ(result.getColumn(0).ns, "test");
-    ASSERT_EQ(result.getColumn(0).qualifier, "pk");
-    ASSERT_EQ(result.getColumn(0).datatype, Datatype::Int32);
+    EXPECT_EQ(result.getColumn(0).ns, "test");
+    EXPECT_EQ(result.getColumn(0).qualifier, "pk");
+    EXPECT_EQ(result.getColumn(0).datatype, Datatype::Int32);
 
-    ASSERT_EQ(result.getColumn(1).ns, "test");
-    ASSERT_EQ(result.getColumn(1).qualifier, "flt");
-    ASSERT_EQ(result.getColumn(1).datatype, Datatype::Float32);
+    EXPECT_EQ(result.getColumn(1).ns, "test");
+    EXPECT_EQ(result.getColumn(1).qualifier, "flt");
+    EXPECT_EQ(result.getColumn(1).datatype, Datatype::Float32);
 
-    ASSERT_EQ(result.getColumn(2).ns, "test");
-    ASSERT_EQ(result.getColumn(2).qualifier, "str");
-    ASSERT_EQ(result.getColumn(2).datatype, Datatype::Text);
+    EXPECT_EQ(result.getColumn(2).ns, "test");
+    EXPECT_EQ(result.getColumn(2).qualifier, "str");
+    EXPECT_EQ(result.getColumn(2).datatype, Datatype::Text);
 
+    // Using iterator
+    size_t rows = 0;
+    for (auto const& row : result) {
+        ++rows;
 
+        // lvalue (copy) from Cell
+        auto pk = row[0];
+        EXPECT_EQ(pk.getField().ns, "test");
+        EXPECT_EQ(pk.getField().qualifier, "pk");
+        EXPECT_EQ(pk.getField().datatype, Datatype::Int32);
+        EXPECT_EQ(pk.as<Int32>(), 5);
 
+        // rvalue (move) fro Cell
+        EXPECT_EQ(std::move(pk).as<Int32>(), 5);
+
+        // rvalue (entire row)
+        EXPECT_EQ(row[0].as<Int32>(), 5);
+        EXPECT_THROW(row[1].as<Float32>(), bes::dbal::NullValueException);
+        EXPECT_EQ(row[2].as<Text>(), "bar");
+    }
+    EXPECT_EQ(rows, 1);
+
+    // Using first-row
+    size_t cols = 0;
+    auto first_row = *(result.begin());
+
+    // Value by name, unordered
+    EXPECT_EQ(first_row.value<Text>("test", "str"), "bar");
+    EXPECT_THROW(first_row.value<Float32>("test", "flt"), bes::dbal::NullValueException);
+    EXPECT_EQ(first_row.value<Int32>("test", "pk"), 5);
+
+    // Using a column iterator
+    for (auto const& cell : first_row) {
+        ++cols;
+        auto const& f = cell.getField();
+        EXPECT_EQ(f.ns, "test");
+
+        if (f.qualifier == "pk") {
+            ASSERT_EQ(f.datatype, Datatype::Int32);
+            EXPECT_EQ(cell.as<Int32>(), 5);
+        } else if (f.qualifier == "flt") {
+            ASSERT_EQ(f.datatype, Datatype::Null);
+            EXPECT_THROW(cell.as<Float32>(), bes::dbal::NullValueException);
+        } else if (f.qualifier == "str") {
+            ASSERT_EQ(f.datatype, Datatype::Text);
+            EXPECT_EQ(cell.as<Text>(), "bar");
+        } else {
+            EXPECT_EQ(f.qualifier, "Qualifier did not match any expected fields");
+        }
+    }
+
+    EXPECT_EQ(cols, 3);
 }
+
+#pragma clang diagnostic pop
+#pragma GCC diagnostic pop

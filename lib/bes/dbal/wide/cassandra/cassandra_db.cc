@@ -3,6 +3,8 @@
 #include <shared_mutex>
 #include <utility>
 
+#include "types.h"
+
 using namespace bes::dbal::wide;
 using cassandra::Connection;
 
@@ -203,7 +205,8 @@ void Cassandra::dropTable(std::string const& table_name, bool if_exists) const
 std::string Cassandra::getFieldCql(Field const& f)
 {
     std::string r = f.ns;
-    r.append("_").append(f.qualifier).append(" ").append(fieldType(f.datatype));
+    r += cassandra::NS_DELIMITER;
+    r.append(f.qualifier).append(" ").append(fieldType(f.datatype));
 
     return r;
 }

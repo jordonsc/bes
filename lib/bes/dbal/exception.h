@@ -20,6 +20,19 @@ class NoRecordException : public DbalException
     using DbalException::DbalException;
 };
 
+class NullValueException : public DbalException
+{
+    using DbalException::DbalException;
+
+   public:
+    NullValueException() : DbalException("Value is null") {}
+};
+
+class OutOfRangeException : public DbalException
+{
+    using DbalException::DbalException;
+};
+
 }  // namespace bes::dbal
 
 #endif

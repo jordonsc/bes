@@ -18,8 +18,10 @@ class Row
     [[nodiscard]] IteratorT begin() const;
     [[nodiscard]] IteratorT end() const;
 
-    Cell operator[](size_t);
-    Cell operator[](std::string const&);
+    [[nodiscard]] Cell operator[](size_t) const;
+
+    template <class ReturnType>
+    [[nodiscard]] ReturnType value(std::string const& ns, std::string const& qualifier) const;
 
    private:
     DataT data;
@@ -42,15 +44,16 @@ inline IteratorT Row<IteratorT, DataT>::end() const
 }
 
 template <class IteratorT, class DataT>
-Cell Row<IteratorT, DataT>::operator[](size_t)
+Cell Row<IteratorT, DataT>::operator[](size_t) const
 {
     throw bes::dbal::DbalException("Cannot index row on unknown template type");
 }
 
 template <class IteratorT, class DataT>
-Cell Row<IteratorT, DataT>::operator[](const std::string&)
+template <class ReturnType>
+ReturnType Row<IteratorT, DataT>::value(std::string const& ns, std::string const& qualifier) const
 {
-    throw bes::dbal::DbalException("Cannot index row on unknown template type");
+    throw bes::dbal::DbalException("Cannot discern value of unknown row template");
 }
 
 }  // namespace bes::dbal::wide

@@ -10,65 +10,25 @@ std::vector<Field> Utility::getColumnsForResult(CassResult const* result)
 {
     auto col_count = cass_result_column_count(result);
     std::vector<Field> fields;
+    fields.reserve(col_count);
 
     for (size_t col_idx = 0; col_idx < col_count; ++col_idx) {
-        Field f;
-
-        char const* col_name;
-        size_t col_name_len;
-        cass_result_column_name(result, col_idx, &col_name, &col_name_len);
-
-        // The cass column name isn't null-terminated, which makes strchr() dangerous. Instead we'll convert to a C++
-        // string and use the class functions.
-        auto full_name = std::string(col_name, col_name_len);
-
-        auto pos = full_name.find('_');
-        if (pos == std::string::npos) {
-            // This shouldn't happen, all DBAL-controlled fields use the underscore to split namespace/qualifier.
-            // Might happen if we've retried a non-DBAL created field. We'll just put the value in the qualifier and
-            // leave the namespace blank.
-            f.qualifier = full_name;
-        } else {
-            f.ns = full_name.substr(0, pos);
-            f.qualifier = full_name.substr(pos + 1);
-        }
-
-        switch (cass_result_column_type(result, col_idx)) {
-            default:
-                throw bes::dbal::DbalException("Unknown or unsupported Cassandra value type");
-            case CASS_VALUE_TYPE_ASCII:
-            case CASS_VALUE_TYPE_VARCHAR:
-            case CASS_VALUE_TYPE_TEXT:
-            case CASS_VALUE_TYPE_BLOB:
-                f.datatype = Datatype::Text;
-                break;
-            case CASS_VALUE_TYPE_BOOLEAN:
-                f.datatype = Datatype::Boolean;
-                break;
-            case CASS_VALUE_TYPE_INT:
-                f.datatype = Datatype::Int32;
-                break;
-            case CASS_VALUE_TYPE_BIGINT:
-                f.datatype = Datatype::Int64;
-                break;
-            case CASS_VALUE_TYPE_FLOAT:
-                f.datatype = Datatype::Float32;
-                break;
-            case CASS_VALUE_TYPE_DOUBLE:
-            case CASS_VALUE_TYPE_DECIMAL:
-                f.datatype = Datatype::Float64;
-                break;
-        }
-
-        fields.push_back(std::move(f));
+        fields.push_back(getFieldFromResult(result, col_idx));
     }
 
     return fields;
 }
 
-Cell Utility::createCellFromColumn(CassValue const* column)
+Cell Utility::createCellFromColumn(CassValue const* column, Field&& f)
 {
-    Field f;
+    if (column == nullptr) {
+        throw bes::dbal::OutOfRangeException("Column out of bounds");
+    }
+
+    if (cass_value_is_null(column)) {
+        f.datatype = Datatype::Null;
+        return Cell(std::move(f), std::make_any<char>(0));
+    }
 
     switch (cass_value_type(column)) {
         default:
@@ -109,4 +69,57 @@ Cell Utility::createCellFromColumn(CassValue const* column)
             cass_value_get_double(column, &dbl);
             return Cell(std::move(f), std::make_any<double>(dbl));
     }
+}
+
+Field Utility::getFieldFromResult(CassResult const* result, size_t index)
+{
+    Field f;
+
+    char const* col_name;
+    size_t col_name_len;
+    cass_result_column_name(result, index, &col_name, &col_name_len);
+
+    // The cass column name isn't null-terminated, which makes strchr() dangerous. Instead we'll convert to a C++
+    // string and use the class functions.
+    auto full_name = std::string(col_name, col_name_len);
+
+    auto pos = full_name.find('_');
+    if (pos == std::string::npos) {
+        // This shouldn't happen, all DBAL-controlled fields use the underscore to split namespace/qualifier.
+        // Might happen if we've retried a non-DBAL created field. We'll just put the value in the qualifier and
+        // leave the namespace blank.
+        f.qualifier = full_name;
+    } else {
+        f.ns = full_name.substr(0, pos);
+        f.qualifier = full_name.substr(pos + 1);
+    }
+
+    switch (cass_result_column_type(result, index)) {
+        default:
+            throw bes::dbal::DbalException("Unknown or unsupported Cassandra value type");
+        case CASS_VALUE_TYPE_ASCII:
+        case CASS_VALUE_TYPE_VARCHAR:
+        case CASS_VALUE_TYPE_TEXT:
+        case CASS_VALUE_TYPE_BLOB:
+            f.datatype = Datatype::Text;
+            break;
+        case CASS_VALUE_TYPE_BOOLEAN:
+            f.datatype = Datatype::Boolean;
+            break;
+        case CASS_VALUE_TYPE_INT:
+            f.datatype = Datatype::Int32;
+            break;
+        case CASS_VALUE_TYPE_BIGINT:
+            f.datatype = Datatype::Int64;
+            break;
+        case CASS_VALUE_TYPE_FLOAT:
+            f.datatype = Datatype::Float32;
+            break;
+        case CASS_VALUE_TYPE_DOUBLE:
+        case CASS_VALUE_TYPE_DECIMAL:
+            f.datatype = Datatype::Float64;
+            break;
+    }
+
+    return f;
 }

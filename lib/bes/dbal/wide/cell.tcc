@@ -3,6 +3,7 @@
 #include <any>
 #include <string>
 
+#include "../exception.h"
 #include "field.h"
 
 namespace bes::dbal::wide {
@@ -35,14 +36,20 @@ Field const& Cell::getField() const
 template <class T>
 T Cell::as() const&
 {
+    if (field.datatype == Datatype::Null) {
+        throw bes::dbal::NullValueException();
+    }
+
     return std::any_cast<T>(data);
 }
 
 template <class T>
 T&& Cell::as() &&
 {
-    return std::any_cast<T>(data);
+    if (field.datatype == Datatype::Null) {
+        throw bes::dbal::NullValueException();
+    }
+    return std::any_cast<T&&>(std::move(data));
 }
 
 }  // namespace bes::dbal::wide
-

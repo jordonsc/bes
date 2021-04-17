@@ -14,10 +14,15 @@ class Row;
 
 namespace bes::dbal::wide::cassandra {
 
+static char const NS_DELIMITER = '_';
+
 class ResultIterator;
 class RowIterator;
 
-using ResultT = bes::dbal::wide::Result<ResultIterator, std::shared_ptr<CassResult>>;
-using RowT = bes::dbal::wide::Row<RowIterator, CassRow const*>;
+using ResultDataType = std::shared_ptr<CassResult>;
+using RowDataType = std::pair<CassRow const*, ResultDataType>;
+
+using ResultT = bes::dbal::wide::Result<ResultIterator, ResultDataType>;
+using RowT = bes::dbal::wide::Row<RowIterator, RowDataType>;
 
 }  // namespace bes::dbal::wide::cassandra

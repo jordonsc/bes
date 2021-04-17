@@ -1,7 +1,5 @@
 #include "result_iterator.h"
 
-#include "../../exception.h"
-
 using namespace bes::dbal::wide::cassandra;
 
 ResultIterator::ResultIterator() : result(nullptr), has_data(false){};
@@ -54,7 +52,7 @@ ResultIterator const& ResultIterator::operator++() const
     has_data = cass_iterator_next(result_iterator.get());
 
     if (has_data) {
-        row_ptr = std::make_shared<RowT>(cass_iterator_get_row(result_iterator.get()));
+        row_ptr = std::make_shared<RowT>(std::make_pair(cass_iterator_get_row(result_iterator.get()), result));
     } else {
         row_ptr.reset();
     }

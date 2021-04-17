@@ -1,13 +1,15 @@
 #include "row_iterator.h"
 
-#include "../../exception.h"
-
 using namespace bes::dbal::wide::cassandra;
 
-RowIterator::RowIterator() : has_data(false), row(nullptr) {}
+RowIterator::RowIterator() : has_data(false), row(nullptr), result(nullptr) {}
 
-RowIterator::RowIterator(CassRow const* r) : has_data(true), row(r)
+RowIterator::RowIterator(RowDataType d) : has_data(true), row(d.first)
 {
+    // I don't know why, but putting this in the constructor initialization args is making Clion think the deleter in
+    // the below shared_ptr is an infinite loop.
+    result = std::move(d.second);
+
     row_iterator.reset(cass_iterator_from_row(row), [](CassIterator* item) {
         cass_iterator_free(item);
     });
@@ -46,7 +48,9 @@ RowIterator const& RowIterator::operator++() const
     has_data = cass_iterator_next(row_iterator.get());
 
     if (has_data) {
-        cell = std::make_shared<Cell>(Utility::createCellFromColumn(cass_iterator_get_column(row_iterator.get())));
+        cell = std::make_shared<Cell>(Utility::createCellFromColumn(cass_iterator_get_column(row_iterator.get()),
+                                                                    Utility::getFieldFromResult(result.get(), pos)));
+        ++pos;
     } else {
         cell.reset();
     }

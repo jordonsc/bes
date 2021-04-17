@@ -23,7 +23,8 @@ class Utility
     }
 
     static std::vector<Field> getColumnsForResult(CassResult const* result);
-    static Cell createCellFromColumn(CassValue const* column);
+    static Cell createCellFromColumn(CassValue const* column, Field&& f);
+    static Field getFieldFromResult(CassResult const* result, size_t index);
 };
 
 }  // namespace bes::dbal::wide::cassandra
