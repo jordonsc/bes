@@ -4,12 +4,18 @@
 
 using namespace bes::dbal::wide::cassandra;
 
-Connection::Connection(std::string hosts, bool own_logging) : hosts(std::move(hosts))
+Connection::Connection(Context const& ctx, bool own_logging)
 {
     if (own_logging) {
         // Pipe the Cassandra driver logging into the Bes logger
         cass_log_set_level(CASS_LOG_TRACE);
         cass_log_set_callback(Connection::driverLog, this->log_data);
+    }
+
+    try {
+        hosts = ctx.getParameter("hosts");
+    } catch (OutOfRangeException const&) {
+        throw DbalException("Cassandra connection requires a 'host' context parameter");
     }
 
     // Build new cluster under RAII control

@@ -16,12 +16,8 @@ static char const* const KEYSPACE_PARAM = "keyspace";
 class Cassandra : public WideColumnDb
 {
    public:
-    explicit Cassandra(cassandra::Connection&&);
-    explicit Cassandra(std::string hosts);
-    Cassandra(cassandra::Connection&&, Context&& c);
-    Cassandra(std::string hosts, Context&& c);
-    Cassandra(cassandra::Connection&&, Context const& c);
-    Cassandra(std::string hosts, Context const& c);
+    Cassandra() = delete;
+    explicit Cassandra(Context c);
 
     [[nodiscard]] std::string getServerVersion() const;
     void setKeyspace(std::string const&);
@@ -33,8 +29,13 @@ class Cassandra : public WideColumnDb
     void createTable(std::string const& table_name, Schema const& schema, bool if_not_exists) const override;
     void dropTable(std::string const& table_name, bool if_exists) const override;
 
-    void createTestData(std::string const& tbl, int a, std::string const& b);
-    cassandra::ResultT retrieveTestData(std::string const& tbl, int a);
+    void update(std::string const& table_name, ValueList values) const override;
+    void update(std::string const& table_name, Value const& key, ValueList values) const override;
+    void remove(std::string const& table_name, Value const& key) const override;
+    void retrieve(const std::string& table_name, const Value& key) const override;
+
+    void createTestData(std::string const& tbl, int a, std::string const& b) const;
+    cassandra::ResultT retrieveTestData(std::string const& tbl, int a) const;
 
    private:
     mutable std::shared_mutex ks_mutex;
@@ -51,9 +52,18 @@ class Cassandra : public WideColumnDb
     [[nodiscard]] static const char* fieldType(Datatype const& dt);
 
     /**
-     * Will return the CQL string for a field.
+     * Will return the CQL string for a field or value.
+     *
+     * Field: namespace_qualifier FIELD_TYPE
+     * Value: namespace_qualifier
      */
-    [[nodiscard]] static std::string getFieldCql(Field const& f);
+    [[nodiscard]] static std::string getFieldCql(Field const& f, bool with_field_type = false);
+    [[nodiscard]] static std::string getFieldCql(Value const& v, bool with_field_type = false);
+
+    /**
+     * Consumes Value and binds it to the Query.
+     */
+    static void bindValue(cassandra::Query& q, Value v);
 
     /**
      * Will raise a NotConnectedException if there is no connection to the server cluster.

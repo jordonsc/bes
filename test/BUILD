@@ -55,6 +55,7 @@ cc_test(
     size = "small",
     srcs = [
         "dbal/cassandra.cc",
+        "dbal/context.cc",
         "test.cc",
     ],
     copts = COPTS,

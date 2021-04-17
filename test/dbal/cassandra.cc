@@ -3,12 +3,6 @@
 
 #include <vector>
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-result"
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-result"
-
 using namespace bes::dbal::wide;
 
 static char const* const TEST_SERVER = "localhost";
@@ -16,7 +10,7 @@ static char const* const TEST_SERVER_VERSION = "3.";  // test server should be C
 static char const* const TEST_KEYSPACE = "test_ks";
 static char const* const TEST_TABLE = "test_table";
 
-Schema CreateTestSchema()
+static Schema createTestSchema()
 {
     std::vector<Field> fields;
     fields.push_back({Datatype::Text, "test", "str"});
@@ -25,32 +19,37 @@ Schema CreateTestSchema()
     return Schema({Datatype::Int32, "test", "pk"}, std::move(fields));
 }
 
+static bes::dbal::Context createContext()
+{
+    auto ctx = bes::dbal::Context();
+    ctx.setParameter("hosts", TEST_SERVER);
+    ctx.setParameter(cassandra::KEYSPACE_PARAM, TEST_KEYSPACE);
+
+    return ctx;
+}
+
 TEST(CassandraTest, Connection)
 {
-    auto con = bes::dbal::wide::cassandra::Connection(TEST_SERVER);
+    auto con = bes::dbal::wide::cassandra::Connection(createContext());
     ASSERT_TRUE(con.isConnected());
 }
 
 TEST(CassandraTest, ServerVersion)
 {
     // Constructed via connection rvalue copy
-    auto db1 = Cassandra(cassandra::Connection(TEST_SERVER));
-    ASSERT_EQ(db1.getServerVersion().substr(0, 2), TEST_SERVER_VERSION);
-    ASSERT_EQ(db1.getServerVersion().substr(0, 2), TEST_SERVER_VERSION);  // ensure consecutive queries work
-
-    // Connection created by Cassandra class
-    auto db2 = Cassandra(TEST_SERVER);
-    ASSERT_EQ(db1.getServerVersion().substr(0, 2), TEST_SERVER_VERSION);
+    auto db = Cassandra(createContext());
+    ASSERT_EQ(db.getServerVersion().substr(0, 2), TEST_SERVER_VERSION);
+    ASSERT_EQ(db.getServerVersion().substr(0, 2), TEST_SERVER_VERSION);  // ensure consecutive queries work
 
     // Do some clean-up for subsequent tests, just in-case of bad/broken data from prior test runs
-    db1.setKeyspace(TEST_KEYSPACE);
-    db1.dropTable(TEST_TABLE, true);
-    db1.dropKeyspace(TEST_KEYSPACE, true);
+    db.setKeyspace(TEST_KEYSPACE);
+    db.dropTable(TEST_TABLE, true);
+    db.dropKeyspace(TEST_KEYSPACE, true);
 }
 
 TEST(CassandraTest, KeyspaceCreation)
 {
-    auto db = Cassandra(cassandra::Connection(TEST_SERVER));
+    auto db = Cassandra(createContext());
     db.setKeyspace(TEST_KEYSPACE);
 
     // Remove any traces of previous runs
@@ -78,8 +77,7 @@ TEST(CassandraTest, KeyspaceCreation)
 TEST(CassandraTest, TableCreation)
 {
     Context ctx;
-    ctx.SetParameter(cassandra::KEYSPACE_PARAM, TEST_KEYSPACE);
-    auto db = Cassandra(cassandra::Connection(TEST_SERVER), std::move(ctx));
+    auto db = Cassandra(createContext());
     db.createKeyspace(cassandra::Keyspace(TEST_KEYSPACE), true);
 
     std::vector<Field> fields;
@@ -105,12 +103,12 @@ TEST(CassandraTest, TableCreation)
 
 TEST(CassandraTest, RowCreation)
 {
-    auto db = Cassandra(TEST_SERVER);
+    auto db = Cassandra(createContext());
     db.setKeyspace(TEST_KEYSPACE);
 
     db.createKeyspace(cassandra::Keyspace(TEST_KEYSPACE), true);
     db.dropTable(TEST_TABLE, true);
-    db.createTable(TEST_TABLE, CreateTestSchema(), false);
+    db.createTable(TEST_TABLE, createTestSchema(), false);
 
     db.createTestData(TEST_TABLE, 5, "bar");
     auto result = db.retrieveTestData(TEST_TABLE, 5);
@@ -153,9 +151,12 @@ TEST(CassandraTest, RowCreation)
     }
     EXPECT_EQ(rows, 1);
 
-    // Using first-row
+    // Using getFirstRow()
     size_t cols = 0;
-    auto first_row = *(result.begin());
+    auto first_row = result.getFirstRow();
+
+    // Value by index
+    EXPECT_EQ(first_row[0].as<Int32>(), 5);
 
     // Value by name, unordered
     EXPECT_EQ(first_row.value<Text>("test", "str"), "bar");
@@ -184,6 +185,3 @@ TEST(CassandraTest, RowCreation)
 
     EXPECT_EQ(cols, 3);
 }
-
-#pragma clang diagnostic pop
-#pragma GCC diagnostic pop

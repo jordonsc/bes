@@ -21,6 +21,8 @@ class Result
     [[nodiscard]] Field const& getColumn(size_t n) const;
     [[nodiscard]] std::vector<Field> const& getColumns() const;
 
+    [[nodiscard]] auto getFirstRow() -> decltype(*begin()) const;
+
    private:
     DataT data;
     std::vector<Field> fields;
@@ -64,6 +66,16 @@ template <class IteratorT, class DataT>
 size_t Result<IteratorT, DataT>::columnCount() const
 {
     return fields.size();
+}
+
+template <class IteratorT, class DataT>
+auto Result<IteratorT, DataT>::getFirstRow() -> decltype(*begin()) const
+{
+    if (rowCount() == 0) {
+        throw NoRecordException("Result set contains no records");
+    }
+
+    return *begin();
 }
 
 }  // namespace bes::dbal::wide

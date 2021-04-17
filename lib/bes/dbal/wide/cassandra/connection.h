@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 
+#include "../../context.h"
 #include "cassandra.h"
 
 namespace bes::dbal::wide::cassandra {
@@ -18,7 +19,7 @@ class Connection
      * By default, the Cassandra driver dumps to the console indiscriminately. If you opt to `own_logging`, we'll pipe
      * this into the Bes log system instead.
      */
-    explicit Connection(std::string hosts, bool own_logging = true);
+    explicit Connection(Context const& ctx, bool own_logging = true);
 
     [[nodiscard]] std::shared_ptr<CassSession> getSession() const;
     [[nodiscard]] CassSession* getSessionPtr() const;

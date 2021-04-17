@@ -8,61 +8,16 @@
 using namespace bes::dbal::wide;
 using cassandra::Connection;
 
-Cassandra::Cassandra(cassandra::Connection&& connection) : connection(connection) {}
-Cassandra::Cassandra(std::string hosts) : connection(Connection(std::move(hosts))) {}
-
-Cassandra::Cassandra(cassandra::Connection&& con, Context&& c) : WideColumnDb(c), connection(std::move(con)) {}
-Cassandra::Cassandra(std::string hosts, Context&& c) : WideColumnDb(c), connection(Connection(std::move(hosts))) {}
-
-Cassandra::Cassandra(cassandra::Connection&& con, Context const& c) : WideColumnDb(c), connection(std::move(con)) {}
-Cassandra::Cassandra(std::string hosts, Context const& c) : WideColumnDb(c), connection(Connection(std::move(hosts))) {}
+Cassandra::Cassandra(Context c) : WideColumnDb(std::move(c)), connection(getContext()) {}
 
 std::string Cassandra::getServerVersion() const
 {
     validateConnection();
 
-    // Build statement and execute query
-    CassStatement* statement = cass_statement_new("SELECT release_version FROM system.local", 0);
-    CassFuture* query_future = cass_session_execute(connection.getSessionPtr(), statement);
-
-    try {
-        if (cass_future_error_code(query_future) == CASS_OK) {
-            // Retrieve result set and get the first row
-            const CassResult* result = cass_future_get_result(query_future);
-            const CassRow* row = cass_result_first_row(result);
-
-            if (row) {
-                const CassValue* value = cass_row_get_column_by_name(row, "release_version");
-                const char* release_version;
-                size_t release_version_length;
-                cass_value_get_string(value, &release_version, &release_version_length);
-
-                auto out = std::string(release_version, release_version_length);
-
-                cass_statement_free(statement);
-                cass_result_free(result);
-                cass_future_free(query_future);
-
-                return out;
-            } else {
-                cass_statement_free(statement);
-                cass_result_free(result);
-                cass_future_free(query_future);
-
-                return "Unknown (no row)";
-            }
-
-        } else {
-            const char* message;
-            size_t message_length;
-            cass_future_error_message(query_future, &message, &message_length);
-            throw DbalException(std::string(message, message_length));
-        }
-
-    } catch (std::exception const& e) {
-        cass_future_free(query_future);
-        throw DbalException(e.what());
-    }
+    return cassandra::Query("SELECT release_version FROM system.local")
+        .getResult(connection)
+        .getFirstRow()[0]
+        .as<std::string>();
 }
 
 void Cassandra::setKeyspace(std::string const& value)
@@ -78,7 +33,7 @@ std::string const& Cassandra::getKeyspace() const
     if (keyspace.empty()) {
         // Keyspace not defined, will need to check if it exists in the context
         try {
-            auto const& ks = context.GetParameter(cassandra::KEYSPACE_PARAM);
+            auto const& ks = getContext().getParameter(cassandra::KEYSPACE_PARAM);
             keyspace = ks;
             return keyspace;
         } catch (std::exception const&) {
@@ -159,10 +114,10 @@ void Cassandra::createTable(std::string const& table_name, Schema const& schema,
         .append(".")
         .append(table_name)
         .append(" (")
-        .append(getFieldCql(schema.primary_key))
+        .append(getFieldCql(schema.primary_key, true))
         .append(" PRIMARY KEY");
     for (auto const& f : schema.fields) {
-        cql.append(", ").append(getFieldCql(f));
+        cql.append(", ").append(getFieldCql(f, true));
     }
     cql.append(");");
 
@@ -180,6 +135,139 @@ void Cassandra::dropTable(std::string const& table_name, bool if_exists) const
 
     cassandra::Query q(cql);
     q.executeSync(connection);
+}
+
+void Cassandra::validateConnection() const
+{
+    if (!connection.isConnected()) {
+        throw NotConnectedException("Not connected to server");
+    }
+}
+
+/**
+ * Test function.
+ *
+ * @deprecated delete me.
+ */
+void Cassandra::createTestData(std::string const& tbl, int a, std::string const& b) const
+{
+    ValueList v;
+    v.push_back(Value("test", "str", b));
+    
+    // Tests expect a null value for `flt`
+    //v.push_back(Value("test", "flt", (float)123.456));
+
+    v.push_back(Value("test", "pk", a));
+
+    update(tbl, std::move(v));
+}
+
+/**
+ * Test function.
+ *
+ * @deprecated delete me.
+ */
+cassandra::ResultT Cassandra::retrieveTestData(std::string const& tbl, int a) const
+{
+    auto cql = std::string("SELECT * FROM ");
+    cql.append(getKeyspace()).append(".").append(tbl).append(" WHERE test_pk = ?;");
+
+    cassandra::Query q(cql, 1);
+    q.bind(a);
+
+    return q.getResult(connection);
+}
+
+void Cassandra::update(std::string const& t, ValueList values) const
+{
+    update(t, Value(), std::move(values));
+}
+
+void Cassandra::update(std::string const& t, Value const& key, ValueList values) const
+{
+    /*
+     * INSERT INTO keyspace.table_name (field [, field]) VALUES (? [, ?])
+     * WHERE field = ?;
+     */
+    if (values.empty()) {
+        throw DbalException("Cannot update without any values");
+    }
+
+    size_t args = values.size();
+
+    auto cql = std::string("INSERT INTO ");
+    cql.append(getKeyspace()).append(".").append(t).append(" (");
+
+    bool first = true;
+    for (auto const& v : values) {
+        if (first) {
+            first = false;
+        } else {
+            cql.append(", ");
+        }
+        cql.append(getFieldCql(v, false));
+    }
+    cql.append(") VALUES (?");
+    for (size_t i = 1; i < values.size(); ++i) {
+        cql.append(", ?");
+    }
+
+    if (key.datatype == Datatype::Null) {
+        // No PK (typical insert)
+        cql.append(");");
+    } else {
+        // PK - include a where clause
+        cql.append(") WHERE ");
+        cql.append(getFieldCql(key, false));
+        cql.append(" = ?;");
+        ++args;
+    }
+
+    cassandra::Query q(cql, args);
+
+    for (auto& v : values) {
+        bindValue(q, std::move(v));
+    }
+
+    if (key.datatype != Datatype::Null) {
+        bindValue(q, key);
+    }
+
+    q.executeSync(connection);
+}
+
+void Cassandra::remove(std::string const& table_name, Value const& key) const {}
+
+void Cassandra::retrieve(std::string const& table_name, Value const& key) const {}
+
+void Cassandra::bindValue(cassandra::Query& q, Value v)
+{
+    switch (v.datatype) {
+        default:
+            throw DbalException("Unknown datatype in update request (" + v.ns + cassandra::NS_DELIMITER + v.qualifier +
+                                ")");
+        case Datatype::Null:
+            q.bind();
+            break;
+        case Datatype::Text:
+            q.bind(std::move(std::any_cast<Text&&>(std::move(v.value))));
+            break;
+        case Datatype::Boolean:
+            q.bind(std::any_cast<Boolean>(v.value));
+            break;
+        case Datatype::Int32:
+            q.bind(std::any_cast<Int32>(v.value));
+            break;
+        case Datatype::Int64:
+            q.bind(std::any_cast<Int64>(v.value));
+            break;
+        case Datatype::Float32:
+            q.bind(std::any_cast<Float32>(v.value));
+            break;
+        case Datatype::Float64:
+            q.bind(std::any_cast<Float64>(v.value));
+            break;
+    }
 }
 
 [[nodiscard]] const char* Cassandra::fieldType(Datatype const& dt)
@@ -202,51 +290,42 @@ void Cassandra::dropTable(std::string const& table_name, bool if_exists) const
     }
 }
 
-std::string Cassandra::getFieldCql(Field const& f)
+std::string Cassandra::getFieldCql(Field const& f, bool with_field_type)
 {
-    std::string r = f.ns;
-    r += cassandra::NS_DELIMITER;
-    r.append(f.qualifier).append(" ").append(fieldType(f.datatype));
+    std::string r;
+    if (!f.ns.empty()) {
+        r.append(f.ns);
+        r += cassandra::NS_DELIMITER;
+    }
+    r.append(f.qualifier);
+
+    if (f.qualifier.empty()) {
+        throw DbalException("Missing field qualifier");
+    }
+
+    if (with_field_type) {
+        r.append(" ").append(fieldType(f.datatype));
+    }
 
     return r;
 }
 
-void Cassandra::validateConnection() const
+std::string Cassandra::getFieldCql(Value const& v, bool with_field_type)
 {
-    if (!connection.isConnected()) {
-        throw NotConnectedException("Not connected to server");
+    std::string r;
+    if (!v.ns.empty()) {
+        r.append(v.ns);
+        r += cassandra::NS_DELIMITER;
     }
-}
+    r.append(v.qualifier);
 
-/**
- * Test function.
- *
- * @deprecated delete me.
- */
-void Cassandra::createTestData(std::string const& tbl, int a, std::string const& b)
-{
-    auto cql = std::string("INSERT INTO ");
-    cql.append(getKeyspace()).append(".").append(tbl).append(" (test_pk, test_str) VALUES (?, ?);");
+    if (v.qualifier.empty()) {
+        throw DbalException("Missing field qualifier");
+    }
 
-    cassandra::Query q(cql, 2);
-    q.bind<int32_t>(a);
-    q.bind<std::string>(b);
+    if (with_field_type) {
+        r.append(" ").append(fieldType(v.datatype));
+    }
 
-    q.executeSync(connection);
-}
-
-/**
- * Test function.
- *
- * @deprecated delete me.
- */
-cassandra::ResultT Cassandra::retrieveTestData(std::string const& tbl, int a)
-{
-    auto cql = std::string("SELECT * FROM ");
-    cql.append(getKeyspace()).append(".").append(tbl).append(" WHERE test_pk = ?;");
-
-    cassandra::Query q(cql, 1);
-    q.bind<int32_t>(a);
-
-    return q.getResult(connection);
+    return r;
 }

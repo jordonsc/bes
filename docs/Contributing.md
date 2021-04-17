@@ -35,3 +35,18 @@ Use `#pragma once`.
 
 > Why? Simplicity and to avoid copy/paste errors.  
 > All supported compilers & platforms safely support this feature. 
+
+Modifier Positioning
+--------------------
+The `const` modifier should always be to the right of the subject so that:
+* All `const` references are consistent
+* All modifiers (const or pointer/reference) are grouped together
+
+Example:
+
+    std::string const& getSomeValue(MyClass const* ptr) const;
+    
+Misc
+----
+* Always use `[[nodiscard]]` where appropriate
+* Always use `explicit` on single-argument constructors (when not creating type-conversion constructors)

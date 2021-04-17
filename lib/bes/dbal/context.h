@@ -9,10 +9,13 @@ namespace bes::dbal {
 class Context
 {
    public:
-    [[nodiscard]] bool HasParameter(std::string const&) const;
-    [[nodiscard]] std::string const& GetParameter(std::string const&) const;
-    [[nodiscard]] std::string const& GetOr(std::string const&, std::string const&) const;
-    void SetParameter(std::string const& key, std::string value);
+    Context() = default;
+    explicit Context(std::unordered_map<std::string, std::string> params);
+
+    [[nodiscard]] bool hasParameter(std::string const&) const;
+    [[nodiscard]] std::string const& getParameter(std::string const&) const;
+    [[nodiscard]] std::string const& getOr(std::string const&, std::string const&) const;
+    void setParameter(std::string const& key, std::string value);
 
    protected:
     std::unordered_map<std::string, std::string> params;

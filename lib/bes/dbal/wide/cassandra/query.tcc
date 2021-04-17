@@ -1,5 +1,4 @@
-#ifndef BES_DBAL_WIDE_CASSANDRA_QUERY_H
-#define BES_DBAL_WIDE_CASSANDRA_QUERY_H
+#pragma once
 
 #include <string>
 #include <vector>
@@ -50,8 +49,8 @@ inline Cell Row<cassandra::RowIterator, cassandra::RowDataType>::operator[](size
  */
 template <>
 template <class ReturnType>
-ReturnType Row<cassandra::RowIterator, cassandra::RowDataType>::value(const std::string& ns,
-                                                                      const std::string& qualifier) const
+inline ReturnType Row<cassandra::RowIterator, cassandra::RowDataType>::value(const std::string& ns,
+                                                                             const std::string& qualifier) const
 {
     if (data.first == nullptr) {
         throw DbalException("Cannot index null row");
@@ -81,8 +80,13 @@ class Query
     explicit Query(std::string cql, size_t num_params = 0);
     virtual ~Query();
 
-    template <class T>
-    void bind(T v);
+    void bind();  // binds a null value
+    void bind(std::string v);
+    void bind(Boolean v);
+    void bind(Int32 v);
+    void bind(Int64 v);
+    void bind(Float32 v);
+    void bind(Float64 v);
 
    private:
     enum class ExecMode
@@ -138,12 +142,13 @@ class Query
 
 // --------------------------------- //
 
-Query::Query(std::string cql, size_t num_params) : cql(std::move(cql)), future(nullptr), expected_params(num_params)
+inline Query::Query(std::string cql, size_t num_params)
+    : cql(std::move(cql)), future(nullptr), expected_params(num_params)
 {
     statement = cass_statement_new(this->cql.c_str(), num_params);
 }
 
-Query::~Query()
+inline Query::~Query()
 {
     if (future != nullptr) {
         cass_future_free(future);
@@ -154,7 +159,7 @@ Query::~Query()
     }
 }
 
-void Query::executeSync(Connection const& con)
+inline void Query::executeSync(Connection const& con)
 {
     execValidation();
 
@@ -174,7 +179,7 @@ void Query::executeSync(Connection const& con)
     }
 }
 
-void Query::executeAsync(Connection const& con)
+inline void Query::executeAsync(Connection const& con)
 {
     execValidation();
 
@@ -186,10 +191,10 @@ void Query::executeAsync(Connection const& con)
     }
 }
 
-void Query::wait()
+inline void Query::wait()
 {
     if (mode != ExecMode::EXEC_ASYNC) {
-        throw bes::dbal::DbalException("Query is not running and cannot wait");
+        throw bes::dbal::DbalException("Query is not running therefore cannot wait");
     }
 
     try {
@@ -206,56 +211,50 @@ void Query::wait()
     }
 }
 
-template <class T>
-void Query::bind(T v)
+inline void Query::bind()
 {
-    throw bes::dbal::DbalException("Unsupported data type for CQL bind");
+    cass_statement_bind_null(statement, q_pos);
+    ++q_pos;
 }
 
-template <>
-void Query::bind<std::string>(std::string v)
+inline void Query::bind(std::string v)
 {
     str_cache.push_back(std::move(v));
     cass_statement_bind_string(statement, q_pos, str_cache.back().c_str());
     ++q_pos;
 }
 
-template <>
-void Query::bind<bool>(bool v)
+inline void Query::bind(Boolean v)
 {
     cass_statement_bind_bool(statement, q_pos, v ? cass_true : cass_false);
     ++q_pos;
 }
 
-template <>
-void Query::bind<float>(float v)
+inline void Query::bind(Float32 v)
 {
     cass_statement_bind_float(statement, q_pos, v);
     ++q_pos;
 }
 
-template <>
-void Query::bind<double>(double v)
+inline void Query::bind(Float64 v)
 {
     cass_statement_bind_double(statement, q_pos, v);
     ++q_pos;
 }
 
-template <>
-void Query::bind<int32_t>(int32_t v)
+inline void Query::bind(Int32 v)
 {
     cass_statement_bind_int32(statement, q_pos, v);
     ++q_pos;
 }
 
-template <>
-void Query::bind<int64_t>(int64_t v)
+inline void Query::bind(Int64 v)
 {
     cass_statement_bind_int64(statement, q_pos, v);
     ++q_pos;
 }
 
-void Query::execValidation() const
+inline void Query::execValidation() const
 {
     if (mode != ExecMode::PENDING) {
         throw bes::dbal::DbalException("Query execution already begun");
@@ -267,9 +266,19 @@ void Query::execValidation() const
     }
 }
 
-ResultT Query::getResult()
+inline ResultT Query::getResult()
 {
+    CassError rc = cass_future_error_code(future);
+    if (rc != CASS_OK) {
+        throw DbalException(Utility::getFutureErrMsg(future));
+    }
+
     auto cass_result = const_cast<CassResult*>(cass_future_get_result(future));
+
+    if (cass_result == nullptr) {
+        throw DbalException("No results");
+    }
+
     return ResultT(std::shared_ptr<CassResult>(cass_result,
                                                [](CassResult* item) {
                                                    cass_result_free(item);
@@ -277,12 +286,10 @@ ResultT Query::getResult()
                    Utility::getColumnsForResult(cass_result));
 }
 
-ResultT Query::getResult(Connection const& con)
+inline ResultT Query::getResult(Connection const& con)
 {
     executeAsync(con);
     return getResult();
 }
 
 }  // namespace bes::dbal::wide::cassandra
-
-#endif
