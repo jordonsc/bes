@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../context.h"
-#include "result.tcc"
+#include "future.h"
 #include "schema.h"
 #include "value.h"
 
@@ -22,8 +22,8 @@ class WideColumnDb
     virtual void dropTable(std::string const& table_name, bool if_exists) const = 0;
     virtual void insert(std::string const& table_name, ValueList values) const = 0;
     virtual void update(std::string const& table_name, Value const& key, ValueList values) const = 0;
-    virtual void retrieve(std::string const& table_name, Value const& key) const = 0;
-    virtual void retrieve(std::string const& table_name, Value const& key, FieldList fields) const = 0;
+    virtual ResultFuture retrieve(std::string const& table_name, Value const& key) const = 0;
+    virtual ResultFuture retrieve(std::string const& table_name, Value const& key, FieldList fields) const = 0;
     virtual void remove(std::string const& table_name, Value const& key) const = 0;
 
    protected:

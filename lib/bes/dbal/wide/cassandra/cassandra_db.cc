@@ -13,11 +13,7 @@ Cassandra::Cassandra(Context c) : WideColumnDb(std::move(c)), connection(getCont
 std::string Cassandra::getServerVersion() const
 {
     validateConnection();
-
-    return cassandra::Query("SELECT release_version FROM system.local")
-        .getResult(connection)
-        .getFirstRow()[0]
-        .as<std::string>();
+    return cassandra::Query("SELECT release_version FROM system.local").getResult(connection).pop()->at(0).as<Text>();
 }
 
 void Cassandra::setKeyspace(std::string const& value)
@@ -144,22 +140,6 @@ void Cassandra::validateConnection() const
     }
 }
 
-/**
- * Test function.
- *
- * @deprecated delete me.
- */
-cassandra::ResultT Cassandra::retrieveTestData(std::string const& tbl, int a) const
-{
-    auto cql = std::string("SELECT * FROM ");
-    cql.append(getKeyspace()).append(".").append(tbl).append(" WHERE test_pk = ?;");
-
-    cassandra::Query q(cql, 1);
-    q.bind(a);
-
-    return q.getResult(connection);
-}
-
 void Cassandra::insert(std::string const& t, ValueList values) const
 {
     /*
@@ -237,7 +217,7 @@ void Cassandra::update(std::string const& t, Value const& key, ValueList values)
     q.executeSync(connection);
 }
 
-void Cassandra::retrieve(std::string const& table_name, Value const& key) const
+ResultFuture Cassandra::retrieve(std::string const& table_name, Value const& key) const
 {
     auto cql = std::string("SELECT * FROM ");
     cql.append(getKeyspace()).append(".").append(table_name).append(" WHERE ");
@@ -246,10 +226,20 @@ void Cassandra::retrieve(std::string const& table_name, Value const& key) const
     cassandra::Query q(cql, 1);
     bindValue(q, key);
 
-    //return q.getResult(connection);
+    return ResultFuture(std::make_shared<bes::dbal::wide::cassandra::Result>(q.getResult(connection)));
 }
 
-void Cassandra::retrieve(std::string const& table_name, Value const& key, FieldList fields) const {}
+ResultFuture Cassandra::retrieve(std::string const& table_name, Value const& key, FieldList fields) const
+{
+    auto cql = std::string("SELECT * FROM ");
+    cql.append(getKeyspace()).append(".").append(table_name).append(" WHERE ");
+    cql.append(getFieldCql(key)).append(" = ?;");
+
+    cassandra::Query q(cql, 1);
+    bindValue(q, key);
+
+    return ResultFuture(std::make_shared<bes::dbal::wide::cassandra::Result>(q.getResult(connection)));
+}
 
 void Cassandra::remove(std::string const& table_name, Value const& key) const {}
 

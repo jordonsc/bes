@@ -9,10 +9,6 @@
 
 namespace bes::dbal::wide {
 
-namespace cassandra {
-static char const* const KEYSPACE_PARAM = "keyspace";
-}
-
 class Cassandra : public WideColumnDb
 {
    public:
@@ -31,11 +27,9 @@ class Cassandra : public WideColumnDb
 
     void insert(std::string const& table_name, ValueList values) const override;
     void update(std::string const& table_name, Value const& key, ValueList values) const override;
-    void retrieve(std::string const& table_name, Value const& key) const override;
-    void retrieve(std::string const& table_name, Value const& key, FieldList fields) const override;
+    ResultFuture retrieve(std::string const& table_name, Value const& key) const override;
+    ResultFuture retrieve(std::string const& table_name, Value const& key, FieldList fields) const override;
     void remove(std::string const& table_name, Value const& key) const override;
-
-    cassandra::ResultT retrieveTestData(std::string const& tbl, int a) const;
 
    private:
     mutable std::shared_mutex ks_mutex;

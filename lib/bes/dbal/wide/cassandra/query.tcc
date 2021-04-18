@@ -5,66 +5,12 @@
 
 #include "../../exception.h"
 #include "../cell.tcc"
-#include "../result.tcc"
 #include "cassandra.h"
-#include "result_iterator.h"
-#include "row_iterator.h"
+#include "result.h"
 #include "utility.h"
 
 namespace bes::dbal::wide {
 class Cassandra;
-using cassandra::Utility;
-
-/**
- * Template specialisation for Result.rowCount()
- */
-template <>
-inline size_t Result<cassandra::ResultIterator, std::shared_ptr<CassResult>>::rowCount() const
-{
-    return cass_result_row_count(data.get());
-}
-
-/**
- * Template specialisation for Row[]
- */
-template <>
-inline Cell Row<cassandra::RowIterator, cassandra::RowDataType>::operator[](size_t index) const
-{
-    if (data.first == nullptr) {
-        throw DbalException("Cannot index null row");
-    } else if (data.second == nullptr) {
-        throw DbalException("Cannot index row: missing result data");
-    }
-
-    auto const* col = cass_row_get_column(data.first, index);
-    if (cass_value_is_null(col)) {
-        throw NullValueException();
-    }
-
-    return Utility::createCellFromColumn(col, Utility::getFieldFromResult(data.second.get(), index));
-}
-
-/**
- * Template specialisation for Row.value()
- */
-template <>
-template <class ReturnType>
-inline ReturnType Row<cassandra::RowIterator, cassandra::RowDataType>::value(const std::string& ns,
-                                                                             const std::string& qualifier) const
-{
-    if (data.first == nullptr) {
-        throw DbalException("Cannot index null row");
-    }
-
-    std::string fqn = ns;
-    fqn += cassandra::NS_DELIMITER;
-    fqn.append(qualifier);
-
-    // Move-return the value from the Cell (nb: cell will not have real field data when pulling by name)
-    return cassandra::Utility::createCellFromColumn(cass_row_get_column_by_name(data.first, fqn.c_str()), Field())
-        .as<ReturnType>();
-}
-
 }  // namespace bes::dbal::wide
 
 namespace bes::dbal::wide::cassandra {
@@ -121,8 +67,8 @@ class Query
      * If called without parameters, it will assume you've first called ExecAsync() and throw an exception if you have
      * not.
      */
-    [[nodiscard]] ResultT getResult();
-    [[nodiscard]] ResultT getResult(Connection const& con);
+    [[nodiscard]] Result getResult();
+    [[nodiscard]] Result getResult(Connection const& con);
 
     /**
      * Waits for query to complete.
@@ -266,7 +212,7 @@ inline void Query::execValidation() const
     }
 }
 
-inline ResultT Query::getResult()
+inline Result Query::getResult()
 {
     CassError rc = cass_future_error_code(future);
     if (rc != CASS_OK) {
@@ -279,14 +225,14 @@ inline ResultT Query::getResult()
         throw DbalException("No results");
     }
 
-    return ResultT(std::shared_ptr<CassResult>(cass_result,
-                                               [](CassResult* item) {
-                                                   cass_result_free(item);
-                                               }),
-                   Utility::getColumnsForResult(cass_result));
+    return Result(std::shared_ptr<CassResult>(cass_result,
+                                              [](CassResult* item) {
+                                                  cass_result_free(item);
+                                              }),
+                  Utility::getColumnsForResult(cass_result));
 }
 
-inline ResultT Query::getResult(Connection const& con)
+inline Result Query::getResult(Connection const& con)
 {
     executeAsync(con);
     return getResult();

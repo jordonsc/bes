@@ -11,7 +11,7 @@ namespace bes::dbal::wide {
 class Cell
 {
    public:
-    inline Cell(Field&& field, std::any data);
+    inline Cell(Field field, std::any data);
 
     [[nodiscard]] inline Field const& getField() const;
 
@@ -26,7 +26,7 @@ class Cell
     std::any data;
 };
 
-Cell::Cell(Field&& field, std::any data) : field(std::forward<Field>(field)), data(std::move(data)) {}
+Cell::Cell(Field field, std::any data) : field(std::move(field)), data(std::move(data)) {}
 
 Field const& Cell::getField() const
 {

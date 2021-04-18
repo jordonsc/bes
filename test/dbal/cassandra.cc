@@ -13,8 +13,8 @@ static char const* const TEST_TABLE = "test_table";
 static Schema createTestSchema()
 {
     std::vector<Field> fields;
-    fields.push_back({Datatype::Text, "test", "str"});
-    fields.push_back({Datatype::Float32, "test", "flt"});
+    fields.emplace_back(Datatype::Text, "test", "str");
+    fields.emplace_back(Datatype::Float32, "test", "flt");
 
     return Schema({Datatype::Int32, "test", "pk"}, std::move(fields));
 }
@@ -117,31 +117,32 @@ TEST(CassandraTest, RowCreation)
     // NB: both insert and update are "upsert" statements, you could have used db.update() here, too
     db.insert(TEST_TABLE, std::move(v));
 
-    auto result = db.retrieveTestData(TEST_TABLE, 5);
+    auto result = db.retrieve(TEST_TABLE, Value("test", "pk", (Int32)5));
 
-    EXPECT_EQ(result.rowCount(), 1);
-    ASSERT_EQ(result.columnCount(), 3);
+    EXPECT_EQ(result->rowCount(), 1);
+    ASSERT_EQ(result->columnCount(), 3);
 
     // NB: PK then lexicographical ordering (I'm not sure how reliable this is)
-    EXPECT_EQ(result.getColumn(0).ns, "test");
-    EXPECT_EQ(result.getColumn(0).qualifier, "pk");
-    EXPECT_EQ(result.getColumn(0).datatype, Datatype::Int32);
+    EXPECT_EQ(result->getColumn(0).ns, "test");
+    EXPECT_EQ(result->getColumn(0).qualifier, "pk");
+    EXPECT_EQ(result->getColumn(0).datatype, Datatype::Int32);
 
-    EXPECT_EQ(result.getColumn(1).ns, "test");
-    EXPECT_EQ(result.getColumn(1).qualifier, "flt");
-    EXPECT_EQ(result.getColumn(1).datatype, Datatype::Float32);
+    EXPECT_EQ(result->getColumn(1).ns, "test");
+    EXPECT_EQ(result->getColumn(1).qualifier, "flt");
+    EXPECT_EQ(result->getColumn(1).datatype, Datatype::Float32);
 
-    EXPECT_EQ(result.getColumn(2).ns, "test");
-    EXPECT_EQ(result.getColumn(2).qualifier, "str");
-    EXPECT_EQ(result.getColumn(2).datatype, Datatype::Text);
+    EXPECT_EQ(result->getColumn(2).ns, "test");
+    EXPECT_EQ(result->getColumn(2).qualifier, "str");
+    EXPECT_EQ(result->getColumn(2).datatype, Datatype::Text);
 
     // Using iterator
     size_t rows = 0;
-    for (auto const& row : result) {
+    while (result->pop()) {
         ++rows;
+        ASSERT_LT(rows, 5);  // infinite loop detection
 
         // lvalue (copy) from Cell
-        auto pk = row[0];
+        auto pk = result->row()->at(0);
         EXPECT_EQ(pk.getField().ns, "test");
         EXPECT_EQ(pk.getField().qualifier, "pk");
         EXPECT_EQ(pk.getField().datatype, Datatype::Int32);
@@ -151,45 +152,11 @@ TEST(CassandraTest, RowCreation)
         EXPECT_EQ(std::move(pk).as<Int32>(), 5);
 
         // rvalue (entire row)
-        EXPECT_EQ(row[0].as<Int32>(), 5);
-        EXPECT_THROW(row[1].as<Float32>(), bes::dbal::NullValueException);
-        EXPECT_EQ(row[2].as<Text>(), "bar");
+        EXPECT_EQ(result->row()->at(0).as<Int32>(), 5);
+        EXPECT_THROW(result->row()->at(1).as<Float32>(), bes::dbal::NullValueException);
+        EXPECT_EQ(result->row()->at(2).as<Text>(), "bar");
     }
     EXPECT_EQ(rows, 1);
-
-    // Using getFirstRow()
-    size_t cols = 0;
-    auto first_row = result.getFirstRow();
-
-    // Value by index
-    EXPECT_EQ(first_row[0].as<Int32>(), 5);
-
-    // Value by name, unordered
-    EXPECT_EQ(first_row.value<Text>("test", "str"), "bar");
-    EXPECT_THROW(first_row.value<Float32>("test", "flt"), bes::dbal::NullValueException);
-    EXPECT_EQ(first_row.value<Int32>("test", "pk"), 5);
-
-    // Using a column iterator
-    for (auto const& cell : first_row) {
-        ++cols;
-        auto const& f = cell.getField();
-        EXPECT_EQ(f.ns, "test");
-
-        if (f.qualifier == "pk") {
-            ASSERT_EQ(f.datatype, Datatype::Int32);
-            EXPECT_EQ(cell.as<Int32>(), 5);
-        } else if (f.qualifier == "flt") {
-            ASSERT_EQ(f.datatype, Datatype::Null);
-            EXPECT_THROW(cell.as<Float32>(), bes::dbal::NullValueException);
-        } else if (f.qualifier == "str") {
-            ASSERT_EQ(f.datatype, Datatype::Text);
-            EXPECT_EQ(cell.as<Text>(), "bar");
-        } else {
-            EXPECT_EQ(f.qualifier, "Qualifier did not match any expected fields");
-        }
-    }
-
-    EXPECT_EQ(cols, 3);
 
     // Will update the table, adding a non-null value for `flt`
     v.clear();
@@ -197,8 +164,9 @@ TEST(CassandraTest, RowCreation)
     v.push_back(Value("test", "flt", (Float32)123.456));
     db.update(TEST_TABLE, Value("test", "pk", 5), std::move(v));
 
-    result = db.retrieveTestData(TEST_TABLE, 5);
-    first_row = result.getFirstRow();
-    ASSERT_FLOAT_EQ(first_row.value<Float32>("test", "flt"), (Float32)123.456);
-    ASSERT_EQ(first_row.value<Text>("test", "str"), "hello world");
+//    result = db.retrieve(TEST_TABLE, Value("test", "pk", (Int32)5));
+//    Row const* row = result.get()->pop();
+//    ASSERT_NE(row, nullptr);
+//    ASSERT_FLOAT_EQ(row->at("test", "flt").as<Float32>(), (Float32)123.456);
+//    ASSERT_EQ(row->at("test", "str").as<Text>(), "hello world");
 }
