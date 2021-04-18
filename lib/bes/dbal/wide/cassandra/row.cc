@@ -15,12 +15,7 @@ Cell Row::at(size_t n) const
         throw bes::dbal::DbalException("Cannot index row: missing result data");
     }
 
-    auto const* col = cass_row_get_column(row, n);
-    if (cass_value_is_null(col)) {
-        throw NullValueException();
-    }
-
-    return Utility::createCellFromColumn(col, Utility::getFieldFromResult(result.get(), n));
+    return Utility::createCellFromColumn(cass_row_get_column(row, n), Utility::getFieldFromResult(result.get(), n));
 }
 
 Cell Row::at(std::string const& ns, std::string const& qualifier) const

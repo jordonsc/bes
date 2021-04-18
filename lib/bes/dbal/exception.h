@@ -1,5 +1,4 @@
-#ifndef BES_DBAL_EXCEPTION_H
-#define BES_DBAL_EXCEPTION_H
+#pragma once
 
 #include <bes/core.h>
 
@@ -26,6 +25,9 @@ class NullValueException : public DbalException
 
    public:
     NullValueException() : DbalException("Value is null") {}
+    NullValueException(std::string const& a, std::string const& b)
+        : DbalException("Value of " + a + ":" + b + " is null")
+    {}
 };
 
 class OutOfRangeException : public DbalException
@@ -34,5 +36,3 @@ class OutOfRangeException : public DbalException
 };
 
 }  // namespace bes::dbal
-
-#endif

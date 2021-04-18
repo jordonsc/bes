@@ -14,7 +14,8 @@ class BesException : public std::exception
    public:
     explicit BesException(std::string msg, int exit_code = 1) : err_msg(std::move(msg)), exit_code(exit_code){};
     BesException(std::string msg, bes::ExitCode exit_flag)
-        : err_msg(std::move(msg)), exit_code(static_cast<int>(exit_flag)){};
+        : err_msg(std::move(msg)), exit_code(static_cast<int>(exit_flag))
+    {}
 
     [[nodiscard]] const char* what() const noexcept override
     {

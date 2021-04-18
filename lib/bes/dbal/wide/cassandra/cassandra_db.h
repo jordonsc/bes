@@ -19,17 +19,18 @@ class Cassandra : public WideColumnDb
     void setKeyspace(std::string const&);
     [[nodiscard]] std::string const& getKeyspace() const;
 
-    void createKeyspace(cassandra::Keyspace const& keyspace, bool if_not_exists = false) const;
-    void dropKeyspace(std::string const& ks_name, bool if_exists = false) const;
+    ResultFuture createKeyspace(cassandra::Keyspace const& keyspace, bool if_not_exists = false) const;
+    ResultFuture dropKeyspace(std::string const& ks_name, bool if_exists = false) const;
 
-    void createTable(std::string const& table_name, Schema const& schema, bool if_not_exists) const override;
-    void dropTable(std::string const& table_name, bool if_exists) const override;
+    ResultFuture createTable(std::string const& table_name, Schema const& schema, bool if_not_exists) const override;
+    ResultFuture dropTable(std::string const& table_name, bool if_exists) const override;
 
-    void insert(std::string const& table_name, ValueList values) const override;
-    void update(std::string const& table_name, Value const& key, ValueList values) const override;
+    ResultFuture insert(std::string const& table_name, ValueList values) const override;
+    ResultFuture update(std::string const& table_name, Value const& key, ValueList values) const override;
     ResultFuture retrieve(std::string const& table_name, Value const& key) const override;
     ResultFuture retrieve(std::string const& table_name, Value const& key, FieldList fields) const override;
-    void remove(std::string const& table_name, Value const& key) const override;
+    ResultFuture remove(std::string const& table_name, Value const& key) const override;
+    ResultFuture truncate(std::string const& table_name) const override;
 
    private:
     mutable std::shared_mutex ks_mutex;
@@ -63,6 +64,11 @@ class Cassandra : public WideColumnDb
      * Will raise a NotConnectedException if there is no connection to the server cluster.
      */
     void validateConnection() const;
+
+    /**
+     * Executes a query and generates a ResultFuture object to return.
+     */
+    ResultFuture execute(cassandra::Query q) const;
 };
 
 }  // namespace bes::dbal::wide

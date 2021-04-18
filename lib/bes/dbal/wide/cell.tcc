@@ -37,7 +37,7 @@ template <class T>
 T Cell::as() const&
 {
     if (field.datatype == Datatype::Null) {
-        throw bes::dbal::NullValueException();
+        throw bes::dbal::NullValueException("Field " + field.ns + ":" + field.qualifier + " is null");
     }
 
     return std::any_cast<T>(data);
@@ -47,7 +47,7 @@ template <class T>
 T&& Cell::as() &&
 {
     if (field.datatype == Datatype::Null) {
-        throw bes::dbal::NullValueException();
+        throw bes::dbal::NullValueException("Field " + field.ns + ":" + field.qualifier + " is null");
     }
     return std::any_cast<T&&>(std::move(data));
 }
