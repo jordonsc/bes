@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "result.h"
+#include "result_iterator.h"
 
 namespace bes::dbal::wide {
 
@@ -14,6 +15,16 @@ class ResultFuture
 {
    public:
     explicit ResultFuture(std::shared_ptr<bes::dbal::wide::Result> result) : result(std::move(result)) {}
+
+    ResultIterator begin() const
+    {
+        return ResultIterator(result);
+    }
+
+    ResultIterator end() const
+    {
+        return ResultIterator();
+    }
 
     [[nodiscard]] inline size_t rowCount() const
     {

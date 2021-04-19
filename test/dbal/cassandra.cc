@@ -212,3 +212,23 @@ TEST(CassandraTest, DataCreation)
     EXPECT_EQ(result.rowCount(), 0);
     EXPECT_EQ(result.columnCount(), 3);
 }
+
+TEST(CassandraTest, Iterators)
+{
+    auto db = Cassandra(createContext());
+    db.setKeyspace(TEST_KEYSPACE);
+
+    db.createKeyspace(cassandra::Keyspace(TEST_KEYSPACE), true).wait();
+    db.createTable(TEST_TABLE, createTestSchema(), true).wait();
+
+    ValueList v;
+    v.push_back(Value("test", "str", "nice iterator"));
+    db.update(TEST_TABLE, Value("test", "pk", 1), std::move(v)).wait();
+
+    auto result = db.retrieve(TEST_TABLE, Value("test", "pk", (Int32)1));
+
+    // Creating an iterator will call wait() on the future
+    for (auto const& row : result) {
+        EXPECT_EQ(row.at("test", "str").as<Text>(), "nice iterator");
+    }
+}
