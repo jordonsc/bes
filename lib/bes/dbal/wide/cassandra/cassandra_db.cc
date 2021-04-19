@@ -151,6 +151,7 @@ ResultFuture Cassandra::insert(std::string const& t, ValueList values) const
 
     bool first = true;
     for (auto const& v : values) {
+        validateNotList(v);
         if (first) {
             first = false;
         } else {
@@ -189,6 +190,7 @@ ResultFuture Cassandra::update(std::string const& t, Value const& key, ValueList
 
     bool first = true;
     for (auto const& v : values) {
+        validateNotList(v);
         if (first) {
             first = false;
         } else {
@@ -197,11 +199,9 @@ ResultFuture Cassandra::update(std::string const& t, Value const& key, ValueList
         cql.append(getFieldCql(v, false)).append(" = ?");
     }
 
-    cql.append(" WHERE ");
-    cql.append(getFieldCql(key, false));
-    cql.append(" = ?;");
+    appendWhereClause(cql, key);
 
-    cassandra::Query q(cql, values.size() + 1);
+    cassandra::Query q(cql, key.isList() ? (values.size() + key.size()) : (values.size() + 1));
 
     // Bind values
     for (auto& v : values) {
@@ -217,10 +217,10 @@ ResultFuture Cassandra::update(std::string const& t, Value const& key, ValueList
 ResultFuture Cassandra::retrieve(std::string const& table_name, Value const& key) const
 {
     auto cql = std::string("SELECT * FROM ");
-    cql.append(getKeyspace()).append(".").append(table_name).append(" WHERE ");
-    cql.append(getFieldCql(key)).append(" = ?;");
+    cql.append(getKeyspace()).append(".").append(table_name);
+    appendWhereClause(cql, key);
 
-    cassandra::Query q(cql, 1);
+    cassandra::Query q(cql, key.isList() ? key.size() : 1);
     bindValue(q, key);
 
     return execute(std::move(q));
@@ -241,10 +241,10 @@ ResultFuture Cassandra::retrieve(std::string const& table_name, Value const& key
     }
 
     cql.append(" FROM ");
-    cql.append(getKeyspace()).append(".").append(table_name).append(" WHERE ");
-    cql.append(getFieldCql(key)).append(" = ?;");
+    cql.append(getKeyspace()).append(".").append(table_name);
+    appendWhereClause(cql, key);
 
-    cassandra::Query q(cql, 1);
+    cassandra::Query q(cql, key.isList() ? key.size() : 1);
     bindValue(q, key);
 
     return execute(std::move(q));
@@ -253,10 +253,10 @@ ResultFuture Cassandra::retrieve(std::string const& table_name, Value const& key
 ResultFuture Cassandra::remove(std::string const& table_name, Value const& key) const
 {
     auto cql = std::string("DELETE FROM ");
-    cql.append(getKeyspace()).append(".").append(table_name).append(" WHERE ");
-    cql.append(getFieldCql(key)).append(" = ?;");
+    cql.append(getKeyspace()).append(".").append(table_name);
+    appendWhereClause(cql, key);
 
-    cassandra::Query q(cql, 1);
+    cassandra::Query q(cql, key.isList() ? key.size() : 1);
     bindValue(q, key);
 
     return execute(std::move(q));
@@ -272,31 +272,63 @@ ResultFuture Cassandra::truncate(std::string const& table_name) const
 
 void Cassandra::bindValue(cassandra::Query& q, Value v)
 {
-    switch (v.datatype) {
+    switch (v.getDatatype()) {
         default:
-            throw DbalException("Unknown datatype in update request (" + v.ns + cassandra::NS_DELIMITER + v.qualifier +
-                                ")");
+            throw DbalException("Unknown datatype in update request (" + v.getNs() + cassandra::NS_DELIMITER +
+                                v.getQualifier() + ")");
         case Datatype::Null:
+            // Values cannot have a list of null
             q.bind();
-            break;
+            return;
         case Datatype::Text:
-            q.bind(std::move(std::any_cast<Text&&>(std::move(v.value))));
-            break;
+            if (v.isList()) {
+                for (auto item : std::any_cast<std::vector<Text>&&>(std::move(v).getValue())) {
+                    q.bind(std::move(item));
+                }
+            } else {
+                q.bind(std::move(std::any_cast<Text&&>(std::move(v).getValue())));
+            }
+            return;
         case Datatype::Boolean:
-            q.bind(std::any_cast<Boolean>(v.value));
+            // Values cannot have a list of boolean
+            q.bind(std::any_cast<Boolean>(v.getValue()));
             break;
         case Datatype::Int32:
-            q.bind(std::any_cast<Int32>(v.value));
-            break;
+            if (v.isList()) {
+                for (auto item : std::any_cast<std::vector<Int32>&&>(std::move(v).getValue())) {
+                    q.bind(item);
+                }
+            } else {
+                q.bind(std::any_cast<Int32>(v.getValue()));
+            }
+            return;
         case Datatype::Int64:
-            q.bind(std::any_cast<Int64>(v.value));
-            break;
+            if (v.isList()) {
+                for (auto item : std::any_cast<std::vector<Int64>&&>(std::move(v).getValue())) {
+                    q.bind(item);
+                }
+            } else {
+                q.bind(std::any_cast<Int64>(v.getValue()));
+            }
+            return;
         case Datatype::Float32:
-            q.bind(std::any_cast<Float32>(v.value));
-            break;
+            if (v.isList()) {
+                for (auto item : std::any_cast<std::vector<Float32>&&>(std::move(v).getValue())) {
+                    q.bind(item);
+                }
+            } else {
+                q.bind(std::any_cast<Float32>(v.getValue()));
+            }
+            return;
         case Datatype::Float64:
-            q.bind(std::any_cast<Float64>(v.value));
-            break;
+            if (v.isList()) {
+                for (auto item : std::any_cast<std::vector<Float64>&&>(std::move(v).getValue())) {
+                    q.bind(item);
+                }
+            } else {
+                q.bind(std::any_cast<Float64>(v.getValue()));
+            }
+            return;
     }
 }
 
@@ -343,18 +375,18 @@ std::string Cassandra::getFieldCql(Field const& f, bool with_field_type)
 std::string Cassandra::getFieldCql(Value const& v, bool with_field_type)
 {
     std::string r;
-    if (!v.ns.empty()) {
-        r.append(v.ns);
+    if (!v.getNs().empty()) {
+        r.append(v.getNs());
         r += cassandra::NS_DELIMITER;
     }
-    r.append(v.qualifier);
+    r.append(v.getQualifier());
 
-    if (v.qualifier.empty()) {
+    if (v.getQualifier().empty()) {
         throw DbalException("Missing field qualifier");
     }
 
     if (with_field_type) {
-        r.append(" ").append(fieldType(v.datatype));
+        r.append(" ").append(fieldType(v.getDatatype()));
     }
 
     return r;
@@ -364,4 +396,27 @@ ResultFuture Cassandra::execute(cassandra::Query q) const
 {
     q.execute(connection);
     return ResultFuture(std::make_shared<bes::dbal::wide::cassandra::Result>(std::move(q)));
+}
+
+void Cassandra::validateNotList(Value const& v)
+{
+    if (v.isList()) {
+        throw DbalException("Cannot accept a list type for value " + v.getNs() + ":" + v.getQualifier());
+    }
+}
+
+void Cassandra::appendWhereClause(std::string& cql, Value const& key, bool final)
+{
+    cql.append(" WHERE ");
+    cql.append(getFieldCql(key, false));
+
+    if (key.isList()) {
+        cql.append(" IN (");
+        for (size_t vi = 0; vi < key.size(); ++vi) {
+            cql.append(vi == 0 ? "?" : ", ?");
+        }
+        cql.append(final ? ");" : ")");
+    } else {
+        cql.append(final ? " = ?;" : ")");
+    }
 }

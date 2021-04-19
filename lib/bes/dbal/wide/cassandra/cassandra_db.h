@@ -66,6 +66,16 @@ class Cassandra : public WideColumnDb
     void validateConnection() const;
 
     /**
+     * Will raise an exception if the value is a list value
+     */
+    static void validateNotList(Value const&);
+
+    /**
+     * Add a WHERE clause to the CQL string
+     */
+    static void appendWhereClause(std::string& cql, const Value& key, bool final = true);
+
+    /**
      * Executes a query and generates a ResultFuture object to return.
      */
     ResultFuture execute(cassandra::Query q) const;

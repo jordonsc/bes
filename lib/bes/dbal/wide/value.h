@@ -8,8 +8,10 @@
 
 namespace bes::dbal::wide {
 
-struct Value
+class Value final
 {
+   public:
+    // -- Standard Value Types -- //
     Value(std::string ns, std::string qualifier, std::string value)
         : ns(std::move(ns)), qualifier(std::move(qualifier)), value(std::move(value)), datatype(Datatype::Text)
     {}
@@ -44,14 +46,95 @@ struct Value
 
     Value() : value((char)0), datatype(Datatype::Null) {}
 
+    // -- List Value Types (nb: no bool or null) -- //
+    Value(std::string ns, std::string qualifier, std::vector<std::string> value)
+        : ns(std::move(ns)),
+          qualifier(std::move(qualifier)),
+          value(std::move(value)),
+          datatype(Datatype::Text),
+          is_list(true)
+    {}
+
+    Value(std::string ns, std::string qualifier, std::vector<Int32> value)
+        : ns(std::move(ns)),
+          qualifier(std::move(qualifier)),
+          value(value),
+          datatype(Datatype::Int32),
+          is_list(true),
+          list_size(value.size())
+    {}
+
+    Value(std::string ns, std::string qualifier, std::vector<Int64> value)
+        : ns(std::move(ns)),
+          qualifier(std::move(qualifier)),
+          value(value),
+          datatype(Datatype::Int64),
+          is_list(true),
+          list_size(value.size())
+    {}
+
+    Value(std::string ns, std::string qualifier, std::vector<Float32> value)
+        : ns(std::move(ns)),
+          qualifier(std::move(qualifier)),
+          value(value),
+          datatype(Datatype::Float32),
+          is_list(true),
+          list_size(value.size())
+    {}
+
+    Value(std::string ns, std::string qualifier, std::vector<Float64> value)
+        : ns(std::move(ns)),
+          qualifier(std::move(qualifier)),
+          value(value),
+          datatype(Datatype::Float64),
+          is_list(true),
+          list_size(value.size())
+    {}
+
+    std::string const& getNs() const
+    {
+        return ns;
+    }
+
+    std::string const& getQualifier() const
+    {
+        return qualifier;
+    }
+
+    std::any const& getValue() const&
+    {
+        return value;
+    }
+
+    std::any&& getValue() &&
+    {
+        return std::move(value);
+    }
+
+    Datatype getDatatype() const
+    {
+        return datatype;
+    }
+
+    bool isList() const
+    {
+        return is_list;
+    }
+
+    size_t size() const
+    {
+        return list_size;
+    }
+
+   private:
     std::string ns;
     std::string qualifier;
     std::any value;
     Datatype datatype;
+    bool is_list = false;
+    size_t list_size = 0;
 };
 
 using ValueList = std::vector<Value>;
-
-
 
 }  // namespace bes::dbal::wide

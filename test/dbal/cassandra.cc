@@ -232,3 +232,44 @@ TEST(CassandraTest, Iterators)
         EXPECT_EQ(row.at("test", "str").as<Text>(), "nice iterator");
     }
 }
+
+TEST(CassandraTest, MultiKey)
+{
+    auto db = Cassandra(createContext());
+    db.setKeyspace(TEST_KEYSPACE);
+
+    db.createKeyspace(cassandra::Keyspace(TEST_KEYSPACE), true).wait();
+    db.createTable(TEST_TABLE, createTestSchema(), true).wait();
+
+    ValueList v;
+    v.push_back(Value("test", "str", "row 1"));
+    db.update(TEST_TABLE, Value("test", "pk", 101), std::move(v)).wait();
+
+    v.clear();
+    v.push_back(Value("test", "str", "row 2"));
+    db.update(TEST_TABLE, Value("test", "pk", 102), std::move(v)).wait();
+
+    v.clear();
+    v.push_back(Value("test", "str", "row 3"));
+    db.update(TEST_TABLE, Value("test", "pk", 103), std::move(v)).wait();
+
+    auto pk_all = Value("test", "pk", Int32List({101, 102, 103}));
+    auto result = db.retrieve(TEST_TABLE, pk_all);
+
+    EXPECT_EQ(result.rowCount(), 3);
+    size_t iterated_rows = 0;
+    for (auto const& row : result) {
+        EXPECT_NE(row.at("test", "str").as<Text>(), "awesome");
+        ++iterated_rows;
+    }
+    EXPECT_EQ(iterated_rows, 3);
+
+    auto pk_duo = Value("test", "pk", Int32List({102, 103}));
+    db.update(TEST_TABLE, pk_duo, {Value("test", "str", "awesome")}).wait();
+
+    result = db.retrieve(TEST_TABLE, pk_duo);
+    for (auto const& row : result) {
+        EXPECT_NE(row.at("test", "pk").as<Int32>(), 101);
+        EXPECT_EQ(row.at("test", "str").as<Text>(), "awesome");
+    }
+}
