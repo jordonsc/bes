@@ -5,22 +5,22 @@ using namespace bes::net::socket;
 Stream::Stream(int s)
 {
     sock = s;
-    bound.store(true);
-    open.store(true);
+    is_bound.store(true);
+    is_open.store(true);
 }
 
-Stream::Stream(Stream&& s)
+Stream::Stream(Stream&& s) noexcept
 {
-    Move(std::move(s));
+    move(std::move(s));
 }
 
-Stream& Stream::operator=(Stream&& s)
+Stream& Stream::operator=(Stream&& s) noexcept
 {
-    Move(std::move(s));
+    move(std::move(s));
     return *this;
 }
 
-void Stream::Move(Stream&& s)
+void Stream::move(Stream&& s)
 {
     using std::swap;
 
@@ -29,22 +29,22 @@ void Stream::Move(Stream&& s)
     std::swap(listen_thread, s.listen_thread);
     listening.store(s.listening);
     kill_signal.store(s.kill_signal);
-    bound.store(s.bound);
-    open.store(s.open);
+    is_bound.store(s.is_bound);
+    is_open.store(s.is_open);
 
     s.sock = 0;
-    s.open.store(false);
-    s.bound.store(false);
+    s.is_open.store(false);
+    s.is_bound.store(false);
     s.listening.store(false);
     s.kill_signal.store(false);
 }
 
-socket_opt_t Stream::GetSocketOptions()
+socket_opt_t Stream::getSocketOptions()
 {
     return {AF_INET, SOCK_STREAM, 0};
 }
 
-void Stream::Listen(std::function<void(Stream&&)> const& callback, size_t max_queue_len, long tv_sec, long tv_usec)
+void Stream::listen(std::function<void(Stream&&)> const& callback, size_t max_queue_len, long tv_sec, long tv_usec)
 {
     if (listening.load()) {
         throw SocketException("Already listening for connections");
@@ -78,18 +78,18 @@ void Stream::Listen(std::function<void(Stream&&)> const& callback, size_t max_qu
     listening.store(false);
 }
 
-void Stream::ListenAsync(std::function<void(Stream&&)> const& callback, size_t max_queue_len, long tv_sec, long tv_usec)
+void Stream::listenAsync(std::function<void(Stream&&)> const& callback, size_t max_queue_len, long tv_sec, long tv_usec)
 {
     if (listen_thread.joinable()) {
         listen_thread.join();
     }
 
     listen_thread = std::thread([this, callback, max_queue_len, tv_sec, tv_usec] {
-        Listen(callback, max_queue_len, tv_sec, tv_usec);
+        listen(callback, max_queue_len, tv_sec, tv_usec);
     });
 }
 
-void Stream::Stop(bool wait)
+void Stream::stop(bool wait)
 {
     kill_signal.store(true);
 
@@ -98,7 +98,7 @@ void Stream::Stop(bool wait)
     }
 }
 
-void Stream::ReadBytes(const void* buf, size_t len)
+void Stream::readBytes(const void* buf, size_t len)
 {
     if (len == 0) {
         return;
@@ -117,7 +117,7 @@ void Stream::ReadBytes(const void* buf, size_t len)
     } while (read_count != len);
 }
 
-void Stream::WriteBytes(const void* buf, size_t len)
+void Stream::writeBytes(const void* buf, size_t len)
 {
     if (len == 0) {
         return;
@@ -138,5 +138,5 @@ void Stream::WriteBytes(const void* buf, size_t len)
 
 Stream::~Stream()
 {
-    Stop();
+    stop();
 }

@@ -11,13 +11,13 @@ using namespace bes::cli;
  *
  * Will always have O(n) efficiency as the short_form variable is optional and not indexed, yet needs checking.
  */
-void Parser::ValidateArgument(Arg& arg)
+void Parser::validateArgument(Arg& arg)
 {
-    if (arg.long_form.length() == 0 || !IsValidLongArg(arg.long_form)) {
+    if (arg.long_form.length() == 0 || !isValidLongArg(arg.long_form)) {
         throw MalformedArgumentException("Argument long-form is malformed");
     }
 
-    if (arg.short_form != 0 && !IsValidShortArg(arg.short_form)) {
+    if (arg.short_form != 0 && !isValidShortArg(arg.short_form)) {
         throw MalformedArgumentException("Argument short-form must be [a-z] or [A-Z]");
     }
 
@@ -34,13 +34,13 @@ void Parser::ValidateArgument(Arg& arg)
 
 Parser& Parser::operator<<(Arg arg)
 {
-    AddArgument(std::move(arg));
+    addArgument(std::move(arg));
     return *this;
 }
 
-Parser& Parser::AddArgument(Arg arg)
+Parser& Parser::addArgument(Arg arg)
 {
-    ValidateArgument(arg);
+    validateArgument(arg);
 
     std::lock_guard<std::mutex> lock(_m);
 
@@ -48,12 +48,12 @@ Parser& Parser::AddArgument(Arg arg)
     return *this;
 }
 
-Parser& Parser::AddArgument(char s, std::string l, std::string default_val)
+Parser& Parser::addArgument(char s, std::string l, std::string default_val)
 {
-    return AddArgument(Arg(s, std::move(l), std::move(default_val)));
+    return addArgument(Arg(s, std::move(l), std::move(default_val)));
 }
 
-size_t Parser::ArgCount() const
+size_t Parser::argCount() const
 {
     return arg_list.size();
 }
@@ -61,7 +61,7 @@ size_t Parser::ArgCount() const
 /**
  * Short-arg must be [a-z] or [A-Z]
  */
-bool Parser::IsValidShortArg(char const& c)
+bool Parser::isValidShortArg(char const& c)
 {
     return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
 }
@@ -69,7 +69,7 @@ bool Parser::IsValidShortArg(char const& c)
 /**
  * Long-arg must contain only lower-case letters
  */
-bool Parser::IsValidLongArg(std::string const& arg)
+bool Parser::isValidLongArg(std::string const& arg)
 {
     try {
         std::for_each(arg.begin(), arg.end(), [](const char& c) {
@@ -85,7 +85,7 @@ bool Parser::IsValidLongArg(std::string const& arg)
 }
 
 // Non-const
-Arg& Parser::GetArg(std::string const& s)
+Arg& Parser::getArg(std::string const& s)
 {
     auto it = arg_list.find(s);
     if (it != arg_list.end()) {
@@ -106,7 +106,7 @@ Arg const& Parser::operator[](std::string const& s) const
     }
 }
 
-void Parser::Parse(int const& argc, char** const argv)
+void Parser::parse(int const& argc, char** const argv)
 {
     if (argc >= 2) {
         std::lock_guard<std::mutex> lock(_m);
@@ -132,10 +132,10 @@ void Parser::Parse(int const& argc, char** const argv)
                     }
 
                     // Long-form
-                    ParseLong(arg + 2);
+                    parseLong(arg + 2);
                 } else {
                     // Short-form
-                    ParseShort(arg + 1);
+                    parseShort(arg + 1);
                 }
             } else {
                 if (_last_arg == nullptr || _last_arg->value_type == ValueType::NONE) {
@@ -144,7 +144,7 @@ void Parser::Parse(int const& argc, char** const argv)
                     positionals.emplace_back(arg);
                 } else {
                     // CAN accept a value, add to last argument
-                    _last_arg->SetValue(arg);
+                    _last_arg->setValue(arg);
                 }
 
                 // Last argument wasn't an option, so we can't reference it
@@ -155,14 +155,14 @@ void Parser::Parse(int const& argc, char** const argv)
         BES_LOG(DEBUG) << "Nothing to parse on CLI";
     }
 
-    ValidateRequired();
+    validateRequired();
 }
 
 /**
  * Assuming we have an argument in the form -a or -abc, we'll should pass to this function a char* starting after the
  * hyphen. We'll iterate over the 'abc' and update Arg's on the Parser.
  */
-void Parser::ParseShort(char* short_args)
+void Parser::parseShort(char* short_args)
 {
     char short_arg = 0;
     Arg* arg = nullptr;
@@ -178,15 +178,15 @@ void Parser::ParseShort(char* short_args)
             }
 
             // Will throw an UnexpectedValueException if it doesn't accept a value
-            _last_arg->SetValue(short_args);
+            _last_arg->setValue(short_args);
             break;
         }
 
-        if (!IsValidShortArg(short_arg)) {
+        if (!isValidShortArg(short_arg)) {
             throw MalformedArgumentException(std::string("Argument -") + short_arg + " is not valid");
         }
 
-        arg = GetArgFromShort(short_arg);
+        arg = getArgFromShort(short_arg);
         if (arg == nullptr) {
             throw NoSuchArgumentException(std::string("Argument -") + short_arg + " does not exist");
         }
@@ -197,7 +197,7 @@ void Parser::ParseShort(char* short_args)
     }
 }
 
-void Parser::ParseLong(std::string const& long_arg)
+void Parser::parseLong(std::string const& long_arg)
 {
     auto pos = long_arg.find('=');
     if (pos != std::string::npos) {
@@ -205,12 +205,12 @@ void Parser::ParseLong(std::string const& long_arg)
         std::string arg_name = std::string(long_arg, 0, pos);
         std::string arg_value = std::string(long_arg, pos + 1);
 
-        Arg& arg = GetArg(arg_name);
-        ++arg.SetValue(std::move(arg_value));
+        Arg& arg = getArg(arg_name);
+        ++arg.setValue(std::move(arg_value));
         _last_arg = &arg;
     } else {
         // Simple option, no value
-        Arg& arg = GetArg(long_arg);
+        Arg& arg = getArg(long_arg);
         ++arg;
         _last_arg = &arg;
     }
@@ -220,7 +220,7 @@ void Parser::ParseLong(std::string const& long_arg)
  * A rather inefficient iterate-and-retrieve on the short value of the argument. Will return nullptr if a matching Arg
  * is not found.
  */
-Arg* Parser::GetArgFromShort(char c)
+Arg* Parser::getArgFromShort(char c)
 {
     for (auto& it : arg_list) {
         if (it.second.short_form == c) {
@@ -234,13 +234,13 @@ Arg* Parser::GetArgFromShort(char c)
 /**
  * Throws an exception is an argument that requires a value does not have one.
  */
-void Parser::ValidateRequired()
+void Parser::validateRequired()
 {
     std::lock_guard<std::mutex> lock(_m);
 
     for (auto& arg : arg_list) {
         if (arg.second.arg_value.empty()) {
-            if (arg.second.value_type == ValueType::REQUIRED && arg.second.Present()) {
+            if (arg.second.value_type == ValueType::REQUIRED && arg.second.present()) {
                 throw NoValueException("Argument --" + arg.second.long_form + " requires a value");
             } else if (arg.second.value_type == ValueType::MANDATORY) {
                 throw NoValueException("Argument --" + arg.second.long_form + " is mandatory");
@@ -249,7 +249,7 @@ void Parser::ValidateRequired()
     }
 }
 
-std::vector<Arg const*> Parser::GetAllArgs() const
+std::vector<Arg const*> Parser::getAllArgs() const
 {
     std::vector<Arg const*> vec;
     for (auto const& a : arg_list) {

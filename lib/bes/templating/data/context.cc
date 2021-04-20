@@ -4,10 +4,10 @@ using namespace bes::templating::data;
 
 Context::Context()
 {
-    IncreaseStack();
+    increaseStack();
 }
 
-Context& Context::IncreaseStack()
+Context& Context::increaseStack()
 {
     std::unique_lock<std::shared_mutex> lock(value_mutex);
 
@@ -15,7 +15,7 @@ Context& Context::IncreaseStack()
     return *this;
 }
 
-Context& Context::DecreaseStack()
+Context& Context::decreaseStack()
 {
     if (data.size() == 1) {
         throw TemplateException("Cannot decrease a context stack to zero");
@@ -27,7 +27,7 @@ Context& Context::DecreaseStack()
     return *this;
 }
 
-Context& Context::SetValue(std::string const& key, std::shared_ptr<ShellInterface> item)
+Context& Context::setValue(std::string const& key, std::shared_ptr<ShellInterface> item)
 {
     std::unique_lock<std::shared_mutex> lock(value_mutex);
 
@@ -35,7 +35,7 @@ Context& Context::SetValue(std::string const& key, std::shared_ptr<ShellInterfac
     return *this;
 }
 
-std::shared_ptr<ShellInterface> const& Context::GetValue(std::string const& key)
+std::shared_ptr<ShellInterface> const& Context::getValue(std::string const& key)
 {
     std::shared_lock<std::shared_mutex> lock(value_mutex);
 
@@ -49,17 +49,17 @@ std::shared_ptr<ShellInterface> const& Context::GetValue(std::string const& key)
     throw MissingContextException("Context item '" + key + "' does not exist");
 }
 
-void Context::AddMacro(std::string const& key, node::Node const* node)
+void Context::addMacro(std::string const& key, node::Node const* node)
 {
     macros[key] = node;
 }
 
-bool Context::HasMacro(std::string const& key) const
+bool Context::hasMacro(std::string const& key) const
 {
     return macros.find(key) != macros.end();
 }
 
-bes::templating::node::Node const* Context::GetMacro(std::string const& key) const
+bes::templating::node::Node const* Context::getMacro(std::string const& key) const
 {
     return macros.at(key);
 }

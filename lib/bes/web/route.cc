@@ -6,13 +6,13 @@ Route::Route(std::string const& name) : name(name), controller(name) {}
 
 Route::Route(std::string const& name, std::string const& uri) : name(name), controller(name)
 {
-    ParseUri(uri);
+    parseUri(uri);
 }
 
 /**
  * Parse the route URI string and break it into segments for matching.
  */
-void Route::ParseUri(std::string const& uri)
+void Route::parseUri(std::string const& uri)
 {
     std::stringstream part;
     uint16_t depth = 0;
@@ -43,8 +43,8 @@ void Route::ParseUri(std::string const& uri)
             }
             sect.section_type = RouteType::REGEX;
 
-            Trim(sect.name);
-            Trim(sect.value);
+            trim(sect.name);
+            trim(sect.value);
 
             if (sect.name.length() && sect.value.length()) {
                 parts.push_back(sect);
@@ -79,7 +79,7 @@ void Route::ParseUri(std::string const& uri)
     }
 }
 
-void Route::Trim(std::string& s)
+void Route::trim(std::string& s)
 {
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {
                 return !std::isspace(ch);
@@ -93,70 +93,7 @@ void Route::Trim(std::string& s)
             s.end());
 }
 
-PrecachedRoute::PrecachedRoute(Route const& route)
-{
-    parts = route.parts;
-    controller = route.controller;
-    name = route.name;
-    includes_query = route.includes_query;
-
-    Precache();
-}
-
-PrecachedRoute::PrecachedRoute(Route&& route)
-{
-    using std::swap;
-
-    swap(parts, route.parts);
-    swap(controller, route.controller);
-    swap(name, route.name);
-    swap(includes_query, route.includes_query);
-
-    Precache();
-}
-
-PrecachedRoute& PrecachedRoute::operator=(Route const& route)
-{
-    parts = route.parts;
-    controller = route.controller;
-    name = route.name;
-    includes_query = route.includes_query;
-
-    Precache();
-    return *this;
-}
-
-PrecachedRoute& PrecachedRoute::operator=(Route&& route)
-{
-    using std::swap;
-
-    swap(parts, route.parts);
-    swap(controller, route.controller);
-    swap(name, route.name);
-    swap(includes_query, route.includes_query);
-
-    Precache();
-    return *this;
-}
-
-PrecachedRoute::PrecachedRoute(PrecachedRoute&& route) noexcept
-{
-    swap(*this, route);
-}
-
-PrecachedRoute& PrecachedRoute::operator=(PrecachedRoute route) noexcept
-{
-    swap(*this, route);
-    return *this;
-}
-
-PrecachedRoute& PrecachedRoute::operator=(PrecachedRoute&& route) noexcept
-{
-    swap(*this, route);
-    return *this;
-}
-
-void PrecachedRoute::Precache()
+void PrecachedRoute::precache()
 {
     std::stringstream buf;  // Regex builder
     bool first = true;      // Is first part
@@ -201,4 +138,32 @@ void PrecachedRoute::Precache()
     if (route_re_str.length() > 2) {
         regex = route_re_str;
     }
+}
+
+PrecachedRoute::PrecachedRoute(Route&& r) : Route(std::move(r))
+{
+    precache();
+}
+
+PrecachedRoute::PrecachedRoute(Route const& r) : Route(r)
+{
+    precache();
+}
+
+PrecachedRoute& PrecachedRoute::operator=(Route&& r)
+{
+    auto tmp = PrecachedRoute(std::move(r));
+    std::swap(*this, tmp);
+    precache();
+
+    return *this;
+}
+
+PrecachedRoute& PrecachedRoute::operator=(Route const& r)
+{
+    auto tmp = PrecachedRoute(r);
+    std::swap(*this, tmp);
+    precache();
+
+    return *this;
 }

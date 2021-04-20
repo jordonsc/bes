@@ -1,5 +1,4 @@
-#ifndef BES_BES_MODEL_H
-#define BES_BES_MODEL_H
+#pragma once
 
 #include <csignal>
 #include <memory>
@@ -41,7 +40,7 @@ enum class ExitCode : int
     TERMINATED = 11,         // SIGTERM
 };
 
-inline int SignalToExitCode(int signal)
+inline int signalToExitCode(int signal)
 {
     switch (signal) {
         case 0:
@@ -56,5 +55,3 @@ inline int SignalToExitCode(int signal)
 }
 
 }  // namespace bes
-
-#endif  // BES_MODEL_H

@@ -1,5 +1,4 @@
-#ifndef BES_TEMPLATING_NODE_FOR_NODE_H
-#define BES_TEMPLATING_NODE_FOR_NODE_H
+#pragma once
 
 #include <memory>
 
@@ -19,26 +18,26 @@ class ForNode : public ExpressionNode
    public:
     using ExpressionNode::ExpressionNode;
 
-    void Render(std::ostringstream& ss, data::Context& ctx, data::TemplateStack& ts) const override
+    void render(std::ostringstream& ss, data::Context& ctx, data::TemplateStack& ts) const override
     {
-        ctx.IncreaseStack();
+        ctx.increaseStack();
         // Guarantees of symbol types is done during parsing
-        auto var = expr.left.Value<std::string>();
+        auto var = expr.left.value<std::string>();
 
         if (expr.right.symbol_type == syntax::Symbol::SymbolType::ARRAY) {
             // Loop over a literal array
             size_t pos = 0;
             for (auto& item : expr.right.items) {
                 // Set context for the array item
-                ctx.SetValue(var, std::make_shared<data::SymbolShell>(std::any_cast<syntax::Symbol>(item), ctx));
+                ctx.setValue(var, std::make_shared<data::SymbolShell>(std::any_cast<syntax::Symbol>(item), ctx));
 
                 // Set the loop context
-                ctx.SetValue("loop",
+                ctx.setValue("loop",
                              std::make_shared<data::StandardShell<node::loop>>(loop(pos, expr.right.items.size())));
 
                 // Process children
                 for (auto& node : child_nodes) {
-                    node->Render(ss, ctx, ts);
+                    node->render(ss, ctx, ts);
                 }
 
                 ++pos;
@@ -46,48 +45,48 @@ class ForNode : public ExpressionNode
 
         } else {
             // Create the array from the context map
-            std::shared_ptr<data::ShellInterface> sh = GetRhsShell(ctx);
+            std::shared_ptr<data::ShellInterface> sh = getRhsShell(ctx);
 
-            size_t size = sh->Count();
-            sh->Begin();
+            size_t size = sh->count();
+            sh->begin();
             for (size_t pos = 0; pos < size; ++pos) {
                 // Set context for the object yield
-                ctx.SetValue(var, sh->Yield());
+                ctx.setValue(var, sh->yield());
 
                 // Set the loop context
-                ctx.SetValue("loop", std::make_shared<data::StandardShell<node::loop>>(loop(pos, size)));
+                ctx.setValue("loop", std::make_shared<data::StandardShell<node::loop>>(loop(pos, size)));
 
                 // Process children
                 for (auto& node : child_nodes) {
-                    node->Render(ss, ctx, ts);
+                    node->render(ss, ctx, ts);
                 }
             }
         }
 
-        ctx.DecreaseStack();
+        ctx.decreaseStack();
     }
 
    protected:
     /**
      * Recursive function to pull RHS items from the context
      */
-    [[nodiscard]] std::shared_ptr<data::ShellInterface> ShellFromContext(
+    [[nodiscard]] std::shared_ptr<data::ShellInterface> shellFromContext(
         std::shared_ptr<data::ShellInterface> const& item, size_t pos = 1) const
     {
-        std::shared_ptr<data::ShellInterface> sub = item->ChildNode(std::any_cast<std::string>(expr.right.items[pos]));
+        std::shared_ptr<data::ShellInterface> sub = item->childNode(std::any_cast<std::string>(expr.right.items[pos]));
 
         if (pos == expr.right.items.size() - 1) {
             return sub;
         } else {
-            return ShellFromContext(sub, pos + 1);
+            return shellFromContext(sub, pos + 1);
         }
     }
 
-    std::shared_ptr<data::ShellInterface> GetRhsShell(data::Context& ctx) const
+    std::shared_ptr<data::ShellInterface> getRhsShell(data::Context& ctx) const
     {
-        std::shared_ptr<data::ShellInterface> item = ctx.GetValue(std::any_cast<std::string>(expr.right.items[0]));
+        std::shared_ptr<data::ShellInterface> item = ctx.getValue(std::any_cast<std::string>(expr.right.items[0]));
         if (expr.right.items.size() > 1) {
-            return ShellFromContext(item);
+            return shellFromContext(item);
         } else {
             return item;
         }
@@ -95,5 +94,3 @@ class ForNode : public ExpressionNode
 };
 
 }  // namespace bes::templating::node
-
-#endif

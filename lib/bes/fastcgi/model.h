@@ -1,5 +1,4 @@
-#ifndef BES_FASTCGI_MODEL_H
-#define BES_FASTCGI_MODEL_H
+#pragma once
 
 #include <byteswap.h>
 
@@ -109,4 +108,3 @@ struct EndRequest
 
 }  // namespace bes::fastcgi::model
 
-#endif

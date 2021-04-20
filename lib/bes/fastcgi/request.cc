@@ -4,11 +4,11 @@ using namespace bes::fastcgi;
 
 Request::Request(Transceiver& tns, bes::Container const& cnt) : container(cnt), transceiver(tns) {}
 
-bool Request::Run()
+bool Request::run()
 {
     try {
         // Process all input records
-        while (ProcessRecord()) {
+        while (processRecord()) {
         }
 
         // Validate we have valid data
@@ -26,9 +26,9 @@ bool Request::Run()
 /**
  * Read a header and then process the record-type it contains
  */
-bool Request::ProcessRecord()
+bool Request::processRecord()
 {
-    model::Header header = transceiver.ReadModel<model::Header>();
+    auto header = transceiver.readModel<model::Header>();
 
     // Validate we understand the FCGI version
     if (header.version > model::fcgi_version) {
@@ -48,27 +48,27 @@ bool Request::ProcessRecord()
     switch (header.type) {
         case model::RecordType::BEGIN_REQUEST:
             BES_LOG(DEBUG) << "FCGI: processing BEGIN";
-            ProcessBeginRequest(header);
+            processBeginRequest(header);
             return true;
 
         case model::RecordType::ABORT_REQUEST:
             BES_LOG(DEBUG) << "FCGI: processing ABORT";
-            transceiver.SkipRecord(header);
+            transceiver.skipRecord(header);
             throw AbortException("Server aborted request");
 
         case model::RecordType::PARAMS:
             BES_LOG(DEBUG) << "FCGI: processing PARAMS";
-            ProcessParams(header);
+            processParams(header);
             return true;
 
         case model::RecordType::IN:
             BES_LOG(DEBUG) << "FCGI: processing IN";
-            ProcessIn(header);
+            processIn(header);
             return false;
 
         default:
             BES_LOG(WARNING) << "FCGI: server skipping record-type: " << int(static_cast<uint8_t>(header.type));
-            transceiver.SkipRecord(header);
+            transceiver.skipRecord(header);
             return true;
     }
 }
@@ -76,53 +76,45 @@ bool Request::ProcessRecord()
 /**
  * The BeginRequest segment marks the intended role and sets some flags.
  */
-void Request::ProcessBeginRequest(model::Header const& header)
+void Request::processBeginRequest(model::Header const& header)
 {
-    ValidateRecordLength(header, sizeof(model::BeginRequest));
+    validateRecordLength(header, sizeof(model::BeginRequest));
 
-    auto begin_request = transceiver.ReadModel<model::BeginRequest>();
+    auto begin_request = transceiver.readModel<model::BeginRequest>();
 
     role = begin_request.role;
     flags = begin_request.flags;
     request_id = header.request_id;
 
-    transceiver.ConsumePadding(header);
+    transceiver.consumePadding(header);
 }
 
 /**
  * This is the core of the request, a set of key/value parameters that defines the request we need to respond to.
  */
-void Request::ProcessParams(model::Header const& header)
+void Request::processParams(model::Header const& header)
 {
     size_t read_counter = 0;
     while (read_counter < header.content_length) {
-        auto name_len = GetVariableSizeLength(read_counter);
-        auto value_len = GetVariableSizeLength(read_counter);
-
-        BES_LOG(DEBUG) << "FCGI: param segment: Name: " << name_len << ", Value: " << value_len;
+        auto name_len = getVariableSizeLength(read_counter);
+        auto value_len = getVariableSizeLength(read_counter);
 
         char data_name[name_len];
-        transceiver.Stream().ReadBytes(data_name, name_len);
+        transceiver.stream().readBytes(data_name, name_len);
         read_counter += name_len;
 
         if (value_len > 0) {
             char data_value[value_len];
-            transceiver.Stream().ReadBytes(data_value, value_len);
+            transceiver.stream().readBytes(data_value, value_len);
             read_counter += value_len;
             params.insert_or_assign(std::string(data_name, name_len), std::string(data_value, value_len));
-            BES_LOG(DEBUG) << "FCGI: PARAM <" << std::string(data_name, name_len) << "> (" << name_len << ") '"
-                             << std::string(data_value, value_len) << "' (" << value_len << ")";
-
         } else {
             params.insert_or_assign(std::string(data_name, name_len), std::string());
-            BES_LOG(DEBUG) << "FCGI: PARAM <" << std::string(data_name, name_len) << "> (" << name_len << ") nil";
         }
     }
 
-    BES_LOG(DEBUG) << "FCGI: validating";
-    ValidateRecordLength(header, read_counter);
-    BES_LOG(DEBUG) << "FCGI: consuming";
-    transceiver.ConsumePadding(header);
+    validateRecordLength(header, read_counter);
+    transceiver.consumePadding(header);
 }
 
 /**
@@ -132,15 +124,15 @@ void Request::ProcessParams(model::Header const& header)
  *  - Consider a max file-size limit here
  *  - Where do we put the file?
  */
-void Request::ProcessIn(model::Header const& header)
+void Request::processIn(model::Header const& header)
 {
-    in_data += transceiver.ReadStream(header);
+    in_data += transceiver.readStream(header);
 }
 
 /**
  * Ensure we are receiving the expected record length for fixed-length records.
  */
-Request& Request::ValidateRecordLength(model::Header const& header, size_t found)
+Request& Request::validateRecordLength(model::Header const& header, size_t found)
 {
     if (header.content_length != found) {
         throw PayloadException("FastCGI record length mismatch. Read: " + std::to_string(found) +
@@ -159,11 +151,11 @@ Request& Request::ValidateRecordLength(model::Header const& header, size_t found
  *
  * See also: http://www.mit.edu/~yandros/doc/specs/fcgi-spec.html#S3.4
  */
-uint32_t Request::GetVariableSizeLength(size_t& read_counter)
+uint32_t Request::getVariableSizeLength(size_t& read_counter)
 {
     // 32-bit buffer, but we might only use one byte
     unsigned char buffer[4];
-    transceiver.Stream().ReadBytes(buffer, 1);
+    transceiver.stream().readBytes(buffer, 1);
 
     // 8-bit size
     if (buffer[0] >> 7 == 0) {
@@ -172,7 +164,7 @@ uint32_t Request::GetVariableSizeLength(size_t& read_counter)
     }
 
     // 32-bit size
-    transceiver.Stream().ReadBytes(buffer + 1, 3);
+    transceiver.stream().readBytes(buffer + 1, 3);
     read_counter += 4;
 
     uint32_t value;
@@ -182,22 +174,22 @@ uint32_t Request::GetVariableSizeLength(size_t& read_counter)
     return bes_endian_u32(value, true);
 }
 
-model::Role Request::Role() const
+model::Role Request::getRole() const
 {
     return role;
 }
 
-uint8_t Request::Flags() const
+uint8_t Request::getFlags() const
 {
     return flags;
 }
 
-std::unordered_map<std::string, std::string> const& Request::Params() const
+std::unordered_map<std::string, std::string> const& Request::getParams() const
 {
     return params;
 }
 
-std::string const& Request::Param(std::string const& key) const
+std::string const& Request::getParam(std::string const& key) const
 {
     auto const& it = params.find(key);
     if (it != params.end()) {
@@ -207,12 +199,12 @@ std::string const& Request::Param(std::string const& key) const
     }
 }
 
-bool Request::HasParam(std::string const& key) const
+bool Request::hasParam(std::string const& key) const
 {
     return params.find(key) != params.end();
 }
 
-uint16_t Request::RequestId() const
+uint16_t Request::getRequestId() const
 {
     return request_id;
 }

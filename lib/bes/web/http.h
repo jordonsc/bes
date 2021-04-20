@@ -1,5 +1,4 @@
-#ifndef BES_WEB_HTTP_H
-#define BES_WEB_HTTP_H
+#pragma once
 
 #include <unordered_map>
 
@@ -101,7 +100,7 @@ struct Http
         CONNECT
     };
 
-    static Method MethodFromString(std::string const& s)
+    static Method methodFromString(std::string const& s)
     {
         if (s == "GET") {
             return Method::GET;
@@ -128,5 +127,3 @@ struct Http
 using ActionArgs = std::unordered_map<std::string, std::string>;
 
 }  // namespace bes::web
-
-#endif

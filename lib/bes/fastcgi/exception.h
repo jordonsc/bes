@@ -1,5 +1,4 @@
-#ifndef BES_FASTCGI_EXCEPTION_H
-#define BES_FASTCGI_EXCEPTION_H
+#pragma once
 
 #include <bes/core.h>
 
@@ -26,5 +25,3 @@ class AbortException : public FastCgiException
 };
 
 }  // namespace bes::fastcgi
-
-#endif

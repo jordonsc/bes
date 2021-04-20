@@ -1,13 +1,12 @@
-#ifndef BES_NET_SOCKET_SOCKET_H
-#define BES_NET_SOCKET_SOCKET_H
+#pragma once
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include <cstring>
 #include <sys/socket.h>
 #include <unistd.h>
 
 #include <atomic>
+#include <cstring>
 #include <mutex>
 
 #include "../address.h"
@@ -20,17 +19,19 @@ using socket_opt_t = std::tuple<int, int, int>;
 class Socket
 {
    public:
-    bool Bind(::bes::net::Address const& addr, bool reuse = true);
-    void Open();
-    void Close();
     virtual ~Socket();
 
-    [[nodiscard]] inline int UnderlyingSocket() const {
+    bool bind(::bes::net::Address const& addr, bool reuse = true);
+    void open();
+    void close();
+
+    [[nodiscard]] inline int underlyingSocket() const
+    {
         return sock;
     }
 
    protected:
-    virtual socket_opt_t GetSocketOptions() = 0;
+    virtual socket_opt_t getSocketOptions() = 0;
 
     constexpr static int const int_false = 0;
     constexpr static int const int_true = 1;
@@ -38,13 +39,11 @@ class Socket
     sockaddr_in sock_addr;
     int sock;
 
-    std::atomic<bool> open{false};
-    std::atomic<bool> bound{false};
+    std::atomic<bool> is_open{false};
+    std::atomic<bool> is_bound{false};
 
    private:
     std::mutex bind_mutex;
 };
 
 }  // namespace bes::net::socket
-
-#endif

@@ -1,10 +1,10 @@
-#ifndef BES_WEB_EXCEPTION_H
-#define BES_WEB_EXCEPTION_H
-
-#include <utility>
+#pragma once
 
 #include <bes/core.h>
 #include <bes/fastcgi.h>
+
+#include <utility>
+
 #include "http.h"
 
 namespace bes::web {
@@ -66,7 +66,7 @@ class HttpWebException : public WebException
         : WebException(string, bes::ExitCode::GEN_ERR), http_code(http_code)
     {}
 
-    [[nodiscard]] Http::Status HttpCode() const
+    [[nodiscard]] Http::Status httpCode() const
     {
         return http_code;
     }
@@ -88,7 +88,7 @@ class RedirectHttpException : public HttpWebException
         : HttpWebException(http_code, msg), tgt(std::move(target))
     {}
 
-    [[nodiscard]] std::string const& Target() const
+    [[nodiscard]] std::string const& target() const
     {
         return tgt;
     }
@@ -149,6 +149,4 @@ class InternalServerErrorHttpException : public HttpWebException
     {}
 };
 
-};  // namespace bes::web
-
-#endif
+}  // namespace bes::web

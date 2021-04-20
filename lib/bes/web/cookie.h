@@ -1,5 +1,4 @@
-#ifndef BES_WEB_COOKIE_H
-#define BES_WEB_COOKIE_H
+#pragma once
 
 #include <chrono>
 #include <string>
@@ -23,17 +22,17 @@ class Cookie
     Cookie& operator=(Cookie const&) = default;
     Cookie& operator=(Cookie&&) = default;
 
-    [[nodiscard]] std::string const& Name() const;
-    [[nodiscard]] std::string const& Value() const;
+    [[nodiscard]] std::string const& getName() const;
+    [[nodiscard]] std::string const& getValue() const;
 
-    Cookie& Domain(std::string domain);
-    [[nodiscard]] std::string const& Domain() const;
+    Cookie& setDomain(std::string d);
+    [[nodiscard]] std::string const& getDomain() const;
 
-    Cookie& Path(std::string path);
-    [[nodiscard]] std::string const& Path() const;
+    Cookie& setPath(std::string p);
+    [[nodiscard]] std::string const& getPath() const;
 
-    Cookie& MaxAge(int64_t age);
-    [[nodiscard]] int64_t MaxAge() const;
+    Cookie& setMaxAge(int64_t age);
+    [[nodiscard]] int64_t getMaxAge() const;
 
     /**
      * We control whether this header is used by determining if it's in the past. This prevents us from creating
@@ -41,17 +40,17 @@ class Cookie
      *
      * TODO: Add a feature to create delete-cookies.
      */
-    Cookie& Expires(std::chrono::system_clock::time_point exp);
-    [[nodiscard]] std::chrono::system_clock::time_point Expires() const;
+    Cookie& setExpires(std::chrono::system_clock::time_point exp);
+    [[nodiscard]] std::chrono::system_clock::time_point getExpires() const;
 
-    Cookie& Secure(bool v);
-    [[nodiscard]] bool Secure() const;
+    Cookie& setSecure(bool v);
+    [[nodiscard]] bool isSecure() const;
 
-    Cookie& HttpOnly(bool v);
-    [[nodiscard]] bool HttpOnly() const;
+    Cookie& setHttpOnly(bool v);
+    [[nodiscard]] bool isHttpOnly() const;
 
-    Cookie& Priority(CookiePriority p);
-    [[nodiscard]] CookiePriority Priority() const;
+    Cookie& setPriority(CookiePriority p);
+    [[nodiscard]] CookiePriority getPriority() const;
 
    protected:
     std::string name;
@@ -69,9 +68,8 @@ class Cookie
     // Limited support:
     CookiePriority priority = CookiePriority::NONE;
 
-    static bool IsValid(std::string const& str, bool is_name);
+    static bool isValid(std::string const& str, bool is_name);
 };
 
 }  // namespace bes::web
 
-#endif

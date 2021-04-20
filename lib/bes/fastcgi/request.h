@@ -1,5 +1,4 @@
-#ifndef BES_FASTCGI_REQUEST_H
-#define BES_FASTCGI_REQUEST_H
+#pragma once
 
 #include <bes/core.h>
 
@@ -16,16 +15,16 @@ class Request
 {
    public:
     Request(Transceiver& tns, bes::Container const& cnt);
-    bool Run();
+    bool run();
 
-    model::Role Role() const;
-    uint8_t Flags() const;
+    model::Role getRole() const;
+    uint8_t getFlags() const;
 
-    std::string const& Param(std::string const& key) const;
-    bool HasParam(std::string const& key) const;
-    std::unordered_map<std::string, std::string> const& Params() const;
+    std::string const& getParam(std::string const& key) const;
+    bool hasParam(std::string const& key) const;
+    std::unordered_map<std::string, std::string> const& getParams() const;
 
-    uint16_t RequestId() const;
+    uint16_t getRequestId() const;
 
     bes::Container const& container;
 
@@ -33,22 +32,22 @@ class Request
     /**
      * Process an arbitrary record. Will read the header then invoke the correct handler.
      */
-    bool ProcessRecord();
+    bool processRecord();
 
     // Input processors
-    void ProcessBeginRequest(model::Header const& header);
-    void ProcessParams(model::Header const& header);
-    void ProcessIn(model::Header const& header);
+    void processBeginRequest(model::Header const& header);
+    void processParams(model::Header const& header);
+    void processIn(model::Header const& header);
 
     /**
      * Validate that the server is sending the expected record length for a fixed-length record.
      */
-    Request& ValidateRecordLength(model::Header const& header, size_t found);
+    Request& validateRecordLength(model::Header const& header, size_t found);
 
     /**
      * Reads either 1 byte or 4 bytes of a variable-size field representing a data length.
      */
-    uint32_t GetVariableSizeLength(size_t& read_counter);
+    uint32_t getVariableSizeLength(size_t& read_counter);
 
     Transceiver& transceiver;
 
@@ -60,5 +59,3 @@ class Request
 };
 
 }  // namespace bes::fastcgi
-
-#endif

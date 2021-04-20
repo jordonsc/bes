@@ -1,5 +1,4 @@
-#ifndef BES_TEMPLATING_NODE_MACRO_NODE_H
-#define BES_TEMPLATING_NODE_MACRO_NODE_H
+#pragma once
 
 #include <memory>
 
@@ -17,12 +16,12 @@ class MacroNode : public ExpressionNode
    public:
     using ExpressionNode::ExpressionNode;
 
-    [[nodiscard]] size_t ArgCount() const
+    [[nodiscard]] size_t argCount() const
     {
         return expr.right.items.size();
     }
 
-    [[nodiscard]] std::vector<std::any> const& GetArgs() const
+    [[nodiscard]] std::vector<std::any> const& getArgs() const
     {
         return expr.right.items;
     }
@@ -32,40 +31,38 @@ class MacroNode : public ExpressionNode
      *
      * When we hit this, we just add the block to the TemplateStack for later referencing.
      */
-    void Render(std::ostringstream& ss, data::Context& ctx, data::TemplateStack& ts) const override
+    void render(std::ostringstream& ss, data::Context& ctx, data::TemplateStack& ts) const override
     {
-        ctx.AddMacro(expr.left.Value<std::string>(), dynamic_cast<Node const*>(this));
+        ctx.addMacro(expr.left.value<std::string>(), dynamic_cast<Node const*>(this));
     }
 
     /**
      * A ValueNode has requested we render our actual content.
      */
-    void RenderMacro(std::ostringstream& ss, data::Context& ctx, data::TemplateStack& ts,
+    void menderMacro(std::ostringstream& ss, data::Context& ctx, data::TemplateStack& ts,
                      std::vector<std::any> const& args) const
     {
-        if (ArgCount() != args.size()) {
+        if (argCount() != args.size()) {
             throw TemplateException("Argument count mismatch for macro call: " + expr.raw);
         }
 
-        ctx.IncreaseStack();
+        ctx.increaseStack();
 
         // Add all function arguments as context items matching macro arguments (by position)
         size_t pos = 0;
-        for (auto& arg : GetArgs()) {
-            ctx.SetValue(
-                std::any_cast<syntax::Symbol>(arg).Value<std::string>(),
+        for (auto& arg : getArgs()) {
+            ctx.setValue(
+                std::any_cast<syntax::Symbol>(arg).value<std::string>(),
                 std::make_shared<bes::templating::data::SymbolShell>(std::any_cast<syntax::Symbol>(args[pos]), ctx));
             ++pos;
         }
 
         for (auto& node : child_nodes) {
-            node->Render(ss, ctx, ts);
+            node->render(ss, ctx, ts);
         }
 
-        ctx.DecreaseStack();
+        ctx.decreaseStack();
     }
 };
 
 }  // namespace bes::templating::node
-
-#endif

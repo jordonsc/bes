@@ -1,5 +1,4 @@
-#ifndef BES_WEB_MODEL_H
-#define BES_WEB_MODEL_H
+#pragma once
 
 namespace bes::web {
 
@@ -16,5 +15,3 @@ auto constexpr SESSION_DEFAULT_COOKIE = "bsn";
 auto constexpr SESSION_DEFAULT_PREFIX = "S";
 
 }  // namespace bes::web
-
-#endif

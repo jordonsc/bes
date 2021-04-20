@@ -1,5 +1,4 @@
-#ifndef BES_WEB_TEMPLATING_TEMPLATING_APP_H
-#define BES_WEB_TEMPLATING_TEMPLATING_APP_H
+#pragma once
 
 #include <yaml-cpp/yaml.h>
 
@@ -14,9 +13,9 @@ class TemplateApp : public bes::app::Application
    public:
     TemplateApp(std::string name, std::string key, std::string description, version_t version, std::string usage = "");
 
-    void Run() override;
-    void Shutdown() override;
-    void ConfigureCli(bes::cli::Parser& parser) override;
+    void run() override;
+    void shutdown() override;
+    void configureCli(bes::cli::Parser& parser) override;
 
    protected:
     virtual void ConfigureServer(bes::web::WebServer& svr) = 0;
@@ -27,12 +26,10 @@ class TemplateApp : public bes::app::Application
     bool debug_mode = false;
 
    private:
-    void Bootstrap();
-    static void LoadTemplates(std::string const& fn);
+    void bootstrap();
+    static void loadTemplates(std::string const& fn);
 
     bool bootstrapped = false;
 };
 
 }  // namespace bes::web
-
-#endif

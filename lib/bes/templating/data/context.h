@@ -1,5 +1,4 @@
-#ifndef BES_TEMPLATING_DATA_CONTEXT_H
-#define BES_TEMPLATING_DATA_CONTEXT_H
+#pragma once
 
 #include <memory>
 #include <shared_mutex>
@@ -24,17 +23,17 @@ class Context
     Context();
 
     /// Increase/decrease scope
-    Context& IncreaseStack();
-    Context& DecreaseStack();
+    Context& increaseStack();
+    Context& decreaseStack();
 
     /// Data values stored in the context
-    Context& SetValue(std::string const& key, std::shared_ptr<ShellInterface> item);
-    std::shared_ptr<ShellInterface> const& GetValue(std::string const& key);
+    Context& setValue(std::string const& key, std::shared_ptr<ShellInterface> item);
+    std::shared_ptr<ShellInterface> const& getValue(std::string const& key);
 
     /// Macro pool - unique to an inheritance line (the template entry-point)
-    void AddMacro(std::string const& key, node::Node const* node);
-    bool HasMacro(std::string const& key) const;
-    node::Node const* GetMacro(std::string const& key) const;
+    void addMacro(std::string const& key, node::Node const* node);
+    bool hasMacro(std::string const& key) const;
+    node::Node const* getMacro(std::string const& key) const;
 
    protected:
     std::vector<std::unordered_map<std::string, std::shared_ptr<ShellInterface>>> data;
@@ -43,5 +42,3 @@ class Context
 };
 
 }  // namespace bes::templating::data
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef BES_WEB_SESSION_INTERFACE_H
-#define BES_WEB_SESSION_INTERFACE_H
+#pragma once
 
 #include <random>
 
@@ -13,26 +12,26 @@ class SessionInterface
     /**
      * Generate a unique session ID and create a blank session.
      */
-    virtual Session CreateSession(std::string const& ns = "S") = 0;
+    virtual Session createSession(std::string const& ns) = 0;
 
     /**
      * Get a session.
      *
      * If the session does not exist, throw a SessionNotExistsException.
      */
-    virtual Session GetSession(std::string const& id) = 0;
+    virtual Session getSession(std::string const& id) = 0;
 
     /**
      * Persist the session, resetting its TTL.
      *
      * If the session does not contain a session ID, it is considered invalid and an exception raised.
      */
-    virtual void PersistSession(Session const& session) = 0;
+    virtual void persistSession(Session const& session) = 0;
 
     /**
      * Define the TTL used when persisting sessions.
      */
-    virtual void SetSessionTtl(uint64_t ttl) = 0;
+    virtual void setSessionTtl(uint64_t ttl) = 0;
 
     /**
      * Generate a session key.
@@ -42,7 +41,7 @@ class SessionInterface
      *
      * `ns` is a prefix to be used as a namespace, or cool looks - your choice.
      */
-    inline static std::string GenerateSessionKey(std::string const& ns = "S")
+    inline static std::string generateSessionKey(std::string const& ns = "S")
     {
         std::stringstream out;
         std::mt19937 rng(std::random_device{}());
@@ -60,5 +59,3 @@ class SessionInterface
 };
 
 }  // namespace bes::web
-
-#endif

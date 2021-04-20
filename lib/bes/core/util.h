@@ -1,5 +1,4 @@
-#ifndef BES_BES_UTIL_TCC
-#define BES_BES_UTIL_TCC
+#pragma once
 
 #include <memory>
 #include <string>
@@ -14,7 +13,7 @@ namespace bes {
  * To be deprecated when we can use C++20.
  */
 template <typename... Args>
-std::string string_format(const std::string& format, Args... args)
+std::string string_format(std::string const& format, Args... args)
 {
     // Extra space for a trailing null character (C-strings)
     size_t size = snprintf(nullptr, 0, format.c_str(), args...) + 1;
@@ -31,5 +30,3 @@ std::string string_format(const std::string& format, Args... args)
 }
 
 }  // namespace bes
-
-#endif

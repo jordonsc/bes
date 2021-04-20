@@ -28,13 +28,13 @@ class Logger
    public:
     Logger(Severity severity, char const* function, char const* filename, int lineno);
 
-    [[nodiscard]] bool Enabled() const;
+    [[nodiscard]] bool enabled() const;
 
     /// Send the log record captured by this object to @p sink.
-    void Dispatch();
+    void dispatch();
 
     /// Return the iostream that captures the log message.
-    std::ostream& Stream();
+    std::ostream& stream();
 
    private:
     bool log_enabled;

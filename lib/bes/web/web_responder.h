@@ -1,5 +1,4 @@
-#ifndef BES_WEB_WEB_RESPONDER_H
-#define BES_WEB_WEB_RESPONDER_H
+#pragma once
 
 #include <bes/fastcgi.h>
 #include <bes/log.h>
@@ -20,16 +19,14 @@ class WebResponder : public bes::fastcgi::Response
     using bes::fastcgi::Response::Response;
 
    public:
-    int Run() override;
+    int run() override;
 
    protected:
-    void RenderResponse(HttpResponse const& resp, HttpRequest const& req);
-    void RenderCookie(Cookie const&);
-    void RenderError(HttpRequest const& req, Http::Status code, std::string const& debug_msg);
-    void RenderEmergencyErrorResponse(std::string const& debug_msg);
-    bool DebugMode();
+    void renderResponse(HttpResponse const& resp, HttpRequest const& req);
+    void renderCookie(Cookie const& cookie);
+    void renderError(HttpRequest const& req, Http::Status code, std::string const& debug_msg);
+    void renderEmergencyErrorResponse(std::string const& debug_msg);
+    bool debugMode();
 };
 
 }  // namespace bes::web
-
-#endif

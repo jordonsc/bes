@@ -41,9 +41,9 @@ bes::templating::syntax::Symbol::Symbol(std::string const& str)
             throw MalformedSymbolException(str, "unterminated array");
         }
 
-        auto parts = Text::Split(std::string(str, 1, str.length() - 2), ",");
+        auto parts = Text::split(std::string(str, 1, str.length() - 2), ",");
         for (auto& part : parts) {
-            Text::Trim(part);
+            Text::trim(part);
             items.emplace_back(Symbol(part));
         }
     } else if (first == '(') {
@@ -53,9 +53,9 @@ bes::templating::syntax::Symbol::Symbol(std::string const& str)
             throw MalformedSymbolException(str, "unterminated function syntax");
         }
 
-        auto parts = Text::Split(std::string(str, 1, str.length() - 2), ",");
+        auto parts = Text::split(std::string(str, 1, str.length() - 2), ",");
         for (auto& part : parts) {
-            Text::Trim(part);
+            Text::trim(part);
             items.emplace_back(Symbol(part));
         }
     } else if (first >= '0' && first <= '9') {
@@ -77,11 +77,11 @@ bes::templating::syntax::Symbol::Symbol(std::string const& str)
             }
 
             if (dec) {
-                v += (c - '0') / std::pow(10, dec);
+                v += float((c - '0') / std::pow(10, dec));
                 ++dec;
             } else {
                 v *= 10;
-                v += c - '0';
+                v += float(c - '0');
             }
         }
 
@@ -110,17 +110,17 @@ bes::templating::syntax::Symbol::Symbol(std::string const& str)
         symbol_type = SymbolType::VARIABLE;
         data_type = DataType::VARIABLE;
 
-        auto parts = Text::Split(str, ".");
+        auto parts = Text::split(str, ".");
         for (auto& part : parts) {
-            if (!IsValidVariableName(part)) {
+            if (!isValidVariableName(part)) {
                 throw MalformedSymbolException(str, "Invalid variable name");
             }
-            items.push_back(part);
+            items.emplace_back(part);
         }
     }
 }
 
-bool Symbol::IsValidVariableName(std::string const& v)
+bool Symbol::isValidVariableName(std::string const& v)
 {
     if (!v.length()) {
         return false;

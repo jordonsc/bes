@@ -2,53 +2,53 @@
 
 using namespace bes::web;
 
-void HttpResponse::Status(Http::Status status_code)
+void HttpResponse::status(Http::Status status_code)
 {
-    return Header(Http::Header::STATUS, std::to_string(static_cast<int>(status_code)));
+    return header(Http::Header::STATUS, std::to_string(static_cast<int>(status_code)));
 }
 
-void HttpResponse::Status(Http::Status status_code, std::string const& content_type)
+void HttpResponse::status(Http::Status status_code, std::string const& content_type)
 {
-    Header(Http::Header::STATUS, std::to_string(static_cast<int>(status_code)));
-    Header(Http::Header::CONTENT_TYPE, content_type);
+    header(Http::Header::STATUS, std::to_string(static_cast<int>(status_code)));
+    header(Http::Header::CONTENT_TYPE, content_type);
 }
 
-void HttpResponse::Header(std::string const& key, std::string const& value)
+void HttpResponse::header(std::string const& key, std::string const& value)
 {
-    headers.insert_or_assign(key, value);
+    http_headers.insert_or_assign(key, value);
 }
 
-std::unordered_map<std::string, std::string> const& HttpResponse::Headers() const
+std::unordered_map<std::string, std::string> const& HttpResponse::headers() const
 {
-    return headers;
+    return http_headers;
 }
 
-size_t HttpResponse::Write(std::string const& data)
+size_t HttpResponse::write(std::string const& data)
 {
-    content << data;
+    resp_content << data;
 
     return data.length();
 }
 
-std::string HttpResponse::Content() const
+std::string HttpResponse::content() const
 {
-    return content.str();
+    return resp_content.str();
 }
 
-void HttpResponse::SetCookie(Cookie cookie)
+void HttpResponse::setCookie(Cookie cookie)
 {
-    cookies.insert_or_assign(cookie.Name(), std::move(cookie));
+    http_cookies.insert_or_assign(cookie.getName(), std::move(cookie));
 }
 
-std::unordered_map<std::string, Cookie> const& HttpResponse::Cookies() const
+std::unordered_map<std::string, Cookie> const& HttpResponse::cookies() const
 {
-    return cookies;
+    return http_cookies;
 }
 
-HttpResponse HttpResponse::OK(std::string const& content_type)
+HttpResponse HttpResponse::ok(std::string const& content_type)
 {
     HttpResponse ok;
-    ok.Status(Http::Status::OK, content_type);
+    ok.status(Http::Status::OK, content_type);
 
     return ok;
 }

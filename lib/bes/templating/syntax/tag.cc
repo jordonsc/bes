@@ -47,7 +47,7 @@ Tag::Tag(std::string const& content, size_t& tag_pos, size_t& parse_cursor)
     clear_right = content[end_pos - 1] == '-';
     size_t start_pos = tag_pos + (clear_left ? 3 : 2);
 
-    if ((end_pos - tag_pos) < static_cast<size_t>(3 + (clear_left ? 1 : 0) + (clear_right ? 1 : 0))) {
+    if ((end_pos - tag_pos) < (size_t(3) + (clear_left ? 1 : 0) + (clear_right ? 1 : 0))) {
         throw TemplateException("Template tags at position " + std::to_string(tag_pos) + " are too short");
     }
 

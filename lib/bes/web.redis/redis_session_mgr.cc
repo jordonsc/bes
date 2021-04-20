@@ -1,6 +1,5 @@
 #include "redis_session_mgr.h"
 
-#include <functional>
 #include <iostream>
 #include <vector>
 
@@ -9,7 +8,7 @@ using namespace bes::web;
 RedisSessionMgr::RedisSessionMgr(bes::net::Address addr, uint32_t timeout_ms)
     : server(std::move(addr)), connect_timeout(timeout_ms)
 {
-    Connect();
+    connect();
 }
 
 RedisSessionMgr::RedisSessionMgr(std::vector<bes::net::Address> const& sentinels, std::string sentinel_svc,
@@ -17,20 +16,20 @@ RedisSessionMgr::RedisSessionMgr(std::vector<bes::net::Address> const& sentinels
     : server(bes::net::Address("", 0)), sentinel_svc_name(std::move(sentinel_svc)), connect_timeout(timeout_ms)
 {
     for (auto const& addr : sentinels) {
-        client.add_sentinel(addr.HasIp6Addr() ? addr.Ip6Addr() : addr.Ip4Addr(), addr.Port());
+        client.add_sentinel(addr.hasIp6Addr() ? addr.ip6Addr() : addr.ip4Addr(), addr.port());
     }
 
-    Connect();
+    connect();
 }
 
-RedisSessionMgr* RedisSessionMgr::FromConfig(bes::Config const& config)
+RedisSessionMgr* RedisSessionMgr::fromConfig(bes::Config const& config)
 {
-    auto timeout = config.GetOr<uint32_t>(250, "web", "sessions", "timeout");
-    auto sentinel_name = config.GetOr<std::string>("", "web", "sessions", "redis", "sentinel-name");
+    auto timeout = config.getOr<uint32_t>(250, "web", "sessions", "timeout");
+    auto sentinel_name = config.getOr<std::string>("", "web", "sessions", "redis", "sentinel-name");
 
     if (!sentinel_name.empty()) {
         // We've been given a sentinel service name, now check to see we've got at least one sentinel server, too -
-        auto node = config.Get<YAML::Node>("web", "sessions", "redis", "sentinels");
+        auto node = config.get<YAML::Node>("web", "sessions", "redis", "sentinels");
         if (node.IsDefined() && node.IsSequence() && node.size()) {
             std::vector<bes::net::Address> sentinels;
 
@@ -58,36 +57,38 @@ RedisSessionMgr* RedisSessionMgr::FromConfig(bes::Config const& config)
         }
     }
 
-    bes::net::Address adr(config.GetOr<std::string>("", "web", "sessions", "redis", "host"),
-                          config.GetOr<uint32_t>(6379, "web", "sessions", "redis", "port"));
+    bes::net::Address adr(config.getOr<std::string>("", "web", "sessions", "redis", "host"),
+                          config.getOr<uint32_t>(6379, "web", "sessions", "redis", "port"));
 
-    if (!adr.HasIp4Addr()) {
+    if (!adr.hasIp4Addr()) {
         throw WebException("No host or sentinels found in configuration for Redis session manager");
     }
 
-    BES_LOG(DEBUG) << "Creating Redis session manager on server " << adr.Ip4Addr() << ":" << adr.Port();
+    BES_LOG(DEBUG) << "Creating Redis session manager on server " << adr.ip4Addr() << ":" << adr.port();
     return new RedisSessionMgr(adr, timeout);
 }
 
-void RedisSessionMgr::Connect()
+void RedisSessionMgr::connect()
 {
     using namespace std::placeholders;
-    auto log = std::bind(&RedisSessionMgr::LogConnectStatus, this, _1, _2, _3);
+    auto log = [this](auto&& host, auto&& port, auto&& status) {
+        logConnectStatus(host, port, status);
+    };
 
     try {
-        if (server.Port() == 0) {
+        if (server.port() == 0) {
             client.connect(sentinel_svc_name, log, connect_timeout);
         } else {
-            client.connect(server.HasIp6Addr() ? server.Ip6Addr() : server.Ip4Addr(), server.Port(), log, 250);
+            client.connect(server.hasIp6Addr() ? server.ip6Addr() : server.ip4Addr(), server.port(), log, 250);
         }
-    } catch (std::exception &e) {
-        BES_LOG(ERROR) << "Unable to open connection to Redis server on " << server.Ip4Addr() << ":" << server.Port();
+    } catch (std::exception& e) {
+        BES_LOG(ERROR) << "Unable to open connection to Redis server on " << server.ip4Addr() << ":" << server.port();
+        BES_LOG(ERROR) << e.what();
         throw WebException("Unable to connect to Redis server");
     }
-
 }
 
-RedisSessionMgr& RedisSessionMgr::LogConnectStatus(std::string const& host, std::size_t port,
+RedisSessionMgr& RedisSessionMgr::logConnectStatus(std::string const& host, std::size_t port,
                                                    cpp_redis::connect_state status)
 {
     switch (status) {
@@ -120,14 +121,14 @@ RedisSessionMgr& RedisSessionMgr::LogConnectStatus(std::string const& host, std:
     return *this;
 }
 
-Session RedisSessionMgr::CreateSession(std::string const& ns)
+Session RedisSessionMgr::createSession(std::string const& ns)
 {
     bool ok = false;
     std::string id;
     uint16_t attempts = 0;
 
     do {
-        id = SessionInterface::GenerateSessionKey(ns);
+        id = SessionInterface::generateSessionKey(ns);
 
         // Commit a blank value to the DB to ensure there is no collision
         client.setnx("session:" + id, "-", [&ok](cpp_redis::reply& reply) {
@@ -143,7 +144,7 @@ Session RedisSessionMgr::CreateSession(std::string const& ns)
     return Session(id);
 }
 
-Session RedisSessionMgr::GetSession(std::string const& session_id)
+Session RedisSessionMgr::getSession(std::string const& session_id)
 {
     bes::web::Session session(session_id);
 
@@ -182,16 +183,16 @@ Session RedisSessionMgr::GetSession(std::string const& session_id)
             char v_type = value[0];
             switch (v_type) {
                 case 'B':
-                    session.SetValue(key, value[1] == '1');
+                    session.setValue(key, SessionObject(value[1] == '1'));
                     break;
                 case 'S':
-                    session.SetValue(key, value.substr(1));
+                    session.setValue(key, SessionObject(value.substr(1)));
                     break;
                 case 'I':
-                    session.SetValue(key, atol(value.substr(1).c_str()));
+                    session.setValue(key, SessionObject(atol(value.substr(1).c_str())));
                     break;
                 case 'D':
-                    session.SetValue(key, atof(value.substr(1).c_str()));
+                    session.setValue(key, SessionObject(atof(value.substr(1).c_str())));
                     break;
                 default:
                     break;
@@ -208,23 +209,23 @@ Session RedisSessionMgr::GetSession(std::string const& session_id)
     return session;
 }
 
-void RedisSessionMgr::SetSessionTtl(uint64_t ttl)
+void RedisSessionMgr::setSessionTtl(uint64_t ttl)
 {
     session_ttl = ttl;
 }
 
-void RedisSessionMgr::PersistSession(Session const& session)
+void RedisSessionMgr::persistSession(Session const& session)
 {
     std::string id("session:");
 
-    if (session.SessionId().empty()) {
+    if (session.sessionId().empty()) {
         throw WebException("Attempting to persist a null session");
     } else {
-        id += session.SessionId();
+        id += session.sessionId();
     }
 
     std::vector<std::pair<std::string, std::string>> hash;
-    for (auto const& it : session.Map()) {
+    for (auto const& it : session.getMap()) {
         switch (it.second.data_type) {
             case SessionObject::ObjectType::DOUBLE:
                 hash.emplace_back(it.first, "D" + std::to_string(std::any_cast<double>(it.second.data)));

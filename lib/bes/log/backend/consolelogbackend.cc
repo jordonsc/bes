@@ -15,9 +15,9 @@ ConsoleLogBackend::ConsoleLogBackend(LogFormat f, ColourMode use_clr) : fmt(f)
     }
 }
 
-void ConsoleLogBackend::Process(LogRecord const& log_record)
+void ConsoleLogBackend::process(LogRecord const& log_record)
 {
-    if (UsingColour()) {
+    if (isColour()) {
         bool c = true;
         switch (log_record.severity) {
             case bes::log::Severity::TRACE:
@@ -51,12 +51,12 @@ void ConsoleLogBackend::Process(LogRecord const& log_record)
     }
 }
 
-bool ConsoleLogBackend::UsingColour() const
+bool ConsoleLogBackend::isColour() const
 {
     return use_colour;
 }
 
-ConsoleLogBackend& ConsoleLogBackend::SetColour(bool v)
+ConsoleLogBackend& ConsoleLogBackend::setColour(bool v)
 {
     use_colour = v;
     return *this;

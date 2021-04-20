@@ -20,31 +20,31 @@ KernelInterface::~KernelInterface()
     instance = nullptr;
 }
 
-bes::log::LogSink& KernelInterface::LogSink() const
+bes::log::LogSink& KernelInterface::getLogSink() const
 {
     if (log_sink == nullptr) {
         throw KernelException("Log sink has not been constructed");
     }
 
-    return *(log_sink.get());
+    return *log_sink;
 }
 
-bes::cli::Parser const& KernelInterface::Cli() const
+bes::cli::Parser const& KernelInterface::getCli() const
 {
-    return cli;
+    return cli_parser;
 }
 
-bes::Config const& KernelInterface::Config()
+bes::Config const& KernelInterface::getConfig()
 {
     return config;
 }
 
-bes::Container& KernelInterface::Container()
+bes::Container& KernelInterface::getContainer()
 {
     return container;
 }
 
-KernelInterface& KernelInterface::Instance()
+KernelInterface& KernelInterface::getInstance()
 {
     if (instance == nullptr) {
         throw KernelException("Kernel has not been constructed");
@@ -53,7 +53,7 @@ KernelInterface& KernelInterface::Instance()
     return *instance;
 }
 
-bool KernelInterface::Exists()
+bool KernelInterface::exists()
 {
     return instance != nullptr;
 }

@@ -1,5 +1,4 @@
-#ifndef BES_FASTCGI_SERVICE_H
-#define BES_FASTCGI_SERVICE_H
+#pragma once
 
 #include <bes/core.h>
 #include <bes/log.h>
@@ -22,12 +21,12 @@ class Service
    public:
     virtual ~Service();
 
-    Service& Run(bes::net::Address const& listen_addr, size_t threads = 10, size_t socket_queue_len = 5);
-    Service& Run(std::string const& addr, uint16_t port, size_t threads = 10, size_t socket_queue_len = 5);
-    Service& Shutdown();
+    Service& run(bes::net::Address const& listen_addr, size_t threads = 10, size_t socket_queue_len = 5);
+    Service& run(std::string const& addr, uint16_t port, size_t threads = 10, size_t socket_queue_len = 5);
+    Service& shutdown();
 
     template <class T>
-    Service& SetRole(model::Role role);
+    Service& setRole(model::Role role);
 
     bes::Container container;
 
@@ -43,7 +42,7 @@ class Service
 };
 
 template <class T>
-inline Service& Service::SetRole(model::Role role)
+inline Service& Service::setRole(model::Role role)
 {
     role_factories[static_cast<uint16_t>(role) - 1] = [](Request const& request, Transceiver& tns) {
         return std::make_shared<T>(request, tns);
@@ -54,4 +53,3 @@ inline Service& Service::SetRole(model::Role role)
 
 }  // namespace bes::fastcgi
 
-#endif

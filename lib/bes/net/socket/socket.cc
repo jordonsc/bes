@@ -2,14 +2,14 @@
 
 using namespace bes::net::socket;
 
-bool Socket::Bind(::bes::net::Address const& addr, bool reuse)
+bool Socket::bind(::bes::net::Address const& addr, bool reuse)
 {
-    if (bound.load()) {
+    if (is_bound.load()) {
         throw bes::net::SocketBindException("Cannot bind an already bound socket");
     }
 
-    if (!open.load()) {
-        Open();
+    if (!is_open.load()) {
+        open();
     }
 
     std::unique_lock<std::mutex> lock(bind_mutex);
@@ -22,19 +22,19 @@ bool Socket::Bind(::bes::net::Address const& addr, bool reuse)
 
     ::memset(&sock_addr, 0, sizeof(sock_addr));
     sock_addr.sin_family = AF_INET;
-    sock_addr.sin_port = ::htons(addr.Port());
-    sock_addr.sin_addr.s_addr = ::inet_addr(addr.Ip4Addr().c_str());
+    sock_addr.sin_port = ::htons(addr.port());
+    sock_addr.sin_addr.s_addr = ::inet_addr(addr.ip4Addr().c_str());
 
     if (::bind(sock, (struct ::sockaddr*)&sock_addr, sizeof(sock_addr)) == -1) {
-        throw bes::net::SocketBindException("Unable to bind: " + addr.Ip4AddrFull());
+        throw bes::net::SocketBindException("Unable to bind: " + addr.ip4AddrFull());
     }
 
     return true;
 }
 
-void Socket::Close()
+void Socket::close()
 {
-    if (!open.load()) {
+    if (!is_open.load()) {
         return;
     }
 
@@ -43,18 +43,18 @@ void Socket::Close()
     ::close(sock);
 
     sock = 0;
-    bound.store(false);
+    is_bound.store(false);
 }
 
-void Socket::Open()
+void Socket::open()
 {
-    if (open.load()) {
+    if (is_open.load()) {
         throw bes::net::SocketBindException("Cannot open an already open socket");
     }
 
     std::unique_lock<std::mutex> lock(bind_mutex);
 
-    auto [fam, s_type, proto] = GetSocketOptions();
+    auto [fam, s_type, proto] = getSocketOptions();
     sock = ::socket(fam, s_type, proto);
 
     if (sock == -1) {
@@ -64,5 +64,5 @@ void Socket::Open()
 
 Socket::~Socket()
 {
-    Close();
+    close();
 }

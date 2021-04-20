@@ -1,5 +1,4 @@
-#ifndef BES_APP_DISCOVERY_SIDECAR_H
-#define BES_APP_DISCOVERY_SIDECAR_H
+#pragma once
 
 #include <bes/core.h>
 #include <bes/net.h>
@@ -28,10 +27,10 @@ class Sidecar : public DiscoveryInterface
    public:
     explicit Sidecar(bes::Config const& config);
 
-    bes::net::Address GetServiceAddr(std::string const& service) override;
-    bes::net::Address GetServiceAddr(std::string const& service, std::string const& ns) override;
+    bes::net::Address getServiceAddr(std::string const& service) override;
+    bes::net::Address getServiceAddr(std::string const& service, std::string const& ns) override;
 
-    bool Ready() override;
+    bool ready() override;
 
    protected:
     bes::Config const& config;
@@ -42,5 +41,3 @@ class Sidecar : public DiscoveryInterface
 };
 
 }  // namespace bes::app::discovery
-
-#endif

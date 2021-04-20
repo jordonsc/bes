@@ -1,5 +1,4 @@
-#ifndef BES_WEB_ROUTE_H
-#define BES_WEB_ROUTE_H
+#pragma once
 
 #include <regex>
 #include <string>
@@ -25,10 +24,15 @@ struct RouteSection
 struct Route
 {
     Route() = default;
+    Route(Route&&) = default;
+    Route(Route const&) = default;
+    Route& operator=(Route&&) = default;
+    Route& operator=(Route const&) = default;
+
     explicit Route(std::string const& name);
     Route(std::string const& name, std::string const& uri);
 
-    void ParseUri(std::string const& uri);
+    void parseUri(std::string const& uri);
 
     std::string name;
     std::string controller;
@@ -36,45 +40,30 @@ struct Route
     bool includes_query = false;
 
    private:
-    static void Trim(std::string& s);
+    static void trim(std::string& s);
 };
 
 struct PrecachedRoute : public Route
 {
     PrecachedRoute() = default;
+    PrecachedRoute(PrecachedRoute&&) = default;
+    PrecachedRoute(PrecachedRoute const&) = default;
+    PrecachedRoute& operator=(PrecachedRoute&&) = default;
+    PrecachedRoute& operator=(PrecachedRoute const&) = default;
 
-    PrecachedRoute(Route const& route);
-    PrecachedRoute(Route&& route);
-    PrecachedRoute& operator=(Route const& route);
-    PrecachedRoute& operator=(Route&& route);
-
-    PrecachedRoute(PrecachedRoute const& route) = default;
-    PrecachedRoute(PrecachedRoute&& route) noexcept;
-    PrecachedRoute& operator=(PrecachedRoute route) noexcept;
-    PrecachedRoute& operator=(PrecachedRoute&& route) noexcept;
-
-    friend void swap(PrecachedRoute& first, PrecachedRoute& second) noexcept
-    {
-        using std::swap;
-        swap(first.controller, second.controller);
-        swap(first.name, second.name);
-        swap(first.parts, second.parts);
-        swap(first.includes_query, second.includes_query);
-        swap(first.regex, second.regex);
-        swap(first.prefix, second.prefix);
-        swap(first.arg_map, second.arg_map);
-    }
+    explicit PrecachedRoute(Route&&);
+    explicit PrecachedRoute(Route const&);
+    PrecachedRoute& operator=(Route&&);
+    PrecachedRoute& operator=(Route const&);
 
     std::string prefix;
     std::regex regex;
     std::vector<std::string> arg_map;
 
    private:
-    void Precache();
+    void precache();
 };
 
 static std::string const regex_esc = "[\\^$.|?*+(){}";
 
 }  // namespace bes::web
-
-#endif

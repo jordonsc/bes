@@ -1,5 +1,4 @@
-#ifndef BES_RPC_POOL_TRACKER_H
-#define BES_RPC_POOL_TRACKER_H
+#pragma once
 
 #include <bes/core.h>
 
@@ -22,23 +21,23 @@ class PoolTracker final
      * Register a new service as running and accepting connections
      * @param tag
      */
-    void InstanceSpawning(void* tag);
+    void instanceSpawning(void* tag);
 
     /**
      * Instance is now working - it's consuming resources but not accepting capacity
      * @param tag
      */
-    void InstanceWorking(void* tag);
+    void instanceWorking(void* tag);
 
     /**
      * Resourcing is finishing up, no further resource or capacity is offered by it
      * @param tag
      */
-    void InstanceTerminating(void* tag);
+    void instanceTerminating(void* tag);
 
-    size_t Count() const;
+    size_t count() const;
 
-    size_t Capacity() const;
+    size_t capacity() const;
 
    private:
     enum class InstState
@@ -48,11 +47,9 @@ class PoolTracker final
     };
 
     size_t instances = 0;
-    size_t capacity = 0;
+    size_t max_capacity = 0;
     std::mutex mutex{};
     std::unordered_map<void*, InstState> inst_map{};
 };
 
 }  // namespace bes::rpc
-
-#endif

@@ -15,12 +15,12 @@ class SymbolShell : public ShellInterface
    public:
     SymbolShell(syntax::Symbol s, Context& ctx) : symbol(s), context(ctx) {}
 
-    void Render(std::ostringstream& str) const override
+    void render(std::ostringstream& str) const override
     {
-        GetItemShell()->Render(str);
+        GetItemShell()->render(str);
     }
 
-    std::shared_ptr<ShellInterface> ChildNode(std::string const& key) const override
+    std::shared_ptr<ShellInterface> childNode(std::string const& key) const override
     {
         // Considerations for indexing an array-symbol, useful if a {% set x = [..] %} tag existed
         if (symbol.symbol_type == syntax::Symbol::SymbolType::ARRAY && key.length() > 6) {
@@ -32,26 +32,26 @@ class SymbolShell : public ShellInterface
                                               symbol.raw);
                 }
 
-                return std::make_shared<SymbolShell>(symbol.Value<syntax::Symbol>(index), context);
+                return std::make_shared<SymbolShell>(symbol.value<syntax::Symbol>(index), context);
             }
         }
 
         throw IndexErrorException("Requested indexing of Symbol: " + key);
     }
 
-    bool IsTrue() const override
+    bool isTrue() const override
     {
-        return GetItemShell()->IsTrue();
+        return GetItemShell()->isTrue();
     }
 
-    long AsInt() const override
+    long asInt() const override
     {
-        return GetItemShell()->AsInt();
+        return GetItemShell()->asInt();
     }
 
-    double AsFloat() const override
+    double asFloat() const override
     {
-        return GetItemShell()->AsFloat();
+        return GetItemShell()->asFloat();
     }
 
    private:
@@ -60,7 +60,7 @@ class SymbolShell : public ShellInterface
      */
     std::shared_ptr<ShellInterface> ShellFromContext(std::shared_ptr<ShellInterface> const& item, size_t pos = 1) const
     {
-        std::shared_ptr<ShellInterface> sub = item->ChildNode(std::any_cast<std::string>(symbol.items[pos]));
+        std::shared_ptr<ShellInterface> sub = item->childNode(std::any_cast<std::string>(symbol.items[pos]));
 
         if (pos == symbol.items.size() - 1) {
             return sub;
@@ -84,15 +84,15 @@ class SymbolShell : public ShellInterface
             try {
                 switch (symbol.data_type) {
                     case Symbol::DataType::STRING:
-                        return std::make_shared<StandardShell<std::string>>(symbol.Value<std::string>());
+                        return std::make_shared<StandardShell<std::string>>(symbol.value<std::string>());
                     case Symbol::DataType::CHAR:
-                        return std::make_shared<StandardShell<char>>(symbol.Value<char>());
+                        return std::make_shared<StandardShell<char>>(symbol.value<char>());
                     case Symbol::DataType::INT:
-                        return std::make_shared<StandardShell<int>>(symbol.Value<int>());
+                        return std::make_shared<StandardShell<int>>(symbol.value<int>());
                     case Symbol::DataType::FLOAT:
-                        return std::make_shared<StandardShell<float>>(symbol.Value<float>());
+                        return std::make_shared<StandardShell<float>>(symbol.value<float>());
                     case Symbol::DataType::BOOL:
-                        return std::make_shared<StandardShell<bool>>(symbol.Value<bool>());
+                        return std::make_shared<StandardShell<bool>>(symbol.value<bool>());
                     default:
                         throw TemplateException("Cannot render symbol: " + symbol.raw);
                 }
@@ -100,7 +100,7 @@ class SymbolShell : public ShellInterface
                 throw TemplateException("Error rendering literal: " + symbol.raw + ": " + e.what());
             }
         } else if (symbol.symbol_type == Symbol::SymbolType::VARIABLE) {
-            std::shared_ptr<ShellInterface> const& item = context.GetValue(std::any_cast<std::string>(symbol.items[0]));
+            std::shared_ptr<ShellInterface> const& item = context.getValue(std::any_cast<std::string>(symbol.items[0]));
             if (symbol.items.size() > 1) {
                 return ShellFromContext(item);
             } else {

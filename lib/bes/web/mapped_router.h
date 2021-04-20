@@ -1,5 +1,4 @@
-#ifndef BES_WEB_MAPPED_ROUTER_H
-#define BES_WEB_MAPPED_ROUTER_H
+#pragma once
 
 #include <yaml-cpp/yaml.h>
 
@@ -18,21 +17,20 @@ namespace bes::web {
 class MappedRouter : public Router
 {
    public:
-    HttpResponse YieldResponse(HttpRequest const& request) const override;
-    HttpResponse YieldErrorResponse(HttpRequest const& request, Http::Status status_code,
+    HttpResponse yieldResponse(HttpRequest const& request) const override;
+    HttpResponse yieldErrorResponse(HttpRequest const& request, Http::Status status_code,
                                     std::string const& debug_msg) const override;
 
-    void LoadRoutesFromString(std::string const& src);
-    void LoadRoutesFromFile(std::string const& fn);
+    void loadRoutesFromString(std::string const& src);
+    void loadRoutesFromFile(std::string const& fn);
 
-    void AddRoute(Route const& route);
-    void AddRoute(Route&& route);
+    void addRoute(Route route);
 
     /**
      * Get a string URI from a route name (and args, if the route requires them).
      */
-    std::string GetUri(std::string const& route_name) const;
-    std::string GetUri(std::string const& route_name, ActionArgs const& args) const;
+    std::string getUri(std::string const& route_name) const;
+    std::string getUri(std::string const& route_name, ActionArgs const& args) const;
 
     /**
      * Register a control with this router.
@@ -41,38 +39,43 @@ class MappedRouter : public Router
      *   ctrl = MyController();
      *   router.RegisterController("home", &MyController::SomeAction, &ctrl);
      */
-    void RegisterController(std::string const& name, Controller);
+    void registerController(std::string const& name, Controller c);
     template <class MethodT, class ObjT>
-    void RegisterController(std::string const& name, MethodT&& method, ObjT&& object);
+    void registerController(std::string const& name, MethodT&& method, ObjT&& object);
 
     /**
      * Returns a map of all registered routes.
      */
-    std::unordered_map<std::string, PrecachedRoute> const& RouteMap();
+    std::unordered_map<std::string, PrecachedRoute> const& routeMap();
 
     /**
      * Match a route to the given URI.
      *
      * Throws a NoMatchException if no route matches the URI.
      */
-    std::tuple<Route const&, ActionArgs> FindRoute(std::string const& uri,
+    std::tuple<Route const&, ActionArgs> findRoute(std::string const& uri,
                                                    std::string const& query = std::string()) const;
+
+    size_t inline size() const
+    {
+        return routes.size();
+    }
 
    protected:
     std::unordered_map<std::string, Controller> controllers;
     std::unordered_map<std::string, PrecachedRoute> routes;
 
    private:
-    void ParseRoutes(YAML::Node&);
+    void parseRoutes(YAML::Node& root);
 
-    static ActionArgs RouteMatch(PrecachedRoute const& route, std::string const& uri);
+    static ActionArgs routeMatch(PrecachedRoute const& route, std::string const& uri);
 
     template <class T>
-    static T GetNodeValue(YAML::Node const&, std::string const& key, T default_value);
+    static T getNodeValue(YAML::Node const& node, std::string const& key, T default_value);
 };
 
 template <class MethodT, class ObjT>
-inline void MappedRouter::RegisterController(std::string const& name, MethodT&& method, ObjT&& object)
+inline void MappedRouter::registerController(std::string const& name, MethodT&& method, ObjT&& object)
 {
     using namespace std::placeholders;
 
@@ -84,7 +87,7 @@ inline void MappedRouter::RegisterController(std::string const& name, MethodT&& 
 }
 
 template <class T>
-inline T MappedRouter::GetNodeValue(YAML::Node const& node, std::string const& key, T default_value)
+inline T MappedRouter::getNodeValue(YAML::Node const& node, std::string const& key, T default_value)
 {
     try {
         auto sub_node = node[key];
@@ -99,5 +102,3 @@ inline T MappedRouter::GetNodeValue(YAML::Node const& node, std::string const& k
 }
 
 }  // namespace bes::web
-
-#endif

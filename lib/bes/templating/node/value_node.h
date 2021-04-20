@@ -1,5 +1,4 @@
-#ifndef BES_TEMPLATING_NODE_VALUE_NODE_H
-#define BES_TEMPLATING_NODE_VALUE_NODE_H
+#pragma once
 
 #include "../data/symbol_shell.h"
 #include "../syntax/expression.h"
@@ -12,23 +11,23 @@ class ValueNode : public ExpressionNode
    public:
     using ExpressionNode::ExpressionNode;
 
-    void Render(std::ostringstream& ss, data::Context& ctx, data::TemplateStack& ts) const override
+    void render(std::ostringstream& ss, data::Context& ctx, data::TemplateStack& ts) const override
     {
         if (expr.right.symbol_type == syntax::Symbol::SymbolType::FUNCTION) {
             /// Call to macro
             MacroNode const* macro;
             try {
-                macro = dynamic_cast<MacroNode const*>(ctx.GetMacro(expr.left.Value<std::string>()));
+                macro = dynamic_cast<MacroNode const*>(ctx.getMacro(expr.left.value<std::string>()));
             } catch (std::exception& e) {
-                throw TemplateException("Call to undefined macro: " + expr.left.Value<std::string>() + "; " + e.what());
+                throw TemplateException("Call to undefined macro: " + expr.left.value<std::string>() + "; " + e.what());
             }
 
-            macro->RenderMacro(ss, ctx, ts, expr.right.items);
+            macro->menderMacro(ss, ctx, ts, expr.right.items);
 
         } else if (!expr.filters.empty()) {
             /// Filtered value
             std::ostringstream tmp;
-            data::SymbolShell(expr.left, ctx).Render(tmp);
+            data::SymbolShell(expr.left, ctx).render(tmp);
             std::string filter_data = tmp.str();
 
             // Apply filters
@@ -46,11 +45,9 @@ class ValueNode : public ExpressionNode
             ss << filter_data;
         } else {
             /// Raw value
-            data::SymbolShell(expr.left, ctx).Render(ss);
+            data::SymbolShell(expr.left, ctx).render(ss);
         }
     }
 };
 
 }  // namespace bes::templating::node
-
-#endif

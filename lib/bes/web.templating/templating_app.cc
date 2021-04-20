@@ -7,11 +7,11 @@ TemplateApp::TemplateApp(std::string name, std::string key, std::string descript
     : Application(std::move(name), std::move(key), std::move(description), std::move(version), std::move(usage))
 {
     // Add core services to kernel container
-    Kernel().Container().Emplace<bes::templating::Engine>("templating");
-    Kernel().Container().Emplace<bes::web::MappedRouter>("router");
+    kernel().getContainer().emplace<bes::templating::Engine>("templating");
+    kernel().getContainer().emplace<bes::web::MappedRouter>("router");
 }
 
-void TemplateApp::Bootstrap()
+void TemplateApp::bootstrap()
 {
     if (bootstrapped) {
         return;
@@ -20,43 +20,43 @@ void TemplateApp::Bootstrap()
     bootstrapped = true;
 
     // Build version, template schema and route schema can all be defined in the config or from CLI
-    build = Kernel().Config().GetOr<std::string>("static", "web", "build");
-    auto tmpl_schema = Kernel().Config().GetOr<std::string>("/app/templating.yml", "web", "templating");
-    auto route_schema = Kernel().Config().GetOr<std::string>("/app/routing.yml", "web", "routing");
+    build = kernel().getConfig().getOr<std::string>("static", "web", "build");
+    auto tmpl_schema = kernel().getConfig().getOr<std::string>("/app/templating.yml", "web", "templating");
+    auto route_schema = kernel().getConfig().getOr<std::string>("/app/routing.yml", "web", "routing");
 
-    debug_mode = Kernel().Cli()["debug"].Present();
+    debug_mode = kernel().getCli()["debug"].present();
     if (debug_mode) {
         BES_LOG(WARNING) << "Debug mode enabled; web server will render error details";
     }
 
-    auto const& cli_build = Kernel().Cli()["build"];
-    if (cli_build.Present()) {
+    auto const& cli_build = kernel().getCli()["build"];
+    if (cli_build.present()) {
         build = cli_build.as<std::string>();
     }
 
-    auto const& cli_templates = Kernel().Cli()["templating"];
-    if (cli_templates.Present()) {
+    auto const& cli_templates = kernel().getCli()["templating"];
+    if (cli_templates.present()) {
         tmpl_schema = cli_templates.as<std::string>();
     }
 
-    auto const& cli_routing = Kernel().Cli()["routing"];
-    if (cli_routing.Present()) {
+    auto const& cli_routing = kernel().getCli()["routing"];
+    if (cli_routing.present()) {
         route_schema = cli_routing.as<std::string>();
     }
 
     // Parse the templating YAML file and load templates
     BES_LOG(DEBUG) << "Parsing template schema: " << tmpl_schema;
     try {
-        LoadTemplates(tmpl_schema);
+        loadTemplates(tmpl_schema);
     } catch (YAML::BadFile const&) {
         BES_LOG(ERROR) << "Bad template schema file: " << tmpl_schema;
     }
 
     // Router
     BES_LOG(DEBUG) << "Parsing route schema: " << route_schema;
-    auto router = Kernel().Container().Get<bes::web::MappedRouter>("router");
+    auto router = kernel().getContainer().get<bes::web::MappedRouter>("router");
     try {
-        router->LoadRoutesFromFile(route_schema);
+        router->loadRoutesFromFile(route_schema);
     } catch (YAML::BadFile const&) {
         BES_LOG(ERROR) << "Bad routing schema file: " << route_schema;
     }
@@ -65,9 +65,9 @@ void TemplateApp::Bootstrap()
     RegisterControllers(*router);
 }
 
-void TemplateApp::LoadTemplates(std::string const& fn)
+void TemplateApp::loadTemplates(std::string const& fn)
 {
-    auto templating = Kernel().Container().Get<bes::templating::Engine>("templating");
+    auto templating = kernel().getContainer().get<bes::templating::Engine>("templating");
     YAML::Node root = YAML::LoadFile(fn);
 
     // Search paths
@@ -109,7 +109,7 @@ void TemplateApp::LoadTemplates(std::string const& fn)
             }
 
             try {
-                templating->LoadFile(node_name.as<std::string>(), node_file.as<std::string>());
+                templating->loadFile(node_name.as<std::string>(), node_file.as<std::string>());
             } catch (bes::FileNotFoundException const&) {
                 BES_LOG(ERROR) << "Unable to load template '" << node_name << "': cannot locate file '" << node_file
                                << "'";
@@ -118,9 +118,9 @@ void TemplateApp::LoadTemplates(std::string const& fn)
     }
 }
 
-void TemplateApp::ConfigureCli(bes::cli::Parser& parser)
+void TemplateApp::configureCli(bes::cli::Parser& parser)
 {
-    Application::ConfigureCli(parser);
+    Application::configureCli(parser);
 
     parser << bes::cli::Arg('b', "build", bes::cli::ValueType::REQUIRED)
            << bes::cli::Arg('t', "templating", bes::cli::ValueType::REQUIRED)
@@ -128,30 +128,30 @@ void TemplateApp::ConfigureCli(bes::cli::Parser& parser)
            << bes::cli::Arg('r', "routing", bes::cli::ValueType::REQUIRED);
 }
 
-void TemplateApp::Run()
+void TemplateApp::run()
 {
-    Bootstrap();
+    bootstrap();
     BES_LOG(INFO) << "Build: " << build;
 
     // Start the FastCGI server
     svc = std::make_unique<bes::web::WebServer>();
-    svc->AddRouter(Kernel().Container().Get<bes::web::MappedRouter>("router"));
+    svc->addRouter(kernel().getContainer().get<bes::web::MappedRouter>("router"));
 
     // Allow the app to add a session manager or other configuration
     ConfigureServer(*(svc.get()));
 
-    auto session_cookie = Kernel().Config().GetOr<std::string>("bsn", "web", "sessions", "cookie");
-    auto session_prefix = Kernel().Config().GetOr<std::string>("S", "web", "sessions", "prefix");
+    auto session_cookie = kernel().getConfig().getOr<std::string>("bsn", "web", "sessions", "cookie");
+    auto session_prefix = kernel().getConfig().getOr<std::string>("S", "web", "sessions", "prefix");
 
-    svc->Run(bes::net::Address(Kernel().Config().GetOr<std::string>("0.0.0.0", "server", "bind"),
-                               Kernel().Config().GetOr<uint16_t>(9000, "server", "listen")),
+    svc->run(bes::net::Address(kernel().getConfig().getOr<std::string>("0.0.0.0", "server", "bind"),
+                               kernel().getConfig().getOr<uint16_t>(9000, "server", "listen")),
              debug_mode);
 }
 
-void TemplateApp::Shutdown()
+void TemplateApp::shutdown()
 {
     BES_LOG(INFO) << "Shutting down FastCGI interface..";
-    svc->Shutdown();
+    svc->shutdown();
     BES_LOG(INFO) << "Shutting down application..";
-    Application::Shutdown();
+    Application::shutdown();
 }

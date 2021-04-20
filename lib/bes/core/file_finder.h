@@ -1,5 +1,4 @@
-#ifndef BES_FILESYSTEM_FILEFINDER_H
-#define BES_FILESYSTEM_FILEFINDER_H
+#pragma once
 
 #include <bes/log.h>
 
@@ -27,19 +26,19 @@ class FileFinder
      *
      * The search path should contain filenames.
      */
-    [[nodiscard]] filesystem_t Find() const;
-    [[nodiscard]] filesystem_t Find(filesystem_t const& override) const;
+    [[nodiscard]] filesystem_t find() const;
+    [[nodiscard]] filesystem_t find(filesystem_t const& override) const;
 
     /**
      * Find the given filename in the search path.
      *
      * The search path should contain path names.
      */
-    [[nodiscard]] filesystem_t FindInPath(filesystem_t const& filename) const;
+    [[nodiscard]] filesystem_t findInPath(filesystem_t const& filename) const;
 
-    FileFinder& ClearSearchPath();
-    [[nodiscard]] size_t SearchPathSize() const;
-    [[nodiscard]] bool Empty() const;
+    FileFinder& clearSearchPath();
+    [[nodiscard]] size_t searchPathSize() const;
+    [[nodiscard]] bool empty() const;
 
     template <typename T>
     FileFinder& AppendSearchPath(T&&);
@@ -54,7 +53,7 @@ class FileFinder
     FileFinder& PrependSearchPath(T&& s, Args&&... paths);
 
    protected:
-    [[nodiscard]] bool FileMeetsRequirements(filesystem_t const& path) const;
+    [[nodiscard]] bool fileMeetsRequirements(filesystem_t const& path) const;
 
     std::vector<filesystem_t> search_path;
     bool req_read;
@@ -94,5 +93,3 @@ FileFinder& FileFinder::PrependSearchPath(T&& s, Args&&... paths)
 }
 
 }  // namespace bes
-
-#endif

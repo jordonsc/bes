@@ -1,5 +1,4 @@
-#ifndef BES_CLI_ARG_H
-#define BES_CLI_ARG_H
+#pragma once
 
 #include <memory>
 #include <regex>
@@ -28,18 +27,18 @@ class Arg
     char const short_form;
     std::string const long_form;
 
-    [[nodiscard]] bool Present() const;
-    [[nodiscard]] std::string const& Value() const;
-    [[nodiscard]] size_t Count() const;
-    [[nodiscard]] ValueType ArgType() const;
+    [[nodiscard]] bool present() const;
+    [[nodiscard]] std::string const& value() const;
+    [[nodiscard]] size_t count() const;
+    [[nodiscard]] ValueType argType() const;
 
     template <class T>
     T as() const;
 
    protected:
-    Arg operator++(int);
+    Arg const operator++(int);
     Arg& operator++();
-    Arg& SetValue(std::string v);
+    Arg& setValue(std::string v);
 
     size_t counter = 0;
     std::string arg_value;
@@ -56,17 +55,16 @@ T Arg::as() const
 }
 
 template <>
-std::string Arg::as<std::string>() const;
+[[nodiscard]] std::string Arg::as<std::string>() const;
 
 template <>
-bool Arg::as<bool>() const;
+[[nodiscard]] bool Arg::as<bool>() const;
 
 template <>
-int Arg::as<int>() const;
+[[nodiscard]] int Arg::as<int>() const;
 
 template <>
-float Arg::as<float>() const;
+[[nodiscard]] float Arg::as<float>() const;
 
 }  // namespace bes::cli
 
-#endif  // BES_ARG_TCC

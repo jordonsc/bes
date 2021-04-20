@@ -1,5 +1,4 @@
-#ifndef BES_TEMPLATING_DATA_STD_SHELLS_H
-#define BES_TEMPLATING_DATA_STD_SHELLS_H
+#pragma once
 
 #include <any>
 #include <memory>
@@ -29,7 +28,7 @@ class SimpleShell : public ShellInterface
    public:
     SimpleShell(T item) : item(item) {}
 
-    inline void Render(std::ostringstream& str) const override
+    inline void render(std::ostringstream& str) const override
     {
         str << item;
     }
@@ -47,17 +46,17 @@ class IntegerShell : public ShellInterface
    public:
     IntegerShell(T item) : item(item) {}
 
-    inline void Render(std::ostringstream& str) const override
+    inline void render(std::ostringstream& str) const override
     {
         str << item;
     }
 
-    bool IsTrue() const override
+    bool isTrue() const override
     {
         return item != 0;
     }
 
-    long AsInt() const override
+    long asInt() const override
     {
         return static_cast<long>(item);
     }
@@ -75,17 +74,17 @@ class FloatShell : public ShellInterface
    public:
     FloatShell(T item) : item(item) {}
 
-    inline void Render(std::ostringstream& str) const override
+    inline void render(std::ostringstream& str) const override
     {
         str << item;
     }
 
-    bool IsTrue() const override
+    bool isTrue() const override
     {
         return item != 0;
     }
 
-    double AsFloat() const override
+    double asFloat() const override
     {
         return static_cast<double>(item);
     }
@@ -103,17 +102,17 @@ class IterableShell : public ShellInterface
    public:
     IterableShell(T item) : item(item) {}
 
-    size_t Count() const override
+    size_t count() const override
     {
         return item.size();
     }
 
-    void Begin() override
+    void begin() override
     {
         it = item.begin();
     }
 
-    bool IsTrue() const override
+    bool isTrue() const override
     {
         return item.size() > 0;
     }
@@ -132,18 +131,18 @@ class IterablePtrShell : public ShellInterface
    public:
     IterablePtrShell(T* item) : item(item) {}
 
-    size_t Count() const override
+    size_t count() const override
     {
         it = item->begin();
         return item->size();
     }
 
-    void Begin() override
+    void begin() override
     {
         it = item->begin();
     }
 
-    bool IsTrue() const override
+    bool isTrue() const override
     {
         return item->size() > 0;
     }
@@ -215,17 +214,17 @@ class StandardShell<bool> : public ShellInterface
    public:
     StandardShell(bool item) : item(item) {}
 
-    inline void Render(std::ostringstream& str) const override
+    inline void render(std::ostringstream& str) const override
     {
         str << std::boolalpha << item;
     }
 
-    bool IsTrue() const override
+    bool isTrue() const override
     {
         return item;
     }
 
-    long AsInt() const override
+    long asInt() const override
     {
         return item ? 1 : 0;
     }
@@ -241,7 +240,7 @@ class StandardShell<std::string> : public SimpleShell<std::string>
     using SimpleShell::SimpleShell;
 
    public:
-    inline std::shared_ptr<ShellInterface> ChildNode(std::string const& key) const override
+    inline std::shared_ptr<ShellInterface> childNode(std::string const& key) const override
     {
         if (key == "length") {
             return std::make_shared<StandardShell<size_t>>(item.length());
@@ -250,7 +249,7 @@ class StandardShell<std::string> : public SimpleShell<std::string>
         }
     }
 
-    bool IsTrue() const override
+    bool isTrue() const override
     {
         return item.length() > 0;
     }
@@ -263,12 +262,12 @@ class StandardShell<std::string const*> : public SimpleShell<std::string const*>
     using SimpleShell::SimpleShell;
 
    public:
-    void Render(std::ostringstream& str) const override
+    void render(std::ostringstream& str) const override
     {
         str << *item;
     }
 
-    inline std::shared_ptr<ShellInterface> ChildNode(std::string const& key) const override
+    inline std::shared_ptr<ShellInterface> childNode(std::string const& key) const override
     {
         if (key == "length") {
             return std::make_shared<StandardShell<size_t>>(item->length());
@@ -277,7 +276,7 @@ class StandardShell<std::string const*> : public SimpleShell<std::string const*>
         }
     }
 
-    bool IsTrue() const override
+    bool isTrue() const override
     {
         return item->length() > 0;
     }
@@ -290,12 +289,12 @@ class StandardShell<std::shared_ptr<std::string>> : public SimpleShell<std::shar
     using SimpleShell::SimpleShell;
 
    public:
-    void Render(std::ostringstream& str) const override
+    void render(std::ostringstream& str) const override
     {
         str << *item;
     }
 
-    inline std::shared_ptr<ShellInterface> ChildNode(std::string const& key) const override
+    inline std::shared_ptr<ShellInterface> childNode(std::string const& key) const override
     {
         if (key == "length") {
             return std::make_shared<StandardShell<size_t>>(item->length());
@@ -304,7 +303,7 @@ class StandardShell<std::shared_ptr<std::string>> : public SimpleShell<std::shar
         }
     }
 
-    bool IsTrue() const override
+    bool isTrue() const override
     {
         return item->length() > 0;
     }
@@ -317,7 +316,7 @@ class StandardShell<std::vector<std::string>> : public IterableShell<std::vector
     using IterableShell::IterableShell;
 
    public:
-    std::shared_ptr<ShellInterface> Yield() override
+    std::shared_ptr<ShellInterface> yield() override
     {
         return std::make_shared<StandardShell<std::string>>(*it++);
     }
@@ -330,7 +329,7 @@ class StandardShell<std::vector<std::string>*> : public IterablePtrShell<std::ve
     using IterablePtrShell::IterablePtrShell;
 
    public:
-    std::shared_ptr<ShellInterface> Yield() override
+    std::shared_ptr<ShellInterface> yield() override
     {
         return std::make_shared<StandardShell<std::string>>(*it++);
     }
@@ -338,4 +337,3 @@ class StandardShell<std::vector<std::string>*> : public IterablePtrShell<std::ve
 
 }  // namespace bes::templating::data
 
-#endif

@@ -7,7 +7,7 @@ using namespace bes::templating::data;
  *
  * Not all objects have a renderable 'main value', it's OK not to implement this.
  */
-void ShellInterface::Render(std::ostringstream& str) const
+void ShellInterface::render(std::ostringstream& str) const
 {
     throw UnknownTypeException(BES_TEMPLATING_NO_SHELL);
 }
@@ -15,7 +15,7 @@ void ShellInterface::Render(std::ostringstream& str) const
 /**
  * Used for referencing member objects.
  */
-std::shared_ptr<ShellInterface> ShellInterface::ChildNode(std::string const& key) const
+std::shared_ptr<ShellInterface> ShellInterface::childNode(std::string const& key) const
 {
     throw UnknownTypeException(std::string(BES_TEMPLATING_NO_SHELL) + " (" + key + ")");
 }
@@ -29,19 +29,19 @@ std::shared_ptr<ShellInterface> ShellInterface::ChildNode(std::string const& key
 bool ShellInterface::operator<(ShellInterface const& rhs) const
 {
     try {
-        long left = AsInt();
+        long left = asInt();
 
         try {
-            return left < rhs.AsInt();
+            return left < rhs.asInt();
         } catch (ValueErrorException const&) {
-            return left < rhs.AsFloat();
+            return (double)left < rhs.asFloat();
         }
     } catch (ValueErrorException const&) {
-        double left = AsFloat();
+        double left = asFloat();
         try {
-            return left < rhs.AsFloat();
+            return left < rhs.asFloat();
         } catch (ValueErrorException const&) {
-            return left < rhs.AsInt();
+            return left < (double)(rhs.asInt());
         }
     }
 }
@@ -68,19 +68,19 @@ bool ShellInterface::operator>=(ShellInterface const& rhs) const
 bool ShellInterface::operator==(ShellInterface const& rhs) const
 {
     try {
-        long left = AsInt();
+        long left = asInt();
 
         try {
-            return left == rhs.AsInt();
+            return left == rhs.asInt();
         } catch (ValueErrorException const&) {
-            return left == rhs.AsFloat();
+            return (double)left == rhs.asFloat();
         }
     } catch (ValueErrorException const&) {
-        double left = AsFloat();
+        double left = asFloat();
         try {
-            return left == rhs.AsFloat();
+            return left == rhs.asFloat();
         } catch (ValueErrorException const&) {
-            return left == rhs.AsInt();
+            return left == (double)(rhs.asInt());
         }
     }
 }
@@ -96,7 +96,7 @@ bool ShellInterface::operator!=(ShellInterface const& rhs) const
  * Strongly recommended to override this, the default is "yes, I exist". Don't throw an exception here if there is
  * no boolean representation of your class, instead return true, so that an `if MyClass` will return true.
  */
-bool ShellInterface::IsTrue() const
+bool ShellInterface::isTrue() const
 {
     return true;
 }
@@ -105,7 +105,7 @@ bool ShellInterface::IsTrue() const
  * Implement one of EITHER AsInt() or AsFloat(), but not both, and only if it is appropriate to represent yourself
  * as a number.
  */
-long ShellInterface::AsInt() const
+long ShellInterface::asInt() const
 {
     throw ValueErrorException(BES_TEMPLATING_NOT_COMPATIBLE);
 }
@@ -114,7 +114,7 @@ long ShellInterface::AsInt() const
  * Implement one of EITHER AsInt() or AsFloat(), but not both, and only if it is appropriate to represent yourself
  * as a number.
  */
-double ShellInterface::AsFloat() const
+double ShellInterface::asFloat() const
 {
     throw ValueErrorException(BES_TEMPLATING_NOT_COMPATIBLE);
 }
@@ -122,7 +122,7 @@ double ShellInterface::AsFloat() const
 /**
  * Retrieve the size of the data contained within an iterable object.
  */
-size_t ShellInterface::Count() const
+size_t ShellInterface::count() const
 {
     throw ValueErrorException(BES_TEMPLATING_NO_SHELL);
 }
@@ -130,7 +130,7 @@ size_t ShellInterface::Count() const
 /**
  * Reset the internal iterator in preparation for a loop.
  */
-void ShellInterface::Begin()
+void ShellInterface::begin()
 {
     throw IndexErrorException(BES_TEMPLATING_NO_SHELL);
 }
@@ -138,7 +138,7 @@ void ShellInterface::Begin()
 /**
  * Yield an iterable object and increment internal iterator.
  */
-std::shared_ptr<ShellInterface> ShellInterface::Yield()
+std::shared_ptr<ShellInterface> ShellInterface::yield()
 {
     throw IndexErrorException(BES_TEMPLATING_NO_SHELL);
 }

@@ -4,7 +4,7 @@
 
 using namespace bes::web;
 
-void MappedRouter::RegisterController(std::string const& name, Controller c)
+void MappedRouter::registerController(std::string const& name, Controller c)
 {
     if (controllers.find(name) != controllers.end()) {
         throw WebException("Controller '" + name + "' already exists");
@@ -13,36 +13,30 @@ void MappedRouter::RegisterController(std::string const& name, Controller c)
     controllers[name] = std::move(c);
 }
 
-void MappedRouter::LoadRoutesFromString(std::string const& src)
+void MappedRouter::loadRoutesFromString(std::string const& src)
 {
     YAML::Node root = YAML::Load(src);
-    ParseRoutes(root);
+    parseRoutes(root);
 }
 
-void MappedRouter::LoadRoutesFromFile(std::string const& fn)
+void MappedRouter::loadRoutesFromFile(std::string const& fn)
 {
     YAML::Node root = YAML::LoadFile(fn);
-    ParseRoutes(root);
+    parseRoutes(root);
 }
 
-void MappedRouter::AddRoute(Route const& route)
+void MappedRouter::addRoute(Route route)
 {
     BES_LOG(DEBUG) << "Registered route: " << route.name;
-    routes[route.name] = route;
+    routes[route.name] = std::move(route);
 }
 
-void MappedRouter::AddRoute(Route&& route)
-{
-    BES_LOG(DEBUG) << "Registered route: " << route.name;
-    routes[route.name] = std::forward<Route>(route);
-}
-
-std::unordered_map<std::string, PrecachedRoute> const& MappedRouter::RouteMap()
+std::unordered_map<std::string, PrecachedRoute> const& MappedRouter::routeMap()
 {
     return routes;
 }
 
-void MappedRouter::ParseRoutes(YAML::Node& root)
+void MappedRouter::parseRoutes(YAML::Node& root)
 {
     for (auto const& node : root) {
         std::string name;
@@ -53,7 +47,7 @@ void MappedRouter::ParseRoutes(YAML::Node& root)
         }
 
         try {
-            std::string uri = GetNodeValue(node.second, "uri", std::string());
+            std::string uri = getNodeValue(node.second, "uri", std::string());
             if (!uri.length()) {
                 BES_LOG(ERROR) << "Route '" << name << "' has no URI";
                 continue;
@@ -64,10 +58,11 @@ void MappedRouter::ParseRoutes(YAML::Node& root)
             }
 
             bes::web::Route route(name, uri);
-            route.includes_query = GetNodeValue(node.second, "includes_query", false);
-            route.controller = GetNodeValue(node.second, "controller", route.name);
+            route.includes_query = getNodeValue(node.second, "includes_query", false);
+            route.controller = getNodeValue(node.second, "controller", route.name);
 
             BES_LOG(DEBUG) << "Registered route: " << route.name;
+
             routes[route.name] = std::move(route);
 
         } catch (std::exception const& e) {
@@ -76,7 +71,7 @@ void MappedRouter::ParseRoutes(YAML::Node& root)
     }
 }
 
-std::string MappedRouter::GetUri(std::string const& route_name) const
+std::string MappedRouter::getUri(std::string const& route_name) const
 {
     auto const& route = routes.find(route_name);
     if (route == routes.end()) {
@@ -90,7 +85,7 @@ std::string MappedRouter::GetUri(std::string const& route_name) const
     return route->second.parts[0].value;
 }
 
-std::string MappedRouter::GetUri(std::string const& route_name, ActionArgs const& args) const
+std::string MappedRouter::getUri(std::string const& route_name, ActionArgs const& args) const
 {
     auto const& route = routes.find(route_name);
     if (route == routes.end()) {
@@ -124,10 +119,10 @@ std::string MappedRouter::GetUri(std::string const& route_name, ActionArgs const
     return buf.str();
 }
 
-HttpResponse MappedRouter::YieldResponse(HttpRequest const& request) const
+HttpResponse MappedRouter::yieldResponse(HttpRequest const& request) const
 {
     try {
-        auto [route, args] = FindRoute(request.Uri(), request.QueryString());
+        auto [route, args] = findRoute(request.uri(), request.queryString());
 
         auto const& ctrl = controllers.find(route.controller);
         if (ctrl == controllers.end()) {
@@ -155,7 +150,7 @@ HttpResponse MappedRouter::YieldResponse(HttpRequest const& request) const
  *
  * Will set the correct HTTP status code to match the error, regardless of what the controller tries to return.
  */
-HttpResponse MappedRouter::YieldErrorResponse(HttpRequest const& request, Http::Status status_code,
+HttpResponse MappedRouter::yieldErrorResponse(HttpRequest const& request, Http::Status status_code,
                                               std::string const& debug_msg) const
 {
     bes::web::ActionArgs args;
@@ -194,20 +189,20 @@ HttpResponse MappedRouter::YieldErrorResponse(HttpRequest const& request, Http::
     auto resp = it->second(request, args);
 
     // Force the correct status code on the response
-    resp.Status(status_code);
+    resp.status(status_code);
     return resp;
 }
 
-std::tuple<Route const&, ActionArgs> MappedRouter::FindRoute(std::string const& uri, std::string const& query) const
+std::tuple<Route const&, ActionArgs> MappedRouter::findRoute(std::string const& uri, std::string const& query) const
 {
     std::string qs = uri;
     qs += std::string("?") += query;
     for (auto const& it : routes) {
         try {
             if (it.second.includes_query && query.length()) {
-                return {it.second, RouteMatch(it.second, qs)};
+                return {it.second, routeMatch(it.second, qs)};
             } else {
-                return {it.second, RouteMatch(it.second, uri)};
+                return {it.second, routeMatch(it.second, uri)};
             }
         } catch (NoMatchException const&) {
         }
@@ -216,7 +211,7 @@ std::tuple<Route const&, ActionArgs> MappedRouter::FindRoute(std::string const& 
     throw NoMatchException("No route for URI '" + uri + "'");
 }
 
-ActionArgs MappedRouter::RouteMatch(PrecachedRoute const& route, std::string const& uri)
+ActionArgs MappedRouter::routeMatch(PrecachedRoute const& route, std::string const& uri)
 {
     ActionArgs args;
 

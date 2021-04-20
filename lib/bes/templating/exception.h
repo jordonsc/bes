@@ -1,5 +1,4 @@
-#ifndef BES_TEMPLATING_EXCEPTION_H
-#define BES_TEMPLATING_EXCEPTION_H
+#pragma once
 
 #include <bes/core.h>
 
@@ -70,5 +69,3 @@ class CircularInheritanceException : public TemplateException
 };
 
 }  // namespace bes::templating
-
-#endif

@@ -4,27 +4,27 @@ using namespace bes::fastcgi;
 
 Response::Response(Request const& request, Transceiver& tns) : request(request), transceiver(tns) {}
 
-std::string const& Response::Param(std::string const& key) const
+std::string const& Response::getParam(std::string const& key) const
 {
-    return request.Param(key);
+    return request.getParam(key);
 }
 
-bool Response::HasParam(std::string const& key) const
+bool Response::hasParam(std::string const& key) const
 {
-    return request.HasParam(key);
+    return request.hasParam(key);
 }
 
-void Response::Flush(bool force)
+void Response::flush(bool force)
 {
-    FlushStream(model::RecordType::OUT, out, force && !out_sent);
-    FlushStream(model::RecordType::ERR, err, force && !err_sent);
+    flushStream(model::RecordType::OUT, out, force && !out_sent);
+    flushStream(model::RecordType::ERR, err, force && !err_sent);
 }
 
-void Response::FlushStream(model::RecordType rt, std::stringstream& str, bool force)
+void Response::flushStream(model::RecordType rt, std::stringstream& str, bool force)
 {
     str.seekg(0, std::ios::end);
     if (str.tellg() || force) {
-        transceiver.WriteStream(rt, str.str(), request.RequestId());
+        transceiver.writeStream(rt, str.str(), request.getRequestId());
 
         if (rt == model::RecordType::OUT) {
             out_sent = true;

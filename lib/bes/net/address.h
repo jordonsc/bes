@@ -1,5 +1,4 @@
-#ifndef BES_NET_ADDRESS_H
-#define BES_NET_ADDRESS_H
+#pragma once
 
 #include <string>
 #include <utility>
@@ -44,47 +43,47 @@ class Address
         return !(rhs == *this);
     }
 
-    [[nodiscard]] inline bool HasIp4Addr() const
+    [[nodiscard]] inline bool hasIp4Addr() const
     {
         return !ip4_addr.empty();
     }
 
-    [[nodiscard]] inline bool HasIp6Addr() const
+    [[nodiscard]] inline bool hasIp6Addr() const
     {
         return !ip6_addr.empty();
     }
 
-    [[nodiscard]] inline std::string const& Ip4Addr() const
+    [[nodiscard]] inline std::string const& ip4Addr() const
     {
         return ip4_addr;
     }
 
-    [[nodiscard]] inline std::string const& Ip6Addr() const
+    [[nodiscard]] inline std::string const& ip6Addr() const
     {
         return ip6_addr;
     }
 
-    [[nodiscard]] inline uint16_t const& Port() const
+    [[nodiscard]] inline uint16_t const& port() const
     {
         return addr_port;
     }
 
-    [[nodiscard]] inline std::string const& Ip4AddrFull() const
+    [[nodiscard]] inline std::string const& ip4AddrFull() const
     {
         return full_addr_ip4;
     }
 
-    [[nodiscard]] inline std::string const& Ip6AddrFull() const
+    [[nodiscard]] inline std::string const& ip6AddrFull() const
     {
         return full_addr_ip6;
     }
 
-    [[nodiscard]] inline std::string const& Addr() const
+    [[nodiscard]] inline std::string const& addr() const
     {
         return ip6_addr.empty() ? ip4_addr : ip6_addr;
     }
 
-    [[nodiscard]] inline std::string const& AddrFull() const
+    [[nodiscard]] inline std::string const& addrFull() const
     {
         return ip6_addr.empty() ? full_addr_ip4 : full_addr_ip6;
     }
@@ -98,5 +97,3 @@ class Address
 };
 
 }  // namespace bes::net
-
-#endif

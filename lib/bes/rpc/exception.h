@@ -1,5 +1,4 @@
-#ifndef BES_RPC_EXCEPTION_H
-#define BES_RPC_EXCEPTION_H
+#pragma once
 
 #include <bes/core.h>
 #include <bes/log.h>
@@ -27,11 +26,11 @@ class NotFoundException : public RpcException
 class RpcCallException : public RpcException
 {
    public:
-    RpcCallException(grpc::Status rpc_stat) : RpcException(rpc_stat.error_message()), rpc_status(std::move(rpc_stat)) {}
+    explicit RpcCallException(grpc::Status rpc_stat) : RpcException(rpc_stat.error_message()), rpc_status(std::move(rpc_stat)) {}
     RpcCallException(grpc::Status rpc_stat, std::string const& msg) : RpcException(msg), rpc_status(std::move(rpc_stat))
     {}
 
-    [[nodiscard]] constexpr grpc::Status const& GetRpcStatus() const
+    [[nodiscard]] constexpr grpc::Status const& getRpcStatus() const
     {
         return rpc_status;
     }
@@ -39,7 +38,7 @@ class RpcCallException : public RpcException
     /**
      * Logs an RPC failure if the status is not OK, otherwise does nothing.
      */
-    void LogRpcReply(std::string const& prefix) const
+    void logRpcReply(std::string const& prefix) const
     {
         if (!rpc_status.ok()) {
             std::stringstream details;
@@ -103,5 +102,3 @@ class RpcCallException : public RpcException
 };
 
 }  // namespace bes::rpc
-
-#endif

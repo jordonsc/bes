@@ -1,5 +1,4 @@
-#ifndef BES_RPC_RPC_CONTROLLER_TCC
-#define BES_RPC_RPC_CONTROLLER_TCC
+#pragma once
 
 #include <bes/core.h>
 #include <bes/log.h>
@@ -38,14 +37,14 @@ class RpcController
      * We need to know how many completion queues to build, so `num_queues` is the number of RPC handlers we'll start
      * after calling Run(). This number _MUST_ match the number of calls to HandleRpc() exactly.
      */
-    void Run(bes::net::Address const& listen_addr, size_t num_queues);
+    void run(bes::net::Address const& listen_addr, size_t num_queues);
 
     // When C++20 is available, we can add a parameter pack for HandlerT constructor args (new lambda feature)
     template <class HandlerT>
-    void HandleRpc(threadsize_t max_threads);
+    void handleRpc(threadsize_t max_threads);
 
     // Stop listening for connections and shutdown the server
-    void Shutdown();
+    void shutdown();
 
    private:
     void* application;
@@ -59,7 +58,7 @@ class RpcController
 };
 
 template <class ServiceClass>
-void RpcController<ServiceClass>::Run(bes::net::Address const& listen_addr, size_t num_queues)
+void RpcController<ServiceClass>::run(bes::net::Address const& listen_addr, size_t num_queues)
 {
     std::lock_guard<std::mutex> lock(safety_mutex);
     svr_alive = true;
@@ -68,7 +67,7 @@ void RpcController<ServiceClass>::Run(bes::net::Address const& listen_addr, size
 
     // Listen on the given address without any authentication mechanism
     // TODO: look into credentials
-    builder.AddListeningPort(listen_addr.Ip4AddrFull(), grpc::InsecureServerCredentials());
+    builder.AddListeningPort(listen_addr.ip4AddrFull(), grpc::InsecureServerCredentials());
 
     // `service` is the GRPC service object we're going to respond to on this server
     builder.RegisterService(&service);
@@ -82,12 +81,12 @@ void RpcController<ServiceClass>::Run(bes::net::Address const& listen_addr, size
     // Assemble and fire-up the server
     server = builder.BuildAndStart();
 
-    BES_LOG(NOTICE) << "Server listening on " << listen_addr.Ip4AddrFull();
+    BES_LOG(NOTICE) << "Server listening on " << listen_addr.ip4AddrFull();
 }
 
 template <class ServiceClass>
 template <class HandlerT>
-void RpcController<ServiceClass>::HandleRpc(threadsize_t const max_threads)
+void RpcController<ServiceClass>::handleRpc(threadsize_t max_threads)
 {
     std::lock_guard<std::mutex> lock(safety_mutex);
 
@@ -118,7 +117,7 @@ void RpcController<ServiceClass>::HandleRpc(threadsize_t const max_threads)
         bool ok = true;
 
         while (true) {
-            if (tracker.Count() < 0) {
+            if (tracker.count() < 0) {
                 // If this ever drops below zero, something real funny is happening, log for debugging
                 BES_LOG(CRITICAL) << "Thread tracker has dropped below zero";
             }
@@ -126,8 +125,8 @@ void RpcController<ServiceClass>::HandleRpc(threadsize_t const max_threads)
             /**
              * The CQ will set OK to false during a shutdown, in which we don't want to spawn new handlers.
              */
-            while (ok && (tracker.Capacity() < min_handlers)) {
-                if (tracker.Count() >= max_threads) {
+            while (ok && (tracker.capacity() < min_handlers)) {
+                if (tracker.count() >= max_threads) {
                     // At capacity
                     // TODO: log this somewhere (statsd or something, don't use the logger)
                     break;
@@ -152,7 +151,7 @@ void RpcController<ServiceClass>::HandleRpc(threadsize_t const max_threads)
              */
             if (ok) {
                 // Have a request to process (could be either process or clean-up)
-                thread_pool.Enqueue(
+                thread_pool.enqueue(
                     [](void* ref) {
                         static_cast<HandlerT*>(ref)->Proceed();
                     },
@@ -165,11 +164,11 @@ void RpcController<ServiceClass>::HandleRpc(threadsize_t const max_threads)
 template <class ServiceClass>
 inline RpcController<ServiceClass>::~RpcController()
 {
-    Shutdown();
+    shutdown();
 }
 
 template <class ServiceClass>
-inline void RpcController<ServiceClass>::Shutdown()
+inline void RpcController<ServiceClass>::shutdown()
 {
     std::lock_guard<std::mutex> lock(safety_mutex);
 
@@ -199,5 +198,3 @@ RpcController<ServiceClass>::RpcController(void* application) : application(appl
 {}
 
 }  // namespace bes::rpc
-
-#endif

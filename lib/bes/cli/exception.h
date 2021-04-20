@@ -1,5 +1,4 @@
-#ifndef BES_CLI_EXCEPTION_H
-#define BES_CLI_EXCEPTION_H
+#pragma once
 
 #include <bes/core.h>
 
@@ -45,5 +44,3 @@ class NoSuchArgumentException : public CliException
 };
 
 }  // namespace bes::cli
-
-#endif

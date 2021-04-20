@@ -4,24 +4,24 @@ using namespace bes::rpc;
 
 PoolTracker::PoolTracker() = default;
 
-void PoolTracker::InstanceSpawning(void* tag)
+void PoolTracker::instanceSpawning(void* tag)
 {
     std::unique_lock<std::mutex> lock(mutex);
 
     if (inst_map.find(tag) != inst_map.end()) {
         // TODO: consider.. this should never happen, raise warning and return?
         lock.unlock();
-        InstanceTerminating(tag);
+        instanceTerminating(tag);
         lock.lock();
     }
 
     instances++;
-    capacity++;
+    max_capacity++;
 
     inst_map[tag] = InstState::READY;
 }
 
-void PoolTracker::InstanceWorking(void* tag)
+void PoolTracker::instanceWorking(void* tag)
 {
     std::unique_lock<std::mutex> lock(mutex);
 
@@ -29,15 +29,15 @@ void PoolTracker::InstanceWorking(void* tag)
         // TODO: raise error, this should never happen
         // Unlock and set up a new instance
         lock.unlock();
-        InstanceSpawning(tag);
+        instanceSpawning(tag);
         lock.lock();
     }
 
-    capacity--;
+    max_capacity--;
     inst_map[tag] = InstState::WORKING;
 }
 
-void PoolTracker::InstanceTerminating(void* tag)
+void PoolTracker::instanceTerminating(void* tag)
 {
     std::unique_lock<std::mutex> lock(mutex);
 
@@ -46,24 +46,24 @@ void PoolTracker::InstanceTerminating(void* tag)
         // TODO: raise error, this should never happen
         // Unlock and run this tag through the motions
         lock.unlock();
-        InstanceSpawning(tag);
-        InstanceWorking(tag);
+        instanceSpawning(tag);
+        instanceWorking(tag);
         lock.lock();
     } else if (search->second != InstState::WORKING) {
         // It's possible the service was registered then terminated, so we need to drop capacity here as well
-        capacity--;
+        max_capacity--;
     }
 
     inst_map.erase(tag);
     instances--;
 }
 
-size_t PoolTracker::Count() const
+size_t PoolTracker::count() const
 {
     return instances;
 }
 
-size_t PoolTracker::Capacity() const
+size_t PoolTracker::capacity() const
 {
-    return capacity;
+    return max_capacity;
 }

@@ -12,13 +12,13 @@ ThreadPool::ThreadPool(threadsize_t pool_size)
     }
 
     // Build worker functions and threads
-    AddThreads(pool_size);
+    addThreads(pool_size);
 }
 
 /**
  * Add new threads to the pool.
  */
-void ThreadPool::AddThreads(threadsize_t n)
+void ThreadPool::addThreads(threadsize_t n)
 {
     std::unique_lock<std::mutex> lock(queue_mutex);
 
@@ -52,12 +52,12 @@ void ThreadPool::AddThreads(threadsize_t n)
     }
 }
 
-size_t ThreadPool::ThreadCount() const
+size_t ThreadPool::threadCount() const
 {
     return worker_count.load();
 }
 
-size_t ThreadPool::Backlog() const
+size_t ThreadPool::backlog() const
 {
     return backlog_size.load();
 }

@@ -25,30 +25,30 @@ LogSink& LogSink::Instance()
     return *LogSink::singleton;
 }
 
-void LogSink::Log(LogRecord const& log_record)
+void LogSink::log(LogRecord const& log_record)
 {
     std::shared_lock<std::shared_mutex> lock(backend_mutex);
 
     for (auto const& backend : backends) {
-        backend.second->Process(log_record);
+        backend.second->process(log_record);
     }
 }
 
-void LogSink::RemoveBackend(long const& id)
+void LogSink::removeBackend(long const& id)
 {
     std::lock_guard<std::shared_mutex> lock(backend_mutex);
     backends.erase(id);
     has_backends.store(!backends.empty());
 }
 
-void LogSink::ClearBackends()
+void LogSink::clearBackends()
 {
     std::lock_guard<std::shared_mutex> lock(backend_mutex);
     backends.clear();
     has_backends.store(false);
 }
 
-std::size_t LogSink::BackendCount()
+std::size_t LogSink::backendCount()
 {
     std::shared_lock<std::shared_mutex> lock(backend_mutex);
     return backends.size();
@@ -57,22 +57,22 @@ std::size_t LogSink::BackendCount()
 /**
  * Return true if this object has no backends.
  */
-bool LogSink::Empty() const
+bool LogSink::empty() const
 {
     return !has_backends.load(std::memory_order_relaxed);
 }
 
-bool LogSink::Enabled(Severity s) const
+bool LogSink::enabled(Severity s) const
 {
     return severity.load(std::memory_order_relaxed) <= static_cast<int>(s);
 }
 
-void LogSink::SetSeverity(Severity s)
+void LogSink::setSeverity(Severity s)
 {
     severity.store(static_cast<int>(s));
 }
 
-bool LogSink::HasInstance() noexcept
+bool LogSink::hasInstance() noexcept
 {
     return LogSink::singleton != nullptr;
 }

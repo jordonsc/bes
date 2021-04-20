@@ -2,46 +2,46 @@
 
 using namespace bes::web;
 
-HttpRequest::HttpRequest(bes::fastcgi::Request const& base) : base_request(base)
+HttpRequest::HttpRequest(bes::fastcgi::Request const& base, std::string const& session_prefix) : base_request(base)
 {
-    method = Http::MethodFromString(base_request.Param(Http::Parameter::REQUEST_METHOD));
-    ParseQueryString();
-    ParseCookies();
-    BootstrapSession();
+    http_method = Http::methodFromString(base_request.getParam(Http::Parameter::REQUEST_METHOD));
+    parseQueryString();
+    parseCookies();
+    bootstrapSession(session_prefix);
 }
 
 HttpRequest::~HttpRequest()
 {
     // Persist the session
-    if (HasSession()) {
-        auto session_mgr = base_request.container.Get<bes::web::SessionInterface>(SVC_SESSION_MGR);
+    if (hasSession()) {
+        auto session_mgr = base_request.container.get<bes::web::SessionInterface>(SVC_SESSION_MGR);
         if (session_mgr != nullptr) {
-            session_mgr->PersistSession(session);
+            session_mgr->persistSession(session);
         }
     }
 }
 
-std::string const& HttpRequest::Uri() const
+std::string const& HttpRequest::uri() const
 {
-    return base_request.Param(Http::Parameter::DOCUMENT_URI);
+    return base_request.getParam(Http::Parameter::DOCUMENT_URI);
 }
 
-std::string const& HttpRequest::QueryString() const
+std::string const& HttpRequest::queryString() const
 {
-    return base_request.Param(Http::Parameter::QUERY_STRING);
+    return base_request.getParam(Http::Parameter::QUERY_STRING);
 }
 
-Http::Method const& HttpRequest::Method() const
+Http::Method const& HttpRequest::method() const
 {
-    return method;
+    return http_method;
 }
 
 /**
  * Parse the query string, breaking it down into key/value pairs and decoding URI encoding.
  */
-void HttpRequest::ParseQueryString()
+void HttpRequest::parseQueryString()
 {
-    std::string const& qs = QueryString();
+    std::string const& qs = queryString();
 
     uint8_t mode = 0;
     unsigned char c;
@@ -75,7 +75,7 @@ void HttpRequest::ParseQueryString()
             } else if (c == '%' && (qs.length() - i > 2)) {
                 // Convert % notation to a regular char, we must have at least 2 bytes remaining for this to be valid
                 try {
-                    c = (HexToChar(qs[i + 1]) * 16) + HexToChar(qs[i + 2]);
+                    c = (hexToChar(qs[i + 1]) * 16) + hexToChar(qs[i + 2]);
                     i += 2;
                 } catch (std::out_of_range const& e) {
                     // Malformed URI, ignore the sequence
@@ -92,9 +92,9 @@ void HttpRequest::ParseQueryString()
     }
 }
 
-void HttpRequest::ParseCookies()
+void HttpRequest::parseCookies()
 {
-    if (!base_request.HasParam("HTTP_COOKIE")) {
+    if (!base_request.hasParam("HTTP_COOKIE")) {
         return;
     }
 
@@ -102,7 +102,7 @@ void HttpRequest::ParseCookies()
     std::stringstream key;
     std::stringstream value;
 
-    for (char const& c : base_request.Param("HTTP_COOKIE")) {
+    for (char const& c : base_request.getParam("HTTP_COOKIE")) {
         if (c == ';') {
             /// Next cookie
             if (key.rdbuf()->in_avail() && value.rdbuf()->in_avail()) {
@@ -139,7 +139,7 @@ void HttpRequest::ParseCookies()
 /**
  * Converts an ASCII value of a hex character into the number it represents (eg 'D' == 13).
  */
-char HttpRequest::HexToChar(char c)
+char HttpRequest::hexToChar(char c)
 {
     if (c >= 'a' && c <= 'z') {
         // Convert lowercase notation
@@ -159,42 +159,42 @@ char HttpRequest::HexToChar(char c)
     return c;
 }
 
-bool HttpRequest::HasQueryParam(std::string const& key) const
+bool HttpRequest::hasQueryParam(std::string const& key) const
 {
     return query_params.find(key) != query_params.end();
 }
 
-std::string const& HttpRequest::QueryParam(std::string const& key) const
+std::string const& HttpRequest::queryParam(std::string const& key) const
 {
     return query_params.at(key);
 }
 
-bool HttpRequest::HasCookie(std::string const& key) const
+bool HttpRequest::hasCookie(std::string const& key) const
 {
     return cookies.find(key) != cookies.end();
 }
 
-std::string const& HttpRequest::GetCookie(std::string const& key) const
+std::string const& HttpRequest::getCookie(std::string const& key) const
 {
     return cookies.at(key);
 }
 
-bool HttpRequest::HasSession() const
+bool HttpRequest::hasSession() const
 {
-    return !session.SessionId().empty();
+    return !session.sessionId().empty();
 }
 
-Session& HttpRequest::GetSession() const
+Session& HttpRequest::getSession() const
 {
-    if (!HasSession()) {
+    if (!hasSession()) {
         // Create a new session
-        auto session_mgr = base_request.container.Get<bes::web::SessionInterface>(SVC_SESSION_MGR);
+        auto session_mgr = base_request.container.get<bes::web::SessionInterface>(SVC_SESSION_MGR);
         if (session_mgr == nullptr) {
             BES_LOG(WARNING) << "Session requested but no session manager available";
             return session;
         }
 
-        session = session_mgr->CreateSession(*(base_request.container.Get<std::string>(SESSION_PREFIX_KEY)));
+        session = session_mgr->createSession(*(base_request.container.get<std::string>(SESSION_PREFIX_KEY)));
     }
 
     return session;
@@ -205,32 +205,32 @@ Session& HttpRequest::GetSession() const
  *
  * This function must be called after the cookies has been initialised, as it depends on them.
  */
-void HttpRequest::BootstrapSession()
+void HttpRequest::bootstrapSession(std::string const& prefix)
 {
-    auto session_mgr = base_request.container.Get<bes::web::SessionInterface>(SVC_SESSION_MGR);
+    auto session_mgr = base_request.container.get<bes::web::SessionInterface>(SVC_SESSION_MGR);
     if (session_mgr == nullptr) {
         return;
     }
 
-    auto session_cookie = base_request.container.Get<std::string>(SESSION_COOKIE_KEY);
+    auto session_cookie = base_request.container.get<std::string>(SESSION_COOKIE_KEY);
 
-    if (HasCookie(*session_cookie)) {
+    if (hasCookie(*session_cookie)) {
         // Session cookie exists, query manager for it
         try {
-            session = session_mgr->GetSession(GetCookie(*session_cookie));
+            session = session_mgr->getSession(getCookie(*session_cookie));
         } catch (SessionNotExistsException const&) {
             // Session has likely expired, create a new one
-            session = session_mgr->CreateSession();
+            session = session_mgr->createSession(prefix);
         }
     }
 }
 
-bool HttpRequest::HasParam(std::string const& key) const
+bool HttpRequest::hasParam(std::string const& key) const
 {
-    return base_request.HasParam(key);
+    return base_request.hasParam(key);
 }
 
-std::string const& HttpRequest::GetParam(std::string const& key) const
+std::string const& HttpRequest::getParam(std::string const& key) const
 {
-    return base_request.Param(key);
+    return base_request.getParam(key);
 }

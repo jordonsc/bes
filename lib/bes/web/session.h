@@ -1,5 +1,4 @@
-#ifndef BES_WEB_SESSION_H
-#define BES_WEB_SESSION_H
+#pragma once
 
 #include <any>
 #include <string>
@@ -11,17 +10,11 @@ namespace bes::web {
 
 struct SessionObject
 {
-    SessionObject(SessionObject const&) = default;
-    SessionObject(SessionObject&&) = default;
-    SessionObject& operator=(SessionObject const&) = default;
-    SessionObject& operator=(SessionObject&&) = default;
-
-    SessionObject(char const*);
-    SessionObject(std::string const&);
-    SessionObject(int32_t);
-    SessionObject(int64_t);
-    SessionObject(double);
-    SessionObject(bool);
+    explicit SessionObject(char const*);
+    explicit SessionObject(std::string);
+    explicit SessionObject(int64_t);
+    explicit SessionObject(double);
+    explicit SessionObject(bool);
 
     enum class ObjectType : char
     {
@@ -40,24 +33,27 @@ class Session
    public:
     Session() = default;
     explicit Session(std::string id);
-    Session(Session const&) = default;
-    Session(Session&&) = default;
-    Session& operator=(Session const&) = default;
-    Session& operator=(Session&&) = default;
 
-    [[nodiscard]] std::string const& SessionId() const;
-    void SetValue(std::string const& key, SessionObject const& data);
-    [[nodiscard]] SessionObject const& GetValue(std::string const& key) const;
-    [[nodiscard]] std::unordered_map<std::string, SessionObject> const& Map() const;
+    [[nodiscard]] std::string const& sessionId() const;
 
-    [[nodiscard]] std::string const& GetString(std::string const& key) const;
-    [[nodiscard]] int64_t GetInt(std::string const& key) const;
-    [[nodiscard]] double GetDouble(std::string const& key) const;
-    [[nodiscard]] bool GetBool(std::string const& key) const;
+    void setValue(std::string const& key, SessionObject data);
+    void setValue(std::string const& key, std::string data);
+    void setValue(std::string const& key, char const* data);
+    void setValue(std::string const& key, int64_t data);
+    void setValue(std::string const& key, double data);
+    void setValue(std::string const& key, bool data);
 
-    [[nodiscard]] size_t Size() const;
-    [[nodiscard]] bool Empty() const;
-    [[nodiscard]] bool HasItem(std::string const& key) const;
+    [[nodiscard]] SessionObject const& getValue(std::string const& key) const;
+    [[nodiscard]] std::unordered_map<std::string, SessionObject> const& getMap() const;
+
+    [[nodiscard]] std::string const& getString(std::string const& key) const;
+    [[nodiscard]] int64_t getInt(std::string const& key) const;
+    [[nodiscard]] double getDouble(std::string const& key) const;
+    [[nodiscard]] bool getBool(std::string const& key) const;
+
+    [[nodiscard]] size_t size() const;
+    [[nodiscard]] bool empty() const;
+    [[nodiscard]] bool hasItem(std::string const& key) const;
 
    protected:
     std::string session_id;
@@ -65,5 +61,3 @@ class Session
 };
 
 }  // namespace bes::web
-
-#endif

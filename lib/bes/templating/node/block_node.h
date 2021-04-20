@@ -1,5 +1,4 @@
-#ifndef BES_TEMPLATING_NODE_BLOCK_NODE_H
-#define BES_TEMPLATING_NODE_BLOCK_NODE_H
+#pragma once
 
 #include "../data/std_shells.h"
 #include "named_node.h"
@@ -15,35 +14,34 @@ class BlockNode : public NamedNode
    public:
     using NamedNode::NamedNode;
 
-    void Render(std::ostringstream& ss, data::Context& ctx, data::TemplateStack& ts) const override
+    void render(std::ostringstream& ss, data::Context& ctx, data::TemplateStack& ts) const override
     {
-        ctx.IncreaseStack();
+        ctx.increaseStack();
 
-        auto const* child = ts.GetNextChildTemplate();
+        auto const* child = ts.getNextChildTemplate();
 
-        if (child != nullptr && child->HasBlock(name)) {
+        if (child != nullptr && child->hasBlock(name)) {
             // Render to a temp context variable for 'super'
             std::ostringstream temp;
             for (auto& node : child_nodes) {
-                node->Render(temp, ctx, ts);
+                node->render(temp, ctx, ts);
             }
 
-            ctx.SetValue("super", std::make_shared<data::StandardShell<std::string>>(temp.str()));
+            ctx.setValue("super", std::make_shared<data::StandardShell<std::string>>(temp.str()));
 
-            ts.NextChild();
-            child->RenderBlock(name, ss, ctx, ts);
-            ts.PrevChild();
+            ts.nextChild();
+            child->renderBlock(name, ss, ctx, ts);
+            ts.prevChild();
         } else {
             // Render directly to output
             for (auto& node : child_nodes) {
-                node->Render(ss, ctx, ts);
+                node->render(ss, ctx, ts);
             }
         }
 
-        ctx.DecreaseStack();
+        ctx.decreaseStack();
     }
 };
 
 }  // namespace bes::templating::node
 
-#endif

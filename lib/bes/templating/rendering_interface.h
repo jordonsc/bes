@@ -1,5 +1,4 @@
-#ifndef BES_TEMPLATING_RENDERING_INTERFACE_H
-#define BES_TEMPLATING_RENDERING_INTERFACE_H
+#pragma once
 
 #include <string>
 
@@ -12,9 +11,7 @@ namespace bes::templating {
 class RenderingInterface
 {
    public:
-    virtual std::string Render(std::string const& name, data::Context& context) = 0;
+    virtual std::string render(std::string const& name, data::Context& context) = 0;
 };
 
 }  // namespace bes::templating
-
-#endif

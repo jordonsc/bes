@@ -1,5 +1,4 @@
-#ifndef BES_TEMPLATING_NODE_INCLUDE_NODE_H
-#define BES_TEMPLATING_NODE_INCLUDE_NODE_H
+#pragma once
 
 #include "../data/std_shells.h"
 #include "../rendering_interface.h"
@@ -15,22 +14,20 @@ class IncludeNode : public NamedNode
    public:
     using NamedNode::NamedNode;
 
-    void Render(std::ostringstream& ss, bes::templating::data::Context& ctx, data::TemplateStack& ts) const override
+    void render(std::ostringstream& ss, bes::templating::data::Context& ctx, data::TemplateStack& ts) const override
     {
-        ctx.IncreaseStack();
+        ctx.increaseStack();
 
-        bes::templating::RenderingInterface* eng = ts.Engine();
+        bes::templating::RenderingInterface* eng = ts.engine();
         if (eng == nullptr) {
             throw TemplateException("Cannot render include '" + name + "': no engine provided in context");
         }
 
         // Will create a new TemplateStack for this sub-render
-        ss << eng->Render(name, ctx);
+        ss << eng->render(name, ctx);
 
-        ctx.DecreaseStack();
+        ctx.decreaseStack();
     }
 };
 
 }  // namespace bes::templating::node
-
-#endif

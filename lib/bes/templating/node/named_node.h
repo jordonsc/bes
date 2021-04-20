@@ -1,5 +1,4 @@
-#ifndef BES_TEMPLATING_NODE_NAMED_NODE_H
-#define BES_TEMPLATING_NODE_NAMED_NODE_H
+#pragma once
 
 #include <utility>
 
@@ -15,7 +14,7 @@ class NamedNode : public Node
    public:
     explicit NamedNode(std::string name, Node const* const root = nullptr) : Node::Node(root), name(std::move(name)) {}
 
-    [[nodiscard]] virtual inline std::string const& Name() const
+    [[nodiscard]] virtual inline std::string const& getName() const
     {
         return name;
     }
@@ -25,5 +24,3 @@ class NamedNode : public Node
 };
 
 }  // namespace bes::templating::node
-
-#endif

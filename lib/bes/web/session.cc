@@ -6,25 +6,49 @@
 using namespace bes::web;
 
 SessionObject::SessionObject(char const* item) : data(std::string(item)), data_type(ObjectType::STRING) {}
-SessionObject::SessionObject(std::string const& item) : data(item), data_type(ObjectType::STRING) {}
-SessionObject::SessionObject(int32_t item) : data(int64_t(item)), data_type(ObjectType::INT64) {}
+SessionObject::SessionObject(std::string item) : data(std::move(item)), data_type(ObjectType::STRING) {}
 SessionObject::SessionObject(int64_t item) : data(item), data_type(ObjectType::INT64) {}
 SessionObject::SessionObject(double item) : data(item), data_type(ObjectType::DOUBLE) {}
 SessionObject::SessionObject(bool item) : data(item), data_type(ObjectType::BOOL) {}
 
 Session::Session(std::string id) : session_id(std::move(id)) {}
 
-std::string const& Session::SessionId() const
+std::string const& Session::sessionId() const
 {
     return session_id;
 };
 
-void Session::SetValue(std::string const& key, SessionObject const& data)
+void Session::setValue(std::string const& key, SessionObject data)
 {
-    map.insert_or_assign(key, data);
+    map.insert_or_assign(key, std::move(data));
 }
 
-SessionObject const& Session::GetValue(std::string const& key) const
+void Session::setValue(std::string const& key, std::string data)
+{
+    setValue(key, SessionObject(std::move(data)));
+}
+
+void Session::setValue(std::string const& key, const char* data)
+{
+    setValue(key, SessionObject(data));
+}
+
+void Session::setValue(std::string const& key, int64_t data)
+{
+    setValue(key, SessionObject(data));
+}
+
+void Session::setValue(std::string const& key, double data)
+{
+    setValue(key, SessionObject(data));
+}
+
+void Session::setValue(std::string const& key, bool data)
+{
+    setValue(key, SessionObject(data));
+}
+
+SessionObject const& Session::getValue(std::string const& key) const
 {
     try {
         return map.at(key);
@@ -33,7 +57,7 @@ SessionObject const& Session::GetValue(std::string const& key) const
     }
 };
 
-std::string const& Session::GetString(std::string const& key) const
+std::string const& Session::getString(std::string const& key) const
 {
     try {
         return std::any_cast<std::string const&>(map.at(key).data);
@@ -42,7 +66,7 @@ std::string const& Session::GetString(std::string const& key) const
     }
 }
 
-int64_t Session::GetInt(std::string const& key) const
+int64_t Session::getInt(std::string const& key) const
 {
     try {
         return std::any_cast<int64_t>(map.at(key).data);
@@ -51,7 +75,7 @@ int64_t Session::GetInt(std::string const& key) const
     }
 }
 
-double Session::GetDouble(std::string const& key) const
+double Session::getDouble(std::string const& key) const
 {
     try {
         return std::any_cast<double>(map.at(key).data);
@@ -60,7 +84,7 @@ double Session::GetDouble(std::string const& key) const
     }
 }
 
-bool Session::GetBool(std::string const& key) const
+bool Session::getBool(std::string const& key) const
 {
     try {
         return std::any_cast<bool>(map.at(key).data);
@@ -69,22 +93,22 @@ bool Session::GetBool(std::string const& key) const
     }
 }
 
-std::unordered_map<std::string, SessionObject> const& Session::Map() const
+std::unordered_map<std::string, SessionObject> const& Session::getMap() const
 {
     return map;
 }
 
-size_t Session::Size() const
+size_t Session::size() const
 {
     return map.size();
 }
 
-bool Session::Empty() const
+bool Session::empty() const
 {
     return map.empty();
 }
 
-bool Session::HasItem(std::string const& key) const
+bool Session::hasItem(std::string const& key) const
 {
     return map.find(key) != map.end();
 }

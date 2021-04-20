@@ -1,5 +1,4 @@
-#ifndef BES_TEMPLATING_DATA_TEMPLATE_STACK_H
-#define BES_TEMPLATING_DATA_TEMPLATE_STACK_H
+#pragma once
 
 #include <list>
 
@@ -21,15 +20,15 @@ class TemplateStack
 
    public:
     /// Stack of templates used when extending templates
-    void PrependTemplate(bes::templating::node::RootNode const* tmp);
-    [[nodiscard]] bes::templating::node::RootNode const* GetChildTemplate() const;
-    [[nodiscard]] bes::templating::node::RootNode const* GetNextChildTemplate();
-    void NextChild();
-    void PrevChild();
+    void prependTemplate(bes::templating::node::RootNode const* tmp);
+    [[nodiscard]] bes::templating::node::RootNode const* getChildTemplate() const;
+    [[nodiscard]] bes::templating::node::RootNode const* getNextChildTemplate();
+    void nextChild();
+    void prevChild();
 
     /// Rendering engine for includes
-    void Engine(bes::templating::RenderingInterface* engine);
-    [[nodiscard]] bes::templating::RenderingInterface* Engine() const;
+    void engine(bes::templating::RenderingInterface* e);
+    [[nodiscard]] bes::templating::RenderingInterface* engine() const;
 
    protected:
     bes::templating::RenderingInterface* rendering_engine;
@@ -39,4 +38,3 @@ class TemplateStack
 
 }  // namespace bes::templating::data
 
-#endif

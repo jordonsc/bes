@@ -1,5 +1,4 @@
-#ifndef BES_WEB_WEB_SERVER_H
-#define BES_WEB_WEB_SERVER_H
+#pragma once
 
 #include <bes/fastcgi.h>
 
@@ -16,24 +15,24 @@ class WebServer
 {
    public:
     WebServer();
-    void Run(bes::net::Address const &listen_addr, bool allow_dbg_rendering = false);
-    void Shutdown();
+    void run(bes::net::Address const &listen_addr, bool allow_dbg_rendering = false);
+    void shutdown();
 
     template <class T, class... Args>
-    void EmplaceRouter(Args &&...);
-    void AllocateRouter(Router *);
-    void AddRouter(std::shared_ptr<Router> const &);
+    void emplaceRouter(Args &&... args);
+    void allocateRouter(Router *router);
+    void addRouter(std::shared_ptr<Router> const &router);
 
     template <class T, class... Args>
-    void EmplaceSessionInterface(Args &&...);
-    void AllocateSessionInterface(SessionInterface *);
-    void SetSessionInterface(std::shared_ptr<SessionInterface> const &);
+    void emplaceSessionInterface(Args &&... args);
+    void allocateSessionInterface(SessionInterface *si);
+    void setSessionInterface(std::shared_ptr<SessionInterface> const &si);
 
-    void SetSessionTtl(uint64_t ttl);
-    void SetSessionSecure(bool);
+    void setSessionTtl(uint64_t ttl);
+    void setSessionSecure(bool);
 
-    void SetSessionPrefix(std::string const &prefix);
-    void SetSessionCookieName(std::string const &name);
+    void setSessionPrefix(std::string const &prefix);
+    void setSessionCookieName(std::string const &name);
 
    protected:
     std::unique_ptr<bes::fastcgi::Service> svc;
@@ -44,18 +43,17 @@ class WebServer
 };
 
 template <class T, class... Args>
-inline void WebServer::EmplaceRouter(Args &&... args)
+inline void WebServer::emplaceRouter(Args &&... args)
 {
     routers->push_back(std::make_shared<T>(std::forward<Args>(args)...));
 }
 
 template <class T, class... Args>
-inline void WebServer::EmplaceSessionInterface(Args &&... args)
+inline void WebServer::emplaceSessionInterface(Args &&... args)
 {
     session_mgr = std::make_shared<T>(std::forward<Args>(args)...);
-    session_mgr->SetSessionTtl(session_ttl);
+    session_mgr->setSessionTtl(session_ttl);
 }
 
 }  // namespace bes::web
 
-#endif

@@ -22,11 +22,11 @@ TEST(WebTest, RouteGenTest)
 {
     bes::web::MappedRouter router;
 
-    router.LoadRoutesFromString(routes);
+    router.loadRoutesFromString(routes);
     bes::web::Route cat("category", "/category/{ cat: [A-Z]{3} }/");
-    router.AddRoute(cat);
+    router.addRoute(cat);
 
-    auto const& map = router.RouteMap();
+    auto const& map = router.routeMap();
 
     ASSERT_EQ(4, map.size());
 
@@ -108,43 +108,47 @@ TEST(WebTest, RouteGenTest)
 TEST(WebTest, UriGenTest)
 {
     bes::web::MappedRouter router;
-    router.LoadRoutesFromString(routes);
+    router.loadRoutesFromString(routes);
 
-    EXPECT_EQ("/", router.GetUri("home"));
-    EXPECT_EQ("/about-us", router.GetUri("about_us"));
-    EXPECT_THROW(router.GetUri("page"), bes::web::MissingArgumentException);
-    EXPECT_EQ("/section/foo?page=bar", router.GetUri("page", {{"section", "foo"}, {"id", "bar"}}));
+    EXPECT_EQ("/", router.getUri("home"));
+    EXPECT_EQ("/about-us", router.getUri("about_us"));
+    EXPECT_THROW(router.getUri("page"), bes::web::MissingArgumentException);
+    EXPECT_EQ("/section/foo?page=bar", router.getUri("page", {{"section", "foo"}, {"id", "bar"}}));
 }
 
 TEST(WebTest, RouteMatchTest)
 {
     bes::web::MappedRouter router;
-    router.LoadRoutesFromString(routes);
-    router.AddRoute(bes::web::Route("category", "/category/{ cat: [A-Z]{3} }/"));
+    router.loadRoutesFromString(routes);
+
+    ASSERT_EQ(router.size(), 3);
+
+    router.addRoute(bes::web::Route("category", "/category/{ cat: [A-Z]{3} }/"));
+    ASSERT_EQ(router.size(), 4);
 
     {
-        auto [route, args] = router.FindRoute("/about-us", "");
+        auto [route, args] = router.findRoute("/about-us", "");
         EXPECT_EQ("about_us", route.name);
     }
 
     {
-        auto [route, args] = router.FindRoute("/");
+        auto [route, args] = router.findRoute("/");
         EXPECT_EQ("home", route.name);
     }
 
     {
-        auto [route, args] = router.FindRoute("/category/HDX/");
+        auto [route, args] = router.findRoute("/category/HDX/");
         EXPECT_EQ("category", route.name);
     }
 
     {
-        auto [route, args] = router.FindRoute("/section/foo_t", "page=123");
+        auto [route, args] = router.findRoute("/section/foo_t", "page=123");
         EXPECT_EQ("page", route.name);
         ASSERT_EQ(2, args.size());
         EXPECT_EQ("foo_t", args["section"]);
         EXPECT_EQ("123", args["id"]);
     }
 
-    EXPECT_THROW(router.FindRoute("/section/this-is-not-valid", "page=xxx"), bes::web::NoMatchException);
-    EXPECT_THROW(router.FindRoute("/category/abc/"), bes::web::NoMatchException);
+    EXPECT_THROW(router.findRoute("/section/this-is-not-valid", "page=xxx"), bes::web::NoMatchException);
+    EXPECT_THROW(router.findRoute("/category/abc/"), bes::web::NoMatchException);
 }

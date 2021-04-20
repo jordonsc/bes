@@ -11,11 +11,11 @@
 using namespace bes;
 using fs_path = std::experimental::filesystem::path;
 
-filesystem_t FileFinder::Find() const
+filesystem_t FileFinder::find() const
 {
     for (auto const& path : search_path) {
         BES_LOG(TRACE) << "Scan: " << path;
-        if (FileMeetsRequirements(path)) {
+        if (fileMeetsRequirements(path)) {
             BES_LOG(TRACE) << "Match: " << path;
             return path;
         }
@@ -24,10 +24,10 @@ filesystem_t FileFinder::Find() const
     throw FileNotFoundException("Cannot locate file", search_path.front());
 }
 
-filesystem_t FileFinder::Find(filesystem_t const& override) const
+filesystem_t FileFinder::find(filesystem_t const& override) const
 {
     BES_LOG(TRACE) << "Scan: " << override;
-    if (FileMeetsRequirements(override)) {
+    if (fileMeetsRequirements(override)) {
         BES_LOG(TRACE) << "Match: " << override;
         return override;
     } else {
@@ -35,7 +35,7 @@ filesystem_t FileFinder::Find(filesystem_t const& override) const
     }
 }
 
-filesystem_t FileFinder::FindInPath(filesystem_t const& filename) const
+filesystem_t FileFinder::findInPath(filesystem_t const& filename) const
 {
     for (auto const& path : search_path) {
         std::string fn = path;
@@ -43,7 +43,7 @@ filesystem_t FileFinder::FindInPath(filesystem_t const& filename) const
         fn += filename;
 
         BES_LOG(TRACE) << "Scan: " << fn;
-        if (FileMeetsRequirements(fn)) {
+        if (fileMeetsRequirements(fn)) {
             BES_LOG(TRACE) << "Match: " << fn;
             return fn;
         }
@@ -52,13 +52,13 @@ filesystem_t FileFinder::FindInPath(filesystem_t const& filename) const
     throw FileNotFoundException("Cannot locate file", filename);
 }
 
-FileFinder& FileFinder::ClearSearchPath()
+FileFinder& FileFinder::clearSearchPath()
 {
     search_path.clear();
     return *this;
 }
 
-bool FileFinder::FileMeetsRequirements(filesystem_t const& path) const
+bool FileFinder::fileMeetsRequirements(filesystem_t const& path) const
 {
     std::fstream s;
 
@@ -79,12 +79,12 @@ bool FileFinder::FileMeetsRequirements(filesystem_t const& path) const
     return s.is_open();
 }
 
-size_t FileFinder::SearchPathSize() const
+size_t FileFinder::searchPathSize() const
 {
     return search_path.size();
 }
 
-bool FileFinder::Empty() const
+bool FileFinder::empty() const
 {
     return search_path.empty();
 }

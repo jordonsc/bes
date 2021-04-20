@@ -1,5 +1,4 @@
-#ifndef BES_TEMPLATING_BLOCKS_BLOCK_H
-#define BES_TEMPLATING_BLOCKS_BLOCK_H
+#pragma once
 
 #include <memory>
 #include <sstream>
@@ -16,19 +15,19 @@ class Node
    public:
     explicit Node(Node const* const root = nullptr) : root(root) {}
 
-    virtual void Render(std::ostringstream&, data::Context&, data::TemplateStack&) const = 0;
+    virtual void render(std::ostringstream&, data::Context&, data::TemplateStack&) const = 0;
 
-    inline void AddNode(std::shared_ptr<Node> const& node)
+    inline void addNode(std::shared_ptr<Node> const& node)
     {
         child_nodes.push_back(node);
     }
 
-    inline void AllocateNode(Node* node)
+    inline void allocateNode(Node* node)
     {
         child_nodes.push_back(std::shared_ptr<Node>(node));
     }
 
-    [[nodiscard]] inline size_t NodeCount() const
+    [[nodiscard]] inline size_t nodeCount() const
     {
         return child_nodes.size();
     }
@@ -39,5 +38,3 @@ class Node
 };
 
 }  // namespace bes::templating::node
-
-#endif

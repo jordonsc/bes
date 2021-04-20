@@ -1,7 +1,6 @@
-#ifndef BES_TEMPLATING_SYNTAX_EXPRESSION_H
-#define BES_TEMPLATING_SYNTAX_EXPRESSION_H
+#pragma once
 
-#define BES_TEMPLATING_INVLD_NOT "invalid use of 'not' keyword"
+#define BES_TEMPLATING_INVALID_NOT "invalid use of 'not' keyword"
 #define BES_TEMPLATING_DBL_NOT "double use of 'not' keyword"
 #define BES_TEMPLATING_INCOMPLETE_EXPR "incomplete expression"
 
@@ -77,10 +76,8 @@ struct Expression
     std::vector<std::string> filters;
 
    private:
-    void ValidateComparisonOperator(bool, std::string const&) const;
-    void ValidateClause(bool, std::string const&) const;
+    void validateComparisonOperator(bool neg, std::string const& str) const;
+    void validateClause(bool neg, std::string const& str) const;
 };
 
 }  // namespace bes::templating::syntax
-
-#endif

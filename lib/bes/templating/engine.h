@@ -1,5 +1,4 @@
-#ifndef BES_TEMPLATING_ENGINE_H
-#define BES_TEMPLATING_ENGINE_H
+#pragma once
 
 #include <bes/core.h>
 
@@ -24,13 +23,13 @@ class Engine : public RenderingInterface
    public:
     Engine();
 
-    void LoadFile(std::string const& name, std::string const& filename);
-    void LoadString(std::string const& name, std::string const& filename);
+    void loadFile(std::string const& name, std::string const& filename);
+    void loadString(std::string const& name, std::string const& data);
 
     /**
      * Add a function matching syntax of Filter, as a filter.
      */
-    void AddFilter(std::string const& name, Filter filter);
+    void addFilter(std::string const& name, Filter filter);
 
     /**
      * Bind an object member function as a filter.
@@ -39,7 +38,7 @@ class Engine : public RenderingInterface
      *  AddFilter("myfilter", &MyClass::FilterFn, &obj_of_myclass);
      */
     template <class MethodT, class ObjT>
-    void AddFilter(std::string const& name, MethodT&& method, ObjT&& object);
+    void addFilter(std::string const& name, MethodT&& method, ObjT&& object);
 
     /**
      * Render a template and return it as a string.
@@ -47,7 +46,7 @@ class Engine : public RenderingInterface
      * If throw_on_error is false, rendering exceptions will be suppressed and sent to the log sink instead. If a
      * template does not exist, a MissingTemplateException will be raised regardless of throw_on_error.
      */
-    std::string Render(std::string const& name, data::Context& context) override;
+    std::string render(std::string const& name, data::Context& context) override;
 
     bes::FileFinder search_path;
 
@@ -59,11 +58,9 @@ class Engine : public RenderingInterface
 };
 
 template <class MethodT, class ObjT>
-inline void Engine::AddFilter(std::string const& name, MethodT&& method, ObjT&& object)
+inline void Engine::addFilter(std::string const& name, MethodT&& method, ObjT&& object)
 {
     filters[name] = std::bind(std::forward<MethodT>(method), std::forward<ObjT>(object), std::placeholders::_1);
 }
 
 }  // namespace bes::templating
-
-#endif

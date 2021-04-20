@@ -1,5 +1,4 @@
-#ifndef BES_BES_EXCEPTION_H
-#define BES_BES_EXCEPTION_H
+#pragma once
 
 #include <filesystem>
 #include <stdexcept>
@@ -12,29 +11,29 @@ namespace bes {
 class BesException : public std::exception
 {
    public:
-    explicit BesException(std::string msg, int exit_code = 1) : err_msg(std::move(msg)), exit_code(exit_code){};
+    explicit BesException(std::string msg, int exit_code = 1) : msg(std::move(msg)), exc_code(exit_code){};
     BesException(std::string msg, bes::ExitCode exit_flag)
-        : err_msg(std::move(msg)), exit_code(static_cast<int>(exit_flag))
+        : msg(std::move(msg)), exc_code(static_cast<int>(exit_flag))
     {}
 
     [[nodiscard]] const char* what() const noexcept override
     {
-        return err_msg.c_str();
+        return msg.c_str();
     }
 
-    [[nodiscard]] virtual std::string const& ErrorMessage() const noexcept
+    [[nodiscard]] virtual std::string const& message() const noexcept
     {
-        return err_msg;
+        return msg;
     }
 
-    [[nodiscard]] virtual int ExitCode() const noexcept
+    [[nodiscard]] virtual int code() const noexcept
     {
-        return exit_code;
+        return exc_code;
     }
 
    private:
-    std::string const err_msg;
-    int const exit_code;
+    std::string const msg;
+    int const exc_code;
 };
 
 /**
@@ -72,7 +71,7 @@ class NullException : public bes::IndexErrorException
         : IndexErrorException(msg, exit_code), key(std::move(key))
     {}
 
-    [[nodiscard]] inline constexpr std::string const& GetKey() const noexcept
+    [[nodiscard]] inline constexpr std::string const& getKey() const noexcept
     {
         return key;
     }
@@ -107,7 +106,7 @@ class FileSystemException : public bes::BesException
         : BesException(std::move(msg), exit_code), fn(std::move(fn))
     {}
 
-    virtual inline std::string& GetPath()
+    virtual inline std::string& getPath()
     {
         return fn;
     }
@@ -122,5 +121,3 @@ class FileNotFoundException : public FileSystemException
 };
 
 }  // namespace bes
-
-#endif

@@ -2,7 +2,7 @@
 
 using namespace bes;
 
-void Config::LoadString(std::string const& source)
+void Config::loadString(std::string const& source)
 {
     BES_LOG(DEBUG) << "Config loading from string";
 
@@ -14,7 +14,7 @@ void Config::LoadString(std::string const& source)
     }
 }
 
-void Config::LoadFile(std::string const& source)
+void Config::loadFile(std::string const& source)
 {
     BES_LOG(DEBUG) << "Config loading from <" << source << ">";
 
@@ -26,10 +26,10 @@ void Config::LoadFile(std::string const& source)
     }
 }
 
-void Config::LoadFile(FileFinder const& ff)
+void Config::loadFile(const FileFinder& ff)
 {
     try {
-        LoadFile(ff.Find());
+        loadFile(ff.find());
     } catch (FileNotFoundException&) {
         root = YAML::Node(YAML::NodeType::Map);
         BES_LOG(WARNING) << "No configuration file found";

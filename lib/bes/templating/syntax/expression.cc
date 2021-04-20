@@ -9,7 +9,7 @@ Expression::Expression(std::string const& str)
 {
     raw = str;
     char pos = 0;
-    auto parts = bes::templating::Text::SplitArgs(str);
+    auto parts = bes::templating::Text::splitArgs(str);
     bool neg = false;
     bool no_op = false;
     bool expect_filter = false;
@@ -46,45 +46,45 @@ Expression::Expression(std::string const& str)
                 clause = Clause::INCLUDE;
                 continue;
             } else if (part == "for") {
-                ValidateClause(neg, str);
+                validateClause(neg, str);
                 clause = Clause::FOR;
                 continue;
             } else if (part == "macro") {
-                ValidateClause(neg, str);
+                validateClause(neg, str);
                 clause = Clause::MACRO;
                 no_op = true;
                 continue;
             } else if (part == "if") {
-                ValidateClause(neg, str);
+                validateClause(neg, str);
                 clause = Clause::IF;
                 continue;
             } else if (part == "endblock") {
-                ValidateClause(neg, str);
+                validateClause(neg, str);
                 clause = Clause::ENDBLOCK;
                 end_tag = true;
                 continue;
             } else if (part == "endfor") {
-                ValidateClause(neg, str);
+                validateClause(neg, str);
                 clause = Clause::ENDFOR;
                 end_tag = true;
                 continue;
             } else if (part == "endmacro") {
-                ValidateClause(neg, str);
+                validateClause(neg, str);
                 clause = Clause::ENDMACRO;
                 end_tag = true;
                 continue;
             } else if (part == "endif") {
-                ValidateClause(neg, str);
+                validateClause(neg, str);
                 clause = Clause::ENDIF;
                 end_tag = true;
                 continue;
             } else if (part == "elif") {
-                ValidateClause(neg, str);
+                validateClause(neg, str);
                 clause = Clause::ELIF;
                 end_tag = true;
                 continue;
             } else if (part == "else") {
-                ValidateClause(neg, str);
+                validateClause(neg, str);
                 clause = Clause::ELSE;
                 end_tag = true;
                 continue;
@@ -145,22 +145,22 @@ Expression::Expression(std::string const& str)
                 }
                 op = Operator::IS;
             } else if (part == "==") {
-                ValidateComparisonOperator(neg, str);
+                validateComparisonOperator(neg, str);
                 op = Operator::EQUALS;
             } else if (part == "!=") {
-                ValidateComparisonOperator(neg, str);
+                validateComparisonOperator(neg, str);
                 op = Operator::NOT_EQUALS;
             } else if (part == ">") {
-                ValidateComparisonOperator(neg, str);
+                validateComparisonOperator(neg, str);
                 op = Operator::GT;
             } else if (part == ">=") {
-                ValidateComparisonOperator(neg, str);
+                validateComparisonOperator(neg, str);
                 op = Operator::GTE;
             } else if (part == "<") {
-                ValidateComparisonOperator(neg, str);
+                validateComparisonOperator(neg, str);
                 op = Operator::LT;
             } else if (part == "<=") {
-                ValidateComparisonOperator(neg, str);
+                validateComparisonOperator(neg, str);
                 op = Operator::LTE;
             } else {
                 // Must be a control keyword in this position
@@ -172,7 +172,7 @@ Expression::Expression(std::string const& str)
                 // Allowed to 'not' an "is defined", but that's the only acceptable use of 'not' after the control
                 // keyword
                 if (neg || op != Operator::IS) {
-                    throw MalformedExpressionException(str, BES_TEMPLATING_INVLD_NOT);
+                    throw MalformedExpressionException(str, BES_TEMPLATING_INVALID_NOT);
                 }
                 neg = true;
                 continue;
@@ -303,7 +303,7 @@ Expression::Expression(std::string const& str)
     }
 }
 
-void Expression::ValidateComparisonOperator(bool neg, std::string const& str) const
+void Expression::validateComparisonOperator(bool neg, std::string const& str) const
 {
     if (op != Operator::NONE || ((clause != Clause::IF) && (clause != Clause::ELIF))) {
         throw MalformedExpressionException(str, "cannot use comparison keywords outside of 'if' statements");
@@ -319,10 +319,10 @@ void Expression::ValidateComparisonOperator(bool neg, std::string const& str) co
  * - Cannot have already been negated (eg "not for ...")
  * - Must not already have a clause defined
  */
-void Expression::ValidateClause(bool neg, std::string const& str) const
+void Expression::validateClause(bool neg, std::string const& str) const
 {
     if (neg) {
-        throw MalformedExpressionException(str, BES_TEMPLATING_INVLD_NOT);
+        throw MalformedExpressionException(str, BES_TEMPLATING_INVALID_NOT);
     } else if (clause != Clause::NONE) {
         throw MalformedExpressionException(str, "multiple uses of expression clauses");
     }

@@ -2,10 +2,10 @@
 
 using namespace bes::templating;
 
-Parser& Parser::Parse(node::RootNode& root, std::string const& content)
+Parser& Parser::parse(node::RootNode& root, std::string const& content)
 {
     size_t pos = 0;
-    ParseInner(root, content, pos, &root);
+    parseInner(root, content, pos, &root);
     return *this;
 }
 
@@ -15,7 +15,7 @@ Parser& Parser::Parse(node::RootNode& root, std::string const& content)
  * Ideally, we'll remain as close to this document as the schema for this templating engine:
  * https://jinja.palletsprojects.com/en/2.11.x/templates/
  */
-syntax::Expression Parser::ParseInner(node::Node& node, std::string const& content, size_t& position,
+syntax::Expression Parser::parseInner(node::Node& node, std::string const& content, size_t& position,
                                       node::RootNode* root)
 {
     size_t max_parse = content.length() - Parser::MinSegmentSize;
@@ -36,9 +36,9 @@ syntax::Expression Parser::ParseInner(node::Node& node, std::string const& conte
         if (node_pos == std::string::npos || node_pos > max_parse) {
             prev = new node::TextNode(std::string(content, position));
             if (trim_next) {
-                prev->TrimFront();
+                prev->trimFront();
             }
-            node.AllocateNode(prev);
+            node.allocateNode(prev);
             break;
         }
 
@@ -59,15 +59,15 @@ syntax::Expression Parser::ParseInner(node::Node& node, std::string const& conte
         if (node_pos > old_pos) {
             prev = new node::TextNode(std::string(content, old_pos, node_pos - old_pos));
             if (trim_next) {
-                prev->TrimFront();
+                prev->trimFront();
                 trim_next = false;
             }
-            node.AllocateNode(prev);
+            node.allocateNode(prev);
         }
 
         // Trim text nodes if we use the hyphen operator inside the tags, eg: {{- somevalue -}}
         if (tag.clear_left && prev != nullptr) {
-            prev->TrimBack();
+            prev->trimBack();
             prev = nullptr;
         }
 
@@ -82,7 +82,7 @@ syntax::Expression Parser::ParseInner(node::Node& node, std::string const& conte
                 break;
             case syntax::Tag::TagType::VALUE:
                 // Value nodes are single, in-line, tags
-                node.AllocateNode(dynamic_cast<node::Node*>(new node::ValueNode(Expression(tag.raw), root)));
+                node.allocateNode(dynamic_cast<node::Node*>(new node::ValueNode(Expression(tag.raw), root)));
                 break;
             case syntax::Tag::TagType::CONTROL:
                 // Control nodes are blocks with child-nodes, we expect an end-tag now
@@ -93,7 +93,7 @@ syntax::Expression Parser::ParseInner(node::Node& node, std::string const& conte
                         return exp;
                     } else {
                         // Process this expression with a recursive control-block processor
-                        ParseExpression(exp, node, content, position, root);
+                        parseExpression(exp, node, content, position, root);
                     }
                 }
                 break;
@@ -109,7 +109,7 @@ syntax::Expression Parser::ParseInner(node::Node& node, std::string const& conte
 /**
  * Sub-parser for tag expressions.
  */
-void Parser::ParseExpression(syntax::Expression const& exp, node::Node& node, std::string const& content,
+void Parser::parseExpression(const syntax::Expression& exp, node::Node& node, std::string const& content,
                              size_t& position, node::RootNode* root)
 {
     using bes::templating::syntax::Expression;
@@ -118,27 +118,27 @@ void Parser::ParseExpression(syntax::Expression const& exp, node::Node& node, st
         case Expression::Clause::EXTENDS:
             // extends - does NOT to have an end-tag, and we won't add this as a node
             {
-                if (root->Extends()) {
+                if (root->extends()) {
                     throw TemplateException("Extends clause duplicated");
-                } else if (root->NodeCount()) {
-                    BES_LOG(WARNING) << "Template '" << root->Name() << "' extends clause is not the very first node";
+                } else if (root->nodeCount()) {
+                    BES_LOG(WARNING) << "Template '" << root->getName() << "' extends clause is not the very first node";
                 }
 
-                root->SetExtends(exp.left.Value<std::string>());
+                root->setExtends(exp.left.value<std::string>());
             }
             break;
         case Expression::Clause::INCLUDE:
             // include - does NOT to have an end-tag
             {
-                auto* sub_node = new node::IncludeNode(exp.left.Value<std::string>(), root);
-                node.AllocateNode(dynamic_cast<node::Node*>(sub_node));
+                auto* sub_node = new node::IncludeNode(exp.left.value<std::string>(), root);
+                node.allocateNode(dynamic_cast<node::Node*>(sub_node));
             }
             break;
         case Expression::Clause::BLOCK:
             // block .. endblock
             {
-                auto* sub_node = new node::BlockNode(exp.left.Value<std::string>(), root);
-                Expression end_tag = ParseInner(*sub_node, content, position, root);
+                auto* sub_node = new node::BlockNode(exp.left.value<std::string>(), root);
+                Expression end_tag = parseInner(*sub_node, content, position, root);
 
                 if (end_tag.clause != Expression::Clause::ENDBLOCK) {
                     throw MissingEndTagException("Missing or incorrect end-tag for block node '" + exp.left.raw +
@@ -148,29 +148,29 @@ void Parser::ParseExpression(syntax::Expression const& exp, node::Node& node, st
                 // For block nodes, we'll add a shared pointer to the same node to both the parent node and the root
                 // node's block list
                 std::shared_ptr<node::BlockNode> ptr(sub_node);
-                node.AddNode(ptr);
-                root->AddBlock(ptr->Name(), ptr);
+                node.addNode(ptr);
+                root->addBlock(ptr->getName(), ptr);
             }
             break;
         case Expression::Clause::FOR:
             // for .. endif
             {
                 auto* sub_node = new node::ForNode(exp, root);
-                Expression end_tag = ParseInner(dynamic_cast<node::Node&>(*sub_node), content, position, root);
+                Expression end_tag = parseInner(dynamic_cast<node::Node&>(*sub_node), content, position, root);
 
                 if (end_tag.clause != Expression::Clause::ENDFOR) {
                     throw MissingEndTagException("Missing or incorrect end-tag for for-loop '" + exp.raw +
                                                  "', found: " + end_tag.raw);
                 }
 
-                node.AllocateNode(dynamic_cast<node::Node*>(sub_node));
+                node.allocateNode(dynamic_cast<node::Node*>(sub_node));
             }
             break;
         case Expression::Clause::MACRO:
             // macro .. endmacro
             {
                 auto* sub_node = new node::MacroNode(exp, root);
-                Expression end_tag = ParseInner(dynamic_cast<node::Node&>(*sub_node), content, position, root);
+                Expression end_tag = parseInner(dynamic_cast<node::Node&>(*sub_node), content, position, root);
 
                 if (end_tag.clause != Expression::Clause::ENDMACRO) {
                     throw MissingEndTagException("Missing or incorrect end-tag for macro '" + exp.raw +
@@ -180,7 +180,7 @@ void Parser::ParseExpression(syntax::Expression const& exp, node::Node& node, st
                 // We don't really need to macro to stay in-place, however because each template is detached from any
                 // extended/inherited, we'll need to add the node to the TemplateStack during rendering - thus, we keep
                 // this inline as any other node
-                node.AllocateNode(dynamic_cast<node::Node*>(sub_node));
+                node.allocateNode(dynamic_cast<node::Node*>(sub_node));
             }
             break;
         case Expression::Clause::IF:
@@ -189,22 +189,22 @@ void Parser::ParseExpression(syntax::Expression const& exp, node::Node& node, st
             // if .. elif .. else .. endif
             {
                 auto* sub_node = new node::IfNode(exp, root);
-                node.AllocateNode(dynamic_cast<node::Node*>(sub_node));
+                node.allocateNode(dynamic_cast<node::Node*>(sub_node));
 
-                Expression end_tag = ParseInner(dynamic_cast<node::Node&>(*sub_node), content, position, root);
+                Expression end_tag = parseInner(dynamic_cast<node::Node&>(*sub_node), content, position, root);
 
                 switch (end_tag.clause) {
                     case Expression::Clause::ELIF:
                         if (exp.clause == Expression::Clause::ELSE) {
                             throw TemplateException("Cannot have an elif tag proceed an else tag");
                         }
-                        ParseExpression(end_tag, node, content, position, root);
+                        parseExpression(end_tag, node, content, position, root);
                         break;
                     case Expression::Clause::ELSE:
                         if (exp.clause == Expression::Clause::ELSE) {
                             throw TemplateException("Cannot have an else tag proceed an else tag");
                         }
-                        ParseExpression(end_tag, node, content, position, root);
+                        parseExpression(end_tag, node, content, position, root);
                         break;
                     case Expression::Clause::ENDIF:
                         break;

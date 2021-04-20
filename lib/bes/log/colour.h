@@ -1,5 +1,4 @@
-#ifndef BES_LOG_COLOUR_H
-#define BES_LOG_COLOUR_H
+#pragma once
 
 enum class ColourMode
 {
@@ -75,4 +74,3 @@ enum class ColourMode
 #define BES_CLR_ERROR BES_CLR_BG_BLACK << BES_CLR_LRED
 #define BES_CLR_CRITICAL BES_CLR_BG_RED << BES_CLR_LYELLOW
 
-#endif

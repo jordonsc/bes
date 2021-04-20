@@ -99,7 +99,7 @@ class LogBackend
    public:
     virtual ~LogBackend() = default;
 
-    virtual void Process(LogRecord const &log_record) = 0;
+    virtual void process(LogRecord const &log_record) = 0;
 };
 }  // namespace backend
 
@@ -122,9 +122,9 @@ std::ostream &operator<<(std::ostream &stream, bes::log::Severity const &s);
  * Create a log entry with a fully-qualified log level.
  */
 #define BES_LOG_LVL(level)                                                                                    \
-    for (auto BES_LOG_INST = ::bes::log::Logger(level, __func__, __FILE__, __LINE__); BES_LOG_INST.Enabled(); \
-         BES_LOG_INST.Dispatch())                                                                             \
-    BES_LOG_INST.Stream()
+    for (auto BES_LOG_INST = ::bes::log::Logger(level, __func__, __FILE__, __LINE__); BES_LOG_INST.enabled(); \
+         BES_LOG_INST.dispatch())                                                                             \
+    BES_LOG_INST.stream()
 
 /**
  * Primary entry-point for logging, allows short-hand severity:

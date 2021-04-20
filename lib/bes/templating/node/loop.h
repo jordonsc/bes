@@ -1,5 +1,4 @@
-#ifndef BES_TEMPLATING_SYNTAX_LOOP_H
-#define BES_TEMPLATING_SYNTAX_LOOP_H
+#pragma once
 
 #include "../data/std_shells.h"
 
@@ -36,12 +35,12 @@ class StandardShell<node::loop> : public ShellInterface
    public:
     explicit StandardShell(const node::loop& item) : item(item) {}
 
-    inline void Render(std::ostringstream& ss) const override
+    inline void render(std::ostringstream& ss) const override
     {
         throw TemplateException("Cannot render the loop context");
     }
 
-    [[nodiscard]] inline std::shared_ptr<ShellInterface> ChildNode(std::string const& key) const override
+    [[nodiscard]] inline std::shared_ptr<ShellInterface> childNode(std::string const& key) const override
     {
         if (key == "index") {
             return std::make_shared<StandardShell<size_t>>(item.index);
@@ -67,5 +66,3 @@ class StandardShell<node::loop> : public ShellInterface
 };
 
 }  // namespace bes::templating::data
-
-#endif

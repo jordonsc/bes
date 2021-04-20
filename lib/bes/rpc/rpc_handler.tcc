@@ -90,7 +90,7 @@ inline RpcHandler<SyncSvcT, RequestT, ResponseT>::RpcHandler(SyncSvcT* svc, Serv
     : service(svc), completion_queue(cq), tracker(trk), responder(&context), application(application)
 {
     // New instance is offering capacity
-    tracker->InstanceSpawning(this);
+    tracker->instanceSpawning(this);
 }
 
 template <class SyncSvcT, class RequestT, class ResponseT>
@@ -103,7 +103,7 @@ inline void RpcHandler<SyncSvcT, RequestT, ResponseT>::Proceed()
 
     } else if (status == CallStatus::PROCESS) {
         // We've got an incoming RPC call, inform the tracker that we're no longer offering capacity
-        tracker->InstanceWorking(this);
+        tracker->instanceWorking(this);
         grpc::Status rpc_status = Process();
 
         // Let the gRPC runtime know we've finished and pass it our reply (formed in Process())
@@ -124,7 +124,7 @@ template <class SyncSvcT, class RequestT, class ResponseT>
 inline RpcHandler<SyncSvcT, RequestT, ResponseT>::~RpcHandler()
 {
     // Register this instance as no longer consuming resources or offering capacity
-    tracker->InstanceTerminating(this);
+    tracker->instanceTerminating(this);
 }
 
 }  // namespace bes::rpc

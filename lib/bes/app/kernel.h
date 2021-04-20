@@ -1,5 +1,4 @@
-#ifndef BES_APP_KERNEL_H
-#define BES_APP_KERNEL_H
+#pragma once
 
 #include <bes/cli.h>
 #include <bes/core.h>
@@ -45,7 +44,7 @@ class KernelInterface
      * This should bootstrap resources required before running the primary execution loop. If this returns non-zero,
      * application execution should halt and the program exit with the returned value
      */
-    virtual int Init() = 0;
+    virtual int init() = 0;
 
     /**
      * Run the application.
@@ -54,20 +53,20 @@ class KernelInterface
      * code for the operating system. The application is expected to terminate when this function returns and exit with
      * the return value.
      */
-    virtual int Run() = 0;
+    virtual int run() = 0;
 
     /**
      * Return the correct usage for the application.
      */
-    virtual std::string Usage() = 0;
+    virtual std::string usage() = 0;
 
-    bes::log::LogSink& LogSink() const;
-    bes::cli::Parser const& Cli() const;
-    bes::Config const& Config();
-    bes::Container& Container();
+    bes::log::LogSink& getLogSink() const;
+    bes::cli::Parser const& getCli() const;
+    bes::Config const& getConfig();
+    bes::Container& getContainer();
 
-    static KernelInterface& Instance();
-    static bool Exists();
+    static KernelInterface& getInstance();
+    static bool exists();
 
    protected:
     static KernelInterface* instance;
@@ -76,7 +75,7 @@ class KernelInterface
     char** const argv;
 
     std::unique_ptr<bes::log::LogSink> log_sink;
-    bes::cli::Parser cli;
+    bes::cli::Parser cli_parser;
     bes::Config config;
     bes::Container container;
 };
@@ -111,17 +110,17 @@ class Kernel : public KernelInterface
     /**
      * Configure the CLI, config, etc.
      */
-    int Init() override;
+    int init() override;
 
     /**
      * Runs the application in an error-controlled environment.
      */
-    int Run() override;
+    int run() override;
 
     /**
      * Return application CLI usage
      */
-    std::string Usage() override;
+    std::string usage() override;
 
     /**
      * Request the entire kernel and application shutdown and exit.
@@ -205,7 +204,7 @@ Kernel<AppT>::Kernel(int const argc, char** const argv, AppArgs&&... args) : Ker
 }
 
 template <class AppT>
-int Kernel<AppT>::Init()
+int Kernel<AppT>::init()
 {
     if (has_inited) {
         throw std::runtime_error("Application attempting to re-init the kernel");
@@ -214,18 +213,18 @@ int Kernel<AppT>::Init()
 
     // From here on in, we'll run in an exception handler
     return ErrorControlledExecution([this] {
-        app.get()->ConfigureCli(cli);
-        cli.Parse(argc, argv);
+        app.get()->configureCli(cli_parser);
+        cli_parser.parse(argc, argv);
 
         try {
             // Init the logger according to the verbosity in the CLI
-            InitLogger(cli["verbose"].Count());
+            InitLogger(cli_parser["verbose"].count());
         } catch (bes::cli::NoSuchArgumentException&) {
             // App removed the standard --verbose option, cannot alter default verbosity
             InitLogger();
         }
 
-        BES_LOG(INFO) << "Init <" << app.get()->Key() << ">";
+        BES_LOG(INFO) << "Init <" << app.get()->getKey() << ">";
 
         // Load the configuration file, will consider the --config option from the CLI if present
         InitConfig();
@@ -247,7 +246,7 @@ int Kernel<AppT>::Init()
 }
 
 template <class AppT>
-int Kernel<AppT>::Run()
+int Kernel<AppT>::run()
 {
     if (!has_inited) {
         throw std::runtime_error("Attempted to run application before initialising kernel");
@@ -256,9 +255,9 @@ int Kernel<AppT>::Run()
     return ErrorControlledExecution([this] {
         // If the application didn't create a DiscoveryInterface before executing Run(), we'll create a standard Sidecar
         // now. If this model isn't appropriate, consider creating one in a lambda function passed to Exec().
-        if (!di_t::HasDiscoveryInterface()) {
+        if (!di_t::hasDiscoveryInterface()) {
             BES_LOG(INFO) << "Building a sidecar as the default service-discovery mechanic";
-            di_t::SetDiscoveryInterface<bes::app::discovery::Sidecar>(config);
+            di_t::setDiscoveryInterface<bes::app::discovery::Sidecar>(config);
         }
 
         // Wait for the DiscoveryInterface to come online
@@ -268,11 +267,11 @@ int Kernel<AppT>::Run()
          * The Application may now start its main processing. We expect the app to start a thread for a process loop and
          * return almost immediately.
          */
-        app.get()->Run();
+        app.get()->run();
 
         // Wait for shutdown
         // The only way to pass this point is to send a SIGINT or SIGTERM (as Kernel::Shutdown() does)
-        BES_LOG(NOTICE) << "Service <" << app.get()->Key() << "> (" << app.get()->Name() << ") online";
+        BES_LOG(NOTICE) << "Service <" << app.get()->getKey() << "> (" << app.get()->getName() << ") online";
         WaitForExit();
 
         // Allow additional signals to kill us if we're taking too long
@@ -280,10 +279,10 @@ int Kernel<AppT>::Run()
 
         BES_LOG(TRACE) << "Beginning shutdown sequence";
         // Control the order things shutdown
-        app.get()->Shutdown();
-        di_t::GetDiscoveryInterface()->Shutdown();
+        app.get()->shutdown();
+        di_t::getDiscoveryInterface()->shutdown();
 
-        return SignalToExitCode(ExitRequestStatus());
+        return signalToExitCode(ExitRequestStatus());
     });
 }
 
@@ -343,7 +342,7 @@ inline void Kernel<AppT>::InitLogger(size_t verbosity)
     using bes::log::LogFormat;
     using bes::log::Severity;
 
-    if (bes::log::LogSink::HasInstance()) {
+    if (bes::log::LogSink::hasInstance()) {
         BES_LOG(WARNING) << "Logger already initialised, skipping";
         return;
     }
@@ -355,7 +354,7 @@ inline void Kernel<AppT>::InitLogger(size_t verbosity)
     log_sink = std::make_unique<bes::log::LogSink>(sev);
 
     // Hand over to the application to add any further backends or changes
-    app.get()->ConfigureLogger(*(log_sink.get()), sev);
+    app.get()->configureLogger(*(log_sink.get()), sev);
 
     BES_LOG(TRACE) << "Logger ready";
 }
@@ -366,24 +365,24 @@ void Kernel<AppT>::InitConfig()
     try {
         try {
             // We'll check the CLI --config option first
-            std::string cfg = cli["config"].Value();
+            std::string cfg = cli_parser["config"].value();
             if (cfg.length() == 0) {
                 throw bes::cli::NoSuchArgumentException(std::string{});
             }
 
             // When we load with an explicit config file, a FileNotFoundException if there is an issue reading it
-            config.LoadFile(cfg);
+            config.loadFile(cfg);
 
         } catch (bes::cli::NoSuchArgumentException&) {
             // Load using a file finder
             bes::FileFinder ff;
-            ff.AppendSearchPath(app.get()->Key().c_str() + std::string(".yaml"));
+            ff.AppendSearchPath(app.get()->getKey().c_str() + std::string(".yaml"));
 
             // This will log a warning if it can't find anything, but otherwise carry on
-            config.LoadFile(ff);
+            config.loadFile(ff);
         }
     } catch (bes::FileNotFoundException& e) {
-        BES_LOG(FATAL) << e.ErrorMessage();
+        BES_LOG(FATAL) << e.message();
         throw ManagedExitException("Could not read from specified configuration file", ExitCode::CONFIG_ERR);
     }
 }
@@ -392,17 +391,17 @@ template <class AppT>
 int Kernel<AppT>::ExecuteKernelCli()
 {
     try {
-        if (cli["help"].Present()) {
-            std::cout << app.get()->Usage();
+        if (cli_parser["help"].present()) {
+            std::cout << app.get()->usage();
             return static_cast<int>(ExitCode::CLI_SUCCESS);
         }
     } catch (bes::cli::NoSuchArgumentException&) {
     }
 
     try {
-        if (cli["version"].Present()) {
-            auto [major, minor, rev] = app.get()->Version();
-            std::cout << app.get()->Name() << "\nv" << major << "." << minor << "." << rev << std::endl;
+        if (cli_parser["version"].present()) {
+            auto [major, minor, rev] = app.get()->getVersion();
+            std::cout << app.get()->getName() << "\nv" << major << "." << minor << "." << rev << std::endl;
             return static_cast<int>(ExitCode::CLI_SUCCESS);
         }
     } catch (bes::cli::NoSuchArgumentException&) {
@@ -414,20 +413,20 @@ int Kernel<AppT>::ExecuteKernelCli()
 template <class AppT>
 void Kernel<AppT>::LoadContainer()
 {
-    std::string const key = app.get()->Key();
+    std::string const key = app.get()->getKey();
 
     // Application key
-    container.Emplace<std::string>(BES_DATA_APP_KEY, key);
+    container.emplace<std::string>(BES_DATA_APP_KEY, key);
 
     // Server listen port
-    unsigned listen_port = config.GetOr<unsigned>(BES_SERVER_DEFAULT_PORT, "server", "listen");
-    container.Emplace<unsigned>(BES_DATA_LISTEN_PORT, listen_port);
+    unsigned listen_port = config.getOr<unsigned>(BES_SERVER_DEFAULT_PORT, "server", "listen");
+    container.emplace<unsigned>(BES_DATA_LISTEN_PORT, listen_port);
 }
 
 template <class AppT>
-std::string Kernel<AppT>::Usage()
+std::string Kernel<AppT>::usage()
 {
-    return app.get()->Usage();
+    return app.get()->usage();
 }
 
 template <class AppT>
@@ -463,7 +462,7 @@ void Kernel<AppT>::Shutdown()
 template <class AppT>
 int Kernel<AppT>::Execute(std::function<int()> const& builder)
 {
-    if (int r = Init()) {
+    if (int r = init()) {
         return r < 0 ? 0 : r;
     }
 
@@ -473,7 +472,7 @@ int Kernel<AppT>::Execute(std::function<int()> const& builder)
         }
     }
 
-    return Run();
+    return run();
 }
 
 template <class AppT>
@@ -484,25 +483,25 @@ int Kernel<AppT>::ErrorControlledExecution(std::function<int()> const& f)
 
     } catch (::bes::SilentExitException& e) {
         // Managed exit, output nothing
-        return e.ExitCode();
+        return e.code();
 
     } catch (::bes::ManagedExitException& e) {
         // Managed exit, will let the Exception control the error message entirely
-        std::cerr << e.ErrorMessage() << std::endl;
+        std::cerr << e.message() << std::endl;
 
-        return e.ExitCode();
+        return e.code();
 
     } catch (::bes::cli::CliException& e) {
         // CLI parse error
-        std::cerr << "Command-line error:\n   " << e.ErrorMessage() << "\n\n" << Usage() << std::endl;
+        std::cerr << "Command-line error:\n   " << e.message() << "\n\n" << usage() << std::endl;
 
-        return e.ExitCode();
+        return e.code();
 
     } catch (::bes::BesException& e) {
         // Uncaught Bes exception
-        BES_LOG(FATAL) << "Fatal error: " << e.ErrorMessage();
+        BES_LOG(FATAL) << "Fatal error: " << e.message();
         std::cerr << "Exit due to fatal error" << std::endl;
-        return e.ExitCode();
+        return e.code();
 
     } catch (::std::exception& e) {
         // Uncaught non-Bes exception
@@ -529,13 +528,13 @@ template <class AppT>
 void Kernel<AppT>::WaitForDI()
 {
     // Wait until the discovery interface is ready before starting the application's Run() sequence
-    auto di = di_t::GetDiscoveryInterface().get();
+    auto di = di_t::getDiscoveryInterface().get();
     unsigned wait_time = 0;
-    unsigned max_wait = Config().template GetOr<unsigned>(60, "discovery", "ready-wait-time");
-    while (!di->Ready()) {
+    unsigned max_wait = getConfig().template getOr<unsigned>(60, "discovery", "ready-wait-time");
+    while (!di->ready()) {
         int sig = ExitRequestStatus();
         if (sig > 0) {
-            throw ManagedExitException("Exit before kernel came online", SignalToExitCode(sig));
+            throw ManagedExitException("Exit before kernel came online", signalToExitCode(sig));
         } else if (++wait_time > max_wait) {
             BES_LOG(FATAL) << "Service-discovery interface never came online";
             throw KernelException("No discovery interface");
@@ -549,5 +548,3 @@ void Kernel<AppT>::WaitForDI()
 }
 
 }  // namespace bes::app
-
-#endif

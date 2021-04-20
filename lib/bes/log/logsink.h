@@ -35,28 +35,28 @@ class LogSink
     LogSink& operator=(LogSink&) = delete;
 
     static LogSink& Instance();
-    static bool HasInstance() noexcept;
+    static bool hasInstance() noexcept;
 
-    void Log(LogRecord const& log_record);
+    void log(LogRecord const& log_record);
 
     template <class T, class... Args>
-    long AddBackend(Args&&... args);
+    long addBackend(Args&&... args);
 
-    void RemoveBackend(long const& id);
-    void ClearBackends();
-    std::size_t BackendCount();
+    void removeBackend(long const& id);
+    void clearBackends();
+    std::size_t backendCount();
 
-    void SetSeverity(bes::log::Severity);
+    void setSeverity(bes::log::Severity s);
 
     /**
      * Return true if this object has no backends.
      */
-    [[nodiscard]] bool Empty() const;
+    [[nodiscard]] bool empty() const;
 
     /**
      * Return false if we're not logging at this severity
      */
-    [[nodiscard]] bool Enabled(Severity s) const;
+    [[nodiscard]] bool enabled(Severity s) const;
 
    private:
     std::shared_mutex backend_mutex;
@@ -67,7 +67,7 @@ class LogSink
 };
 
 template <class T, class... Args>
-long LogSink::AddBackend(Args&&... args)
+long LogSink::addBackend(Args&&... args)
 {
     std::lock_guard<std::shared_mutex> lock(backend_mutex);
     static long id = 0;

@@ -1,9 +1,8 @@
-#ifndef BES_TEMPLATNG_NODE_TEXT_NODE_H
-#define BES_TEMPLATNG_NODE_TEXT_NODE_H
-
-#include "node.h"
+#pragma once
 
 #include <utility>
+
+#include "node.h"
 
 namespace bes::templating::node {
 
@@ -13,19 +12,19 @@ namespace bes::templating::node {
 class TextNode : public Node
 {
    public:
-    explicit TextNode(std::string  content) : content(std::move(content)) {}
+    explicit TextNode(std::string content) : content(std::move(content)) {}
 
-    inline void TrimFront()
+    inline void trimFront()
     {
-        bes::templating::Text::TrimFront(content);
+        bes::templating::Text::trimFront(content);
     }
 
-    inline void TrimBack()
+    inline void trimBack()
     {
-        bes::templating::Text::TrimBack(content);
+        bes::templating::Text::trimBack(content);
     }
 
-    void Render(std::ostringstream& str, data::Context& ctx, data::TemplateStack& ts) const override
+    void render(std::ostringstream& str, data::Context& ctx, data::TemplateStack& ts) const override
     {
         str << content;
     }
@@ -35,5 +34,3 @@ class TextNode : public Node
 };
 
 }  // namespace bes::templating::node
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef BES_FASTCGI_MEMORY_H
-#define BES_FASTCGI_MEMORY_H
+#pragma once
 
 #include <bes/log.h>
 
@@ -26,34 +25,32 @@ inline int32_t swap_int32(int32_t val)
 }
 
 template <class T>
-inline void Endian(T& item, bool to_host);
+inline void endian(T& item, bool to_host);
 
 template <>
-inline void Endian(model::Header& item, bool to_host)
+inline void endian(model::Header& item, bool to_host)
 {
     item.content_length = bes_endian_u16(item.content_length, to_host);
     item.request_id = bes_endian_u16(item.request_id, to_host);
 }
 
 template <>
-inline void Endian(model::BeginRequest& item, bool to_host)
+inline void endian(model::BeginRequest& item, bool to_host)
 {
     item.role = static_cast<model::Role>(bes_endian_u16(static_cast<uint16_t>(item.role), to_host));
 }
 
 template <>
-inline void Endian(model::EndRequest& item, bool to_host)
+inline void endian(model::EndRequest& item, bool to_host)
 {
     item.app_status = bes_endian_32(item.app_status, to_host);
 }
 
 template <class T>
-inline void Endian(T& item, bool to_host)
+inline void endian(T& item, bool to_host)
 {
     BES_LOG(CRITICAL) << "Endian shift on foreign object";
     throw FastCgiException("Unknown object to perform endian shift");
 }
 
 }  // namespace bes::fastcgi
-
-#endif

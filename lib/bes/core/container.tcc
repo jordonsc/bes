@@ -1,5 +1,4 @@
-#ifndef BES_BES_CONTAINER_H
-#define BES_BES_CONTAINER_H
+#pragma once
 
 #include <any>
 #include <memory>
@@ -14,17 +13,17 @@ class Container
 {
    public:
     template <class T>
-    Container& Add(std::string const& key, std::shared_ptr<T> ptr);
+    Container& add(std::string const& key, std::shared_ptr<T> ptr);
 
     template <class T, class... Args>
-    Container& Emplace(std::string const& key, Args&&...);
+    Container& emplace(std::string const& key, Args&&... args);
 
-    bool Exists(std::string const& key) const;
+    bool exists(std::string const& key) const;
 
     template <class T>
-    std::shared_ptr<T> Get(std::string const& key) const;
+    std::shared_ptr<T> get(std::string const& key) const;
 
-    void Remove(std::string const& key);
+    void remove(std::string const& key);
 
    private:
     std::unordered_map<std::string, std::any> bucket;
@@ -32,9 +31,9 @@ class Container
 };
 
 template <class T>
-inline Container& Container::Add(std::string const& key, std::shared_ptr<T> ptr)
+inline Container& Container::add(std::string const& key, std::shared_ptr<T> ptr)
 {
-    if (Exists(key)) {
+    if (exists(key)) {
         throw KeyExistsException("Key '" + key + "' already exists in container");
     }
 
@@ -45,9 +44,9 @@ inline Container& Container::Add(std::string const& key, std::shared_ptr<T> ptr)
 }
 
 template <class T, class... Args>
-inline Container& Container::Emplace(std::string const& key, Args&&... args)
+inline Container& Container::emplace(std::string const& key, Args&&... args)
 {
-    if (Exists(key)) {
+    if (exists(key)) {
         throw KeyExistsException("Key '" + key + "' already exists in container");
     }
 
@@ -57,14 +56,14 @@ inline Container& Container::Emplace(std::string const& key, Args&&... args)
     return *this;
 }
 
-inline bool Container::Exists(std::string const& key) const
+inline bool Container::exists(std::string const& key) const
 {
     std::shared_lock<std::shared_mutex> lock(mutex);
     return bucket.find(key) != bucket.end();
 }
 
 template <class T>
-inline std::shared_ptr<T> Container::Get(std::string const& key) const
+inline std::shared_ptr<T> Container::get(std::string const& key) const
 {
     std::shared_lock<std::shared_mutex> lock(mutex);
 
@@ -76,7 +75,7 @@ inline std::shared_ptr<T> Container::Get(std::string const& key) const
     return std::any_cast<std::shared_ptr<T>>(it->second);
 }
 
-inline void Container::Remove(std::string const& key)
+inline void Container::remove(std::string const& key)
 {
     std::lock_guard<std::shared_mutex> lock(mutex);
     try {
@@ -87,5 +86,3 @@ inline void Container::Remove(std::string const& key)
 }
 
 }  // namespace bes
-
-#endif

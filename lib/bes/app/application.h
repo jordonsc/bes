@@ -1,5 +1,4 @@
-#ifndef BES_APP_APPLICATION_H
-#define BES_APP_APPLICATION_H
+#pragma once
 
 #include <bes/cli.h>
 
@@ -26,7 +25,7 @@ class Application
      *
      * Eg: "My Application"
      */
-    [[nodiscard]] virtual inline std::string const& Name() const
+    [[nodiscard]] virtual inline std::string const& getName() const
     {
         return name;
     }
@@ -39,17 +38,15 @@ class Application
      *
      * Eg: "my-application"
      */
-    [[nodiscard]] virtual inline std::string const& Key() const
+    [[nodiscard]] virtual inline std::string const& getKey() const
     {
         return key;
     }
 
     /**
      * A single-line human-friendly description of this application.
-     *
-     * Eg: "Regularly sends me an email telling me I'm awesome."
      */
-    [[nodiscard]] virtual inline std::string const& Description() const
+    [[nodiscard]] virtual inline std::string const& getDescription() const
     {
         return description;
     }
@@ -59,7 +56,7 @@ class Application
      *
      * Eg. (1, 6, 9)
      */
-    [[nodiscard]] virtual inline version_t const& Version() const
+    [[nodiscard]] virtual inline version_t const& getVersion() const
     {
         return version;
     }
@@ -69,14 +66,14 @@ class Application
      *
      * Will be automatically generated if you set usage to a blank string.
      */
-    virtual std::string const& Usage();
+    virtual std::string const& getUsage();
 
     /**
      * Allow the Application to add or override the CLI arguments.
      *
      * By default, we add standard options such as --config and --verbosity.
      */
-    virtual void ConfigureCli(bes::cli::Parser& parser);
+    virtual void configureCli(bes::cli::Parser& parser);
 
     /**
      * Allow the Application to add backends or otherwise configure the log sink.
@@ -84,21 +81,21 @@ class Application
      * By default, we'll add a ConsoleLogBackend with the format set to STANDARD unless we're in TRACE level verbosity,
      * whereby the log format is set to DETAIL.
      */
-    virtual void ConfigureLogger(bes::log::LogSink& log_sink, bes::log::Severity verbosity);
+    virtual void configureLogger(bes::log::LogSink& log_sink, bes::log::Severity verbosity);
 
     /**
      * The Application's core process.
      *
      * This is run when the kernel has finished initialisation.
      */
-    virtual void Run() = 0;
+    virtual void run() = 0;
 
     /**
      * A request to terminate has been made, close listeners and immediately prepare to shutdown.
      *
      * This function should block until the application has completed shutdown.
      */
-    virtual void Shutdown(){};
+    virtual void shutdown(){};
 
    protected:
     /**
@@ -123,8 +120,8 @@ class Application
           usage(std::move(usage))
     {}
 
-    static bool KernelExists();
-    static KernelInterface& Kernel();
+    static bool kernelExists();
+    static KernelInterface& kernel();
 
    private:
     std::string const name;
@@ -136,4 +133,3 @@ class Application
 
 }  // namespace bes::app
 
-#endif

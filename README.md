@@ -27,6 +27,7 @@ Library Documentation
 ---------------------
 * Application Kernel
 * Core
+* [DBAL](docs/library/DBAL.md)
 * [FastCGI](docs/library/FastCGI.md)
 * Log
 * Net

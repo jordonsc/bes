@@ -1,5 +1,4 @@
-#ifndef BES_CLI_PARSER_H
-#define BES_CLI_PARSER_H
+#pragma once
 
 #include <bes/log.h>
 
@@ -16,38 +15,38 @@ class Parser
 {
    public:
     Parser& operator<<(Arg arg);
-    Parser& AddArgument(Arg arg);
-    Parser& AddArgument(char s, std::string l, std::string default_val = "");
-    [[nodiscard]] size_t ArgCount() const;
+    Parser& addArgument(Arg arg);
+    Parser& addArgument(char s, std::string l, std::string default_val = "");
+    [[nodiscard]] size_t argCount() const;
 
     Arg const& operator[](std::string const& s) const;
-    [[nodiscard]] std::vector<Arg const*> GetAllArgs() const;
+    [[nodiscard]] std::vector<Arg const*> getAllArgs() const;
 
-    void Parse(int const& argc, char** argv);
+    void parse(int const& argc, char** argv);
 
    protected:
     /**
      * Raises an ArgumentConflictException if there is a conflict between existing arguments.
      */
-    void ValidateArgument(Arg& arg);
+    void validateArgument(Arg& arg);
 
     /**
      * Raising a NoValueException if an argument doesn't have a required value
      */
-    void ValidateRequired();
+    void validateRequired();
 
     std::map<std::string, Arg> arg_list;
     std::vector<std::string> positionals;
 
-    static bool IsValidShortArg(char const& c);
-    static bool IsValidLongArg(std::string const& arg);
-    Arg& GetArg(std::string const& s);
+    static bool isValidShortArg(char const& c);
+    static bool isValidLongArg(std::string const& arg);
+    Arg& getArg(std::string const& s);
 
    private:
-    void ParseShort(char* short_args);
-    void ParseLong(const std::string& long_arg);
+    void parseShort(char* short_args);
+    void parseLong(const std::string& long_arg);
 
-    Arg* GetArgFromShort(char c);
+    Arg* getArgFromShort(char c);
 
     // Inner workings of parser
     Arg* _last_arg = nullptr;
@@ -55,5 +54,3 @@ class Parser
 };
 
 }  // namespace bes::cli
-
-#endif

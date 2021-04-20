@@ -23,14 +23,14 @@ Arg& Arg::operator++()
     return *this;
 }
 
-Arg Arg::operator++(int)
+Arg const Arg::operator++(int)
 {
-    Arg const tmp = Arg(*this);
+    Arg tmp = Arg(*this);
     operator++();
     return tmp;
 }
 
-Arg& Arg::SetValue(std::string v)
+Arg& Arg::setValue(std::string v)
 {
     if (value_type == ValueType::NONE) {
         throw UnexpectedValueException("Argument --" + long_form + " does not accept a value");
@@ -44,22 +44,22 @@ Arg& Arg::SetValue(std::string v)
     return *this;
 }
 
-bool Arg::Present() const
+bool Arg::present() const
 {
     return arg_present;
 }
 
-std::string const& Arg::Value() const
+std::string const& Arg::value() const
 {
     return arg_value;
 }
 
-size_t Arg::Count() const
+size_t Arg::count() const
 {
     return counter;
 }
 
-ValueType Arg::ArgType() const
+ValueType Arg::argType() const
 {
     return value_type;
 }

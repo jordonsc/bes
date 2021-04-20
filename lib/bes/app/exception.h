@@ -1,5 +1,4 @@
-#ifndef BES_APP_EXCEPTION_H
-#define BES_APP_EXCEPTION_H
+#pragma once
 
 #include <bes/core.h>
 
@@ -27,4 +26,3 @@ class NoDiscoveryInterfaceException : public KernelException
 
 }  // namespace bes::app
 
-#endif

@@ -76,35 +76,35 @@ TEST(CliTest, ParserTest)
     using bes::cli::Arg;
     bes::cli::Parser p;
 
-    p.AddArgument(Arg(0, "aaa")).AddArgument('b', "bbb", "16");
+    p.addArgument(Arg(0, "aaa")).addArgument('b', "bbb", "16");
     p << Arg('c', "ccc") << Arg('C', "ddd");
-    EXPECT_EQ(4, p.ArgCount());
+    EXPECT_EQ(4, p.argCount());
 
     EXPECT_THROW(p << Arg('b', "eee"), bes::cli::ArgumentConflictException);
     EXPECT_THROW(p << Arg('f', "ccc"), bes::cli::ArgumentConflictException);
     EXPECT_THROW(p << Arg('g', ""), bes::cli::MalformedArgumentException);
 
-    EXPECT_EQ(4, p.ArgCount());
+    EXPECT_EQ(4, p.argCount());
     EXPECT_EQ(16, p["bbb"].as<int>());
-    EXPECT_EQ(0, p["bbb"].Count());
-    EXPECT_FALSE(p["bbb"].Present());
+    EXPECT_EQ(0, p["bbb"].count());
+    EXPECT_FALSE(p["bbb"].present());
 
     EXPECT_THROW(p["xxx"], bes::cli::NoSuchArgumentException);
 
     int argc = 3;
     char* argv[3] = {(char*)"test", (char*)"-ccCc", (char*)"--aaa"};
 
-    p.Parse(argc, argv);
+    p.parse(argc, argv);
 
-    EXPECT_TRUE(p["aaa"].Present());
-    EXPECT_FALSE(p["bbb"].Present());
-    EXPECT_TRUE(p["ccc"].Present());
-    EXPECT_TRUE(p["ddd"].Present());
+    EXPECT_TRUE(p["aaa"].present());
+    EXPECT_FALSE(p["bbb"].present());
+    EXPECT_TRUE(p["ccc"].present());
+    EXPECT_TRUE(p["ddd"].present());
 
-    EXPECT_EQ(1, p["aaa"].Count());
-    EXPECT_EQ(0, p["bbb"].Count());
-    EXPECT_EQ(3, p["ccc"].Count());
-    EXPECT_EQ(1, p["ddd"].Count());
+    EXPECT_EQ(1, p["aaa"].count());
+    EXPECT_EQ(0, p["bbb"].count());
+    EXPECT_EQ(3, p["ccc"].count());
+    EXPECT_EQ(1, p["ddd"].count());
 }
 
 TEST(CliTest, ParserMalformedTest)
@@ -113,14 +113,14 @@ TEST(CliTest, ParserMalformedTest)
     bes::cli::Parser p;
 
     p << Arg(0, "aaa") << Arg('b', "bbb", "16") << Arg('c', "ccc") << Arg('d', "ddd");
-    EXPECT_EQ(4, p.ArgCount());
+    EXPECT_EQ(4, p.argCount());
 
     int argc = 2;
     char* argvA[2] = {(char*)"test", (char*)"--sd34 fd"};
-    EXPECT_THROW(p.Parse(argc, argvA), bes::cli::NoSuchArgumentException);
+    EXPECT_THROW(p.parse(argc, argvA), bes::cli::NoSuchArgumentException);
 
     char* argvB[2] = {(char*)"test", (char*)"-B"};
-    EXPECT_THROW(p.Parse(argc, argvB), bes::cli::NoSuchArgumentException);
+    EXPECT_THROW(p.parse(argc, argvB), bes::cli::NoSuchArgumentException);
 }
 
 TEST_P(CliValueTest, SetValueTest)
@@ -129,20 +129,20 @@ TEST_P(CliValueTest, SetValueTest)
     bes::cli::Parser p;
 
     p << Arg(Arg(0, "aaa")) << Arg('b', "bbb", "16") << Arg('c', "ccc") << Arg('d', "ddd");
-    EXPECT_EQ(4, p.ArgCount());
+    EXPECT_EQ(4, p.argCount());
 
     char param[40];
     strcpy(param, GetParam().c_str());
 
     int argc = 2;
     char* argv[2] = {(char*)"test", param};
-    EXPECT_NO_THROW(p.Parse(argc, argv));
+    EXPECT_NO_THROW(p.parse(argc, argv));
 
-    EXPECT_FALSE(p["aaa"].Present());
-    EXPECT_TRUE(p["bbb"].Present());
-    EXPECT_FALSE(p["ddd"].Present());
+    EXPECT_FALSE(p["aaa"].present());
+    EXPECT_TRUE(p["bbb"].present());
+    EXPECT_FALSE(p["ddd"].present());
 
-    EXPECT_EQ(1, p["bbb"].Count());
+    EXPECT_EQ(1, p["bbb"].count());
     EXPECT_EQ(20, p["bbb"].as<int>());
 }
 
@@ -153,11 +153,11 @@ TEST(CliTest, ParserMandatoryTest)
     bes::cli::Parser p;
 
     p << Arg(0, "aaa", ValueType::MANDATORY) << Arg('b', "bbb", "16") << Arg('c', "ccc") << Arg('d', "ddd");
-    EXPECT_EQ(4, p.ArgCount());
+    EXPECT_EQ(4, p.argCount());
 
     int argc = 2;
     char* argvA[2] = {(char*)"test", (char*)"-b"};
     char* argvB[2] = {(char*)"test", (char*)"--aaa=foo"};
-    EXPECT_THROW(p.Parse(argc, argvA), bes::cli::NoValueException);
-    EXPECT_NO_THROW(p.Parse(argc, argvB));
+    EXPECT_THROW(p.parse(argc, argvA), bes::cli::NoValueException);
+    EXPECT_NO_THROW(p.parse(argc, argvB));
 }

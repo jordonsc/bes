@@ -1,5 +1,4 @@
-#ifndef BES_NET_H
-#define BES_NET_H
+#pragma once
 
 #include "net/address.h"
 #include "net/exception.h"
@@ -7,4 +6,3 @@
 #include "net/socket/datagram.h"
 #include "net/socket/stream.h"
 
-#endif

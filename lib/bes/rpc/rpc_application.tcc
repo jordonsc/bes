@@ -1,5 +1,4 @@
-#ifndef BES_RPC_RPC_APPLICATION_H
-#define BES_RPC_RPC_APPLICATION_H
+#pragma once
 
 #include <bes/app.h>
 
@@ -15,8 +14,8 @@ template <class RpcService>
 class RpcApplication : public bes::app::Application
 {
    public:
-    void Run() override;
-    void Shutdown() override;
+    void run() override;
+    void shutdown() override;
     virtual ~RpcApplication();
 
    protected:
@@ -29,7 +28,7 @@ class RpcApplication : public bes::app::Application
      *
      * Override this to change the default binding or config behaviour.
      */
-    virtual void BindServer();
+    virtual void bindServer();
 
     /**
      * Register an RPC handler for listening.
@@ -38,21 +37,21 @@ class RpcApplication : public bes::app::Application
      * configuration file, whereby it will use the values defined in the configuration to scale threads and performance.
      */
     template <class HandlerClass>
-    void RegisterRpcHandler(std::string const& rpc_id);
+    void registerRpcHandler(std::string const& rpc_id);
 
    private:
     std::queue<std::function<void()>> handler_stack;
 };
 
 template <class RpcService>
-void RpcApplication<RpcService>::Run()
+void RpcApplication<RpcService>::run()
 {
     if (rpc_ctrl != nullptr) {
         throw bes::app::KernelPanicException("Panic! Attempted to rebuild service controller!");
     }
 
     rpc_ctrl = std::make_unique<bes::rpc::RpcController<RpcService>>(this);
-    BindServer();
+    bindServer();
 
     // Request the implementation now execute all RPC handlers
     while (!handler_stack.empty()) {
@@ -62,7 +61,7 @@ void RpcApplication<RpcService>::Run()
 }
 
 template <class RpcService>
-void RpcApplication<RpcService>::BindServer()
+void RpcApplication<RpcService>::bindServer()
 {
     if (rpc_ctrl == nullptr) {
         throw bes::app::KernelPanicException("Panic! RPC Controller not created, cannot bind.");
@@ -70,36 +69,36 @@ void RpcApplication<RpcService>::BindServer()
 
     // The default port we can reconfigure with the below macro, but the default bind address will always be controlled
     // by the service controller. This will be 0.0.0.0 as there is really no need to ever change this.
-    rpc_ctrl.get()->Run(
-        bes::net::Address(Kernel().Config().GetOr<std::string>("0.0.0.0", "server", "bind"), "",
-                          Kernel().Config().GetOr<unsigned>(BES_SERVER_DEFAULT_PORT, "server", "listen")),
+    rpc_ctrl.get()->run(
+        bes::net::Address(kernel().getConfig().getOr<std::string>("0.0.0.0", "server", "bind"), "",
+                          kernel().getConfig().getOr<unsigned>(BES_SERVER_DEFAULT_PORT, "server", "listen")),
         handler_stack.size());
 }
 
 template <class RpcService>
-void RpcApplication<RpcService>::Shutdown()
+void RpcApplication<RpcService>::shutdown()
 {
     if (rpc_ctrl != nullptr) {
-        rpc_ctrl->Shutdown();
+        rpc_ctrl->shutdown();
     }
 }
 
 template <class RpcService>
 template <class HandlerClass>
-void RpcApplication<RpcService>::RegisterRpcHandler(std::string const& rpc_id)
+void RpcApplication<RpcService>::registerRpcHandler(std::string const& rpc_id)
 {
     handler_stack.push([this, rpc_id] {
         if (rpc_ctrl == nullptr) {
             throw std::runtime_error("Cannot register RPC handler before initialisation completed and server running");
         }
 
-        auto max_threads = Kernel().Config().GetOr<unsigned>(10, "rpc", rpc_id, "threads");
+        auto max_threads = kernel().getConfig().getOr<unsigned>(10, "rpc", rpc_id, "threads");
         if (max_threads < 1) {
             BES_LOG(ALERT) << "Invalid thread count for RPC handler '" << rpc_id << "', NOT accepting connections!";
             return;
         }
 
-        rpc_ctrl.get()->template HandleRpc<HandlerClass>(max_threads);
+        rpc_ctrl.get()->template handleRpc<HandlerClass>(max_threads);
         BES_LOG(INFO) << "RPC handler '" << rpc_id << "' running with " << max_threads << " threads";
     });
 }
@@ -107,9 +106,8 @@ void RpcApplication<RpcService>::RegisterRpcHandler(std::string const& rpc_id)
 template <class RpcService>
 RpcApplication<RpcService>::~RpcApplication()
 {
-    RpcApplication<RpcService>::Shutdown();
+    RpcApplication<RpcService>::shutdown();
 }
 
 }  // namespace bes::rpc
 
-#endif

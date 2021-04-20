@@ -1,5 +1,4 @@
-#ifndef BES_NET_SOCKET_DATAGRAM_H
-#define BES_NET_SOCKET_DATAGRAM_H
+#pragma once
 
 #include "../address.h"
 #include "../message.h"
@@ -24,7 +23,7 @@ class Datagram : public Socket
      *
      * Will throw an exception if the socket is not yet bound.
      */
-    bes::net::Message Receive();
+    bes::net::Message receive();
 
     /**
      * Send a datagram.
@@ -34,13 +33,11 @@ class Datagram : public Socket
      *
      * Will throw an exception if the socket has already been bound for listening purposes.
      */
-    size_t Dispatch(bes::net::Message const& payload, bool broadcast = false);
+    size_t dispatch(bes::net::Message const& payload, bool broadcast = false);
 
    protected:
-    socket_opt_t GetSocketOptions() override;
+    socket_opt_t getSocketOptions() override;
     char rec_buffer[255];
 };
 
 }  // namespace bes::net::socket
-
-#endif

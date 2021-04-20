@@ -1,5 +1,4 @@
-#ifndef BES_CONCURRENCY_THREADPOOL_H
-#define BES_CONCURRENCY_THREADPOOL_H
+#pragma once
 
 #include <cassert>
 #include <functional>
@@ -18,22 +17,22 @@ class ThreadPool
 {
    public:
     explicit ThreadPool(threadsize_t pool_size = 10);
+    virtual ~ThreadPool();
 
     template <class F, class... Args>
-    auto Enqueue(F&& f, Args&&... args) -> std::future<typename std::invoke_result<F, Args...>::type>;
-    void AddThreads(threadsize_t n);
+    auto enqueue(F&& f, Args&&... args) -> std::future<typename std::invoke_result<F, Args...>::type>;
+    void addThreads(threadsize_t n);
 
     /**
      * Size of our pool, active or idle.
      */
-    [[nodiscard]] size_t ThreadCount() const;
+    [[nodiscard]] size_t threadCount() const;
 
     /**
      * Number of tasks waiting for a thread to become available.
      */
-    [[nodiscard]] size_t Backlog() const;
+    [[nodiscard]] size_t backlog() const;
 
-    ~ThreadPool();
 
    protected:
     // Worker thread pool
@@ -57,7 +56,7 @@ class ThreadPool
  * Add a task to be processed by the thread pool.
  */
 template <class F, class... Args>
-auto ThreadPool::Enqueue(F&& f, Args&&... args) -> std::future<typename std::invoke_result<F, Args...>::type>
+auto ThreadPool::enqueue(F&& f, Args&&... args) -> std::future<typename std::invoke_result<F, Args...>::type>
 {
     using return_type = typename std::invoke_result<F, Args...>::type;
 
@@ -83,5 +82,3 @@ auto ThreadPool::Enqueue(F&& f, Args&&... args) -> std::future<typename std::inv
 }
 
 }  // namespace bes::concurrency
-
-#endif

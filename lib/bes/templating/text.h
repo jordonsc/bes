@@ -1,5 +1,4 @@
-#ifndef BES_TEMPLATING_TEXT_H
-#define BES_TEMPLATING_TEXT_H
+#pragma once
 
 #include <algorithm>
 #include <cctype>
@@ -19,7 +18,7 @@ struct Text
     /**
      * Break a string into words, loading a vector.
      */
-    static inline std::vector<std::string> Split(std::string const &str, std::string const &delim = " ")
+    static inline std::vector<std::string> split(std::string const &str, std::string const &delim = " ")
     {
         std::vector<std::string> tokens;
         size_t prev = 0, pos = 0;
@@ -45,7 +44,7 @@ struct Text
      * - the pipe counts as a token, a space does not
      * - square brackets and quotes enclose a single token
      */
-    static inline std::vector<std::string> SplitArgs(std::string const &str)
+    static inline std::vector<std::string> splitArgs(std::string const &str)
     {
         std::vector<std::string> tokens;
         std::ostringstream token;
@@ -70,7 +69,7 @@ struct Text
                     token << c;
                     token_len = 1;
                 } else if (c == '|') {
-                    tokens.push_back("|");
+                    tokens.emplace_back("|");
                 }
 
                 continue;
@@ -108,7 +107,7 @@ struct Text
     /**
      * Remove whitespace from the front of a string
      */
-    static inline void TrimFront(std::string &s)
+    static inline void trimFront(std::string &s)
     {
         s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {
                     return !std::isspace(ch);
@@ -118,7 +117,7 @@ struct Text
     /**
      * Remove whitespace from the back of a string
      */
-    static inline void TrimBack(std::string &s)
+    static inline void trimBack(std::string &s)
     {
         s.erase(std::find_if(s.rbegin(), s.rend(),
                              [](int ch) {
@@ -131,13 +130,13 @@ struct Text
     /**
      * Remove whitespace from both ends of a string
      */
-    static inline void Trim(std::string &s)
+    static inline void trim(std::string &s)
     {
-        TrimFront(s);
-        TrimBack(s);
+        trimFront(s);
+        trimBack(s);
     }
 
-    void ReplaceAll(std::string &str, std::string const &from, std::string const &to)
+    static void replaceAll(std::string &str, std::string const &from, std::string const &to)
     {
         if (from.empty()) {
             return;
@@ -153,7 +152,7 @@ struct Text
     /**
      * Convert new-lines to <br/>
      */
-    static inline void Nl2Br(std::string &s)
+    static inline void nl2br(std::string &s)
     {
         for (size_t pos = 0; pos < s.length(); ++pos) {
             char c = s[pos];
@@ -175,7 +174,7 @@ struct Text
     /**
      * Convert new-lines to <p>...</p>
      */
-    static inline void Nl2P(std::string &s)
+    static inline void nl2p(std::string &s)
     {
         for (size_t pos = 0; pos < s.length(); ++pos) {
             char c = s[pos];
@@ -199,5 +198,3 @@ struct Text
 };
 
 }  // namespace bes::templating
-
-#endif

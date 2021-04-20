@@ -1,5 +1,4 @@
-#ifndef BES_TEMPLATING_NODE_ROOT_NODE_H
-#define BES_TEMPLATING_NODE_ROOT_NODE_H
+#pragma once
 
 #include <unordered_map>
 
@@ -18,17 +17,17 @@ class RootNode : public NamedNode
     using NamedNode::NamedNode;
 
    public:
-    void Render(std::ostringstream& ss, data::Context& ctx, data::TemplateStack& ts) const override;
+    void render(std::ostringstream& ss, data::Context& ctx, data::TemplateStack& ts) const override;
 
-    bool Extends() const;
-    std::string const& ExtendsTemplate() const;
-    void SetExtends(std::string const& name);
+    bool extends() const;
+    std::string const& extendsTemplate() const;
+    void setExtends(std::string const& name);
 
     // Block nodes
-    void AddBlock(std::string const& key, std::shared_ptr<Node> const& node);
-    void AllocateBlock(std::string const& key, Node* node);
-    bool HasBlock(std::string const& key) const;
-    bool RenderBlock(std::string const& key, std::ostringstream& ss, data::Context& ctx, data::TemplateStack& ts) const;
+    void addBlock(std::string const& key, std::shared_ptr<Node> const& node);
+    void allocateBlock(std::string const& key, Node* node);
+    bool hasBlock(std::string const& key) const;
+    bool renderBlock(std::string const& key, std::ostringstream& ss, data::Context& ctx, data::TemplateStack& ts) const;
 
     // Filters
     std::unordered_map<std::string, Filter>* filters = nullptr;
@@ -40,5 +39,3 @@ class RootNode : public NamedNode
 };
 
 }  // namespace bes::templating::node
-
-#endif

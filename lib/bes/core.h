@@ -1,5 +1,4 @@
-#ifndef BES_H
-#define BES_H
+#pragma once
 
 #include "core/config.h"
 #include "core/container.tcc"
@@ -8,5 +7,3 @@
 #include "core/model.h"
 #include "core/threadpool.h"
 #include "core/util.h"
-
-#endif

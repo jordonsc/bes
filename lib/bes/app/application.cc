@@ -2,7 +2,7 @@
 
 using namespace bes::app;
 
-void Application::ConfigureCli(bes::cli::Parser& parser)
+void Application::configureCli(bes::cli::Parser& parser)
 {
     using bes::cli::Arg;
     using bes::cli::ValueType;
@@ -11,39 +11,39 @@ void Application::ConfigureCli(bes::cli::Parser& parser)
     parser << Arg('v', "verbose") << Arg('c', "config", ValueType::REQUIRED) << Arg(0, "version") << Arg(0, "help");
 }
 
-void Application::ConfigureLogger(bes::log::LogSink& log_sink, bes::log::Severity verbosity)
+void Application::configureLogger(bes::log::LogSink& log_sink, bes::log::Severity verbosity)
 {
     using bes::log::LogFormat;
     using bes::log::Severity;
 
     // Add a console backend as default operation
-    log_sink.AddBackend<bes::log::backend::ConsoleLogBackend>(verbosity <= Severity::TRACE ? LogFormat::DETAIL
+    log_sink.addBackend<bes::log::backend::ConsoleLogBackend>(verbosity <= Severity::TRACE ? LogFormat::DETAIL
                                                                                            : LogFormat::STANDARD);
 }
 
-bool Application::KernelExists()
+bool Application::kernelExists()
 {
-    return KernelInterface::Exists();
+    return KernelInterface::exists();
 }
 
-KernelInterface& Application::Kernel()
+KernelInterface& Application::kernel()
 {
-    return KernelInterface::Instance();
+    return KernelInterface::getInstance();
 }
 
-std::string const& Application::Usage()
+std::string const& Application::getUsage()
 {
-    if (usage.length() == 0 && KernelExists()) {
+    if (usage.length() == 0 && kernelExists()) {
         std::stringstream ss;
-        ss << "Usage:\n  " << Key();
+        ss << "Usage:\n  " << getKey();
 
-        size_t num_args = Kernel().Cli().ArgCount();
+        size_t num_args = kernel().getCli().argCount();
         size_t mandatory = 0;
-        auto args = Kernel().Cli().GetAllArgs();
+        auto args = kernel().getCli().getAllArgs();
 
         // We'll put all the mandatory arguments on the main usage line:
         for (auto const* a : args) {
-            if (a->ArgType() == bes::cli::ValueType::MANDATORY) {
+            if (a->argType() == bes::cli::ValueType::MANDATORY) {
                 ++mandatory;
                 if (a->short_form) {
                     ss << " -" << a->short_form << "|";
@@ -58,7 +58,7 @@ std::string const& Application::Usage()
         if (mandatory < num_args) {
             ss << " [options]\n\nOptions:\n";
             for (auto const* a : args) {
-                if (a->ArgType() == bes::cli::ValueType::MANDATORY) {
+                if (a->argType() == bes::cli::ValueType::MANDATORY) {
                     continue;
                 }
 
@@ -69,7 +69,7 @@ std::string const& Application::Usage()
                 }
                 ss << "  --" << a->long_form;
 
-                switch (a->ArgType()) {
+                switch (a->argType()) {
                     default:
                     case bes::cli::ValueType::NONE:
                         ss << "\n";

@@ -13,9 +13,10 @@ class Stream : public Socket
 {
    public:
     Stream() = default;
-    virtual ~Stream();
-    Stream(Stream&& s);
-    Stream& operator=(Stream&& s);
+    ~Stream() override;
+
+    Stream(Stream&& s) noexcept;
+    Stream& operator=(Stream&& s) noexcept;
 
     /**
      * Listen for connections before opening a new socket to process.
@@ -24,8 +25,8 @@ class Stream : public Socket
      * @param tv_sec Number of seconds before polling for a kill signal
      * @param tv_usec Number of microseconds before polling for a kill signal
      */
-    void Listen(std::function<void(Stream&&)> const& callback, size_t max_queue = 5, long tv_sec = 1, long tv_usec = 0);
-    void ListenAsync(std::function<void(Stream&&)> const& callback, size_t max_queue = 5, long tv_sec = 1,
+    void listen(std::function<void(Stream&&)> const& callback, size_t max_queue = 5, long tv_sec = 1, long tv_usec = 0);
+    void listenAsync(std::function<void(Stream&&)> const& callback, size_t max_queue = 5, long tv_sec = 1,
                      long tv_usec = 0);
 
     /**
@@ -34,24 +35,24 @@ class Stream : public Socket
      * If `wait` is true and the listen loop was executed with ListenAsync(), Stop() will block until the listen loop
      * has completely shutdown.
      */
-    void Stop(bool wait = true);
+    void stop(bool wait = true);
 
     /**
      * Read `len` bytes from the stream.
      */
-    void ReadBytes(void const* buf, size_t len);
+    void readBytes(void const* buf, size_t len);
 
     /**
      * Write `len` bytes to the stream.
      */
-    void WriteBytes(void const* buf, size_t len);
+    void writeBytes(void const* buf, size_t len);
 
    protected:
-    socket_opt_t GetSocketOptions() override;
+    socket_opt_t getSocketOptions() override;
 
    private:
-    Stream(int s);
-    void Move(Stream&& s);
+    explicit Stream(int s);
+    void move(Stream&& s);
 
     std::thread listen_thread;
     std::atomic<bool> listening{false};

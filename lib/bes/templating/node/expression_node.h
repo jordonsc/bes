@@ -1,5 +1,4 @@
-#ifndef BES_TEMPLATING_NODE_EXPRESSION_NODE_H
-#define BES_TEMPLATING_NODE_EXPRESSION_NODE_H
+#pragma once
 
 #include <utility>
 
@@ -23,5 +22,3 @@ class ExpressionNode : public Node
 };
 
 }  // namespace bes::templating::node
-
-#endif
