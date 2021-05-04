@@ -23,6 +23,8 @@ Variable Names   | Snake Case
     class MyClass {
        public:
         void myFunction();
+       private:
+        int my_variable;
     };
     
     }

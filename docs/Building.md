@@ -37,28 +37,6 @@ To build an application, use the `build` command with a Bazel build target path:
     bazel build //:templating
     bazel build //:all
     
-
-Running Tests
--------------
-As above, but with the `test` Bazel command:
-
-    # Run all unit & integration tests:
-    bazel test //test:all
-    
-    # Run all unit tests (skip integration tests):
-    bazel test //test:all --test_tag_filter=-integration
-
-The `.bazelrc` file will instruct the test command output only to be verbose on failure.
-
-> Integration tests should be skipped unless you're running local database servers. 
-
-### Integration Tests
-If you want to run integration tests for the `web.redis` and `dbal` packages, you'll need some Docker containers 
-running first:
-
-    docker run --net host -d redis
-    docker run --net host -d cassandra
-
-You can now run the integration tests:
-
-    bazel test //test:all --test_tag_filter=integration
+Testing
+-------
+See [Testing](Testing.md).

@@ -20,6 +20,7 @@ Documentation Contents
 ----------------------
 * [Contributing](docs/Contributing.md) - Includes code styles & naming conventions.
 * [Building](docs/Building.md)
+* [Testing](docs/Testing.md)
 * [Performance](docs/Performance.md)
 * [Learning Resources](docs/Learning_Resources.md)
 

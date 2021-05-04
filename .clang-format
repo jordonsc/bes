@@ -1,13 +1,20 @@
 # https://zed0.co.uk/clang-format-configurator/
 ---
 BasedOnStyle: Google
+AlignAfterOpenBracket: AlwaysBreak
 AllowShortBlocksOnASingleLine: Never
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: Empty
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLambdasOnASingleLine: Empty
 AllowShortLoopsOnASingleLine: false
+AllowAllArgumentsOnNextLine: false
+AllowAllConstructorInitializersOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+BinPackArguments: false
+BinPackParameters: false
 BreakBeforeBraces: Mozilla
 ColumnLimit: 120
 IndentWidth: 4
+ContinuationIndentWidth: 4
 UseTab: Never

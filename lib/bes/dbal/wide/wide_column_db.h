@@ -12,7 +12,7 @@ namespace bes::dbal::wide {
 class WideColumnDb
 {
    public:
-    WideColumnDb() = default;
+    WideColumnDb() = delete;
     explicit WideColumnDb(Context c) : context(std::move(c)) {}
 
     virtual ResultFuture createTable(std::string const& table_name, Schema const& schema, bool if_not_exists) const = 0;

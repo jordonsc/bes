@@ -58,7 +58,7 @@ class Value final
     Value(std::string ns, std::string qualifier, std::vector<Int32> value)
         : ns(std::move(ns)),
           qualifier(std::move(qualifier)),
-          value(value),
+          value(std::move(value)),
           datatype(Datatype::Int32),
           is_list(true),
           list_size(value.size())
@@ -67,7 +67,7 @@ class Value final
     Value(std::string ns, std::string qualifier, std::vector<Int64> value)
         : ns(std::move(ns)),
           qualifier(std::move(qualifier)),
-          value(value),
+          value(std::move(value)),
           datatype(Datatype::Int64),
           is_list(true),
           list_size(value.size())
@@ -76,7 +76,7 @@ class Value final
     Value(std::string ns, std::string qualifier, std::vector<Float32> value)
         : ns(std::move(ns)),
           qualifier(std::move(qualifier)),
-          value(value),
+          value(std::move(value)),
           datatype(Datatype::Float32),
           is_list(true),
           list_size(value.size())
@@ -85,23 +85,23 @@ class Value final
     Value(std::string ns, std::string qualifier, std::vector<Float64> value)
         : ns(std::move(ns)),
           qualifier(std::move(qualifier)),
-          value(value),
+          value(std::move(value)),
           datatype(Datatype::Float64),
           is_list(true),
           list_size(value.size())
     {}
 
-    std::string const& getNs() const
+    [[nodiscard]] std::string const& getNs() const
     {
         return ns;
     }
 
-    std::string const& getQualifier() const
+    [[nodiscard]] std::string const& getQualifier() const
     {
         return qualifier;
     }
 
-    std::any const& getValue() const&
+    [[nodiscard]] std::any const& getValue() const&
     {
         return value;
     }
@@ -111,17 +111,22 @@ class Value final
         return std::move(value);
     }
 
-    Datatype getDatatype() const
+    std::any&& consumeValue()
+    {
+        return std::move(value);
+    }
+
+    [[nodiscard]] Datatype getDatatype() const
     {
         return datatype;
     }
 
-    bool isList() const
+    [[nodiscard]] bool isList() const
     {
         return is_list;
     }
 
-    size_t size() const
+    [[nodiscard]] size_t size() const
     {
         return list_size;
     }

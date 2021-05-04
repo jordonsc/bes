@@ -40,8 +40,6 @@ class Result final : public WideResult
     mutable std::shared_ptr<CassIterator> row_it;
     mutable std::shared_ptr<Row> row_ptr;
     mutable size_t row_count = std::string::npos;
-
-    friend class bes::dbal::wide::cassandra::Query;
 };
 
 }  // namespace bes::dbal::wide::cassandra

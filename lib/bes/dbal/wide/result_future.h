@@ -16,12 +16,12 @@ class ResultFuture
    public:
     explicit ResultFuture(std::shared_ptr<bes::dbal::wide::Result> result) : result(std::move(result)) {}
 
-    ResultIterator begin() const
+    [[nodiscard]] ResultIterator begin() const
     {
         return ResultIterator(result);
     }
 
-    ResultIterator end() const
+    [[nodiscard]] ResultIterator end() const
     {
         return ResultIterator();
     }
