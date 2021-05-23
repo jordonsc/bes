@@ -1,4 +1,4 @@
-#include <bes/dbal.h>
+#include <bes/dbal.cassandra.h>
 #include <gtest/gtest.h>
 
 #include <vector>
@@ -13,10 +13,10 @@ static char const* const TEST_TABLE = "test_table";
 static Schema createTestSchema()
 {
     std::vector<Field> fields;
-    fields.emplace_back(Datatype::Text, "test", "str");
-    fields.emplace_back(Datatype::Float32, "test", "flt");
+    fields.emplace_back(Datatype::Text, "str");
+    fields.emplace_back(Datatype::Float32, "flt");
 
-    return Schema({Datatype::Int32, "test", "pk"}, std::move(fields));
+    return Schema({Datatype::Int32, "pk"}, std::move(fields));
 }
 
 static bes::dbal::Context createContext()
@@ -76,10 +76,10 @@ TEST(CassandraTest, TableCreation)
     db.createKeyspace(cassandra::Keyspace(TEST_KEYSPACE), true).wait();
 
     FieldList fields;
-    fields.emplace_back(Datatype::Text, "test", "str");
-    fields.emplace_back(Datatype::Float32, "test", "flt");
+    fields.emplace_back(Datatype::Text, "str");
+    fields.emplace_back(Datatype::Float32, "flt");
 
-    Schema s({Datatype::Int32, "test", "pk"}, std::move(fields));
+    Schema s({Datatype::Int32, "pk"}, std::move(fields));
 
     ASSERT_NO_THROW({
         db.createTable(TEST_TABLE, s, false).wait();
@@ -107,12 +107,11 @@ TEST(CassandraTest, RowSemantics)
 
     // Create test data, nb that we are omitting `flt` here, which should be a null value
     ValueList v;
-    v.push_back(Value("test", "str", "bar"));
-    v.push_back(Value("test", "pk", 5));
+    v.push_back(Value("str", "bar"));
     // NB: both insert and update are "upsert" statements, you could have used db.update() here, too
-    db.insert(TEST_TABLE, std::move(v)).wait();
+    db.apply(TEST_TABLE, Value("pk", 5), std::move(v)).wait();
 
-    auto result = db.retrieve(TEST_TABLE, Value("test", "pk", (Int32)5));
+    auto result = db.retrieve(TEST_TABLE, Value("pk", (Int32)5));
 
     // NB: not waiting here, the first call to anything (eg rowCount()) will immediate force the future to wait()
     EXPECT_EQ(result.rowCount(), 1);
@@ -122,15 +121,12 @@ TEST(CassandraTest, RowSemantics)
     ASSERT_EQ(result.columnCount(), result.get()->columnCount());
 
     // NB: PK then lexicographical ordering (I'm not sure how reliable this is)
-    EXPECT_EQ(result.getColumn(0).ns, "test");
     EXPECT_EQ(result.getColumn(0).qualifier, "pk");
     EXPECT_EQ(result.getColumn(0).datatype, Datatype::Int32);
 
-    EXPECT_EQ(result.getColumn(1).ns, "test");
     EXPECT_EQ(result.getColumn(1).qualifier, "flt");
     EXPECT_EQ(result.getColumn(1).datatype, Datatype::Float32);
 
-    EXPECT_EQ(result.getColumn(2).ns, "test");
     EXPECT_EQ(result.getColumn(2).qualifier, "str");
     EXPECT_EQ(result.getColumn(2).datatype, Datatype::Text);
 
@@ -142,7 +138,6 @@ TEST(CassandraTest, RowSemantics)
 
         // lvalue (copy) from Cell
         auto pk = result.row()->at(0);
-        EXPECT_EQ(pk.getField().ns, "test");
         EXPECT_EQ(pk.getField().qualifier, "pk");
         EXPECT_EQ(pk.getField().datatype, Datatype::Int32);
         EXPECT_EQ(pk.as<Int32>(), 5);
@@ -159,16 +154,17 @@ TEST(CassandraTest, RowSemantics)
 
     // Will update the table, adding a non-null value for `flt`
     v.clear();
-    v.push_back(Value("test", "str", "hello world"));
-    v.push_back(Value("test", "flt", (Float32)123.456));
-    db.update(TEST_TABLE, Value("test", "pk", 5), std::move(v)).wait();
+    v.push_back(Value("str", "hello world"));
+    v.push_back(Value("flt", (Float32)123.456));
+    // NB: be careful with literals - the typecasting is very important and must match schema, ie does `5` == `(Int32)5`
+    db.apply(TEST_TABLE, Value("pk", (Int32)5), std::move(v)).wait();
 
-    result = db.retrieve(TEST_TABLE, Value("test", "pk", (Int32)5));
+    result = db.retrieve(TEST_TABLE, Value("pk", (Int32)5));
     EXPECT_TRUE(result.pop());
     Row const* row = result.row();
     ASSERT_NE(row, nullptr);
-    ASSERT_FLOAT_EQ(row->at("test", "flt").as<Float32>(), (Float32)123.456);
-    ASSERT_EQ(row->at("test", "str").as<Text>(), "hello world");
+    ASSERT_FLOAT_EQ(row->at("flt").as<Float32>(), (Float32)123.456);
+    ASSERT_EQ(row->at("str").as<Text>(), "hello world");
 }
 
 TEST(CassandraTest, DataCreation)
@@ -181,37 +177,31 @@ TEST(CassandraTest, DataCreation)
     db.createTable(TEST_TABLE, createTestSchema(), false).wait();
 
     // Table should be empty
-    auto result = db.retrieve(TEST_TABLE, Value("test", "pk", (Int32)5));
+    auto result = db.retrieve(TEST_TABLE, Value("pk", (Int32)5));
     ASSERT_EQ(result.rowCount(), 0);
     EXPECT_FALSE(result.pop());
 
-    ValueList v;
-    v.push_back(Value("test", "str", "abc"));
-    v.push_back(Value("test", "flt", (Float32)123456.789));
-    db.update(TEST_TABLE, Value("test", "pk", 5), std::move(v)).wait();
+    ValueList v = {{"str", "abc"}, {"flt", (Float32)123456.789}};
+    db.apply(TEST_TABLE, {"pk", 5}, std::move(v)).wait();
 
-    v.clear();
-    v.push_back(Value("test", "str", "def"));
-    v.push_back(Value("test", "flt", (Float32)7.5));
-    v.push_back(Value("test", "pk", 90));
-    db.insert(TEST_TABLE, std::move(v)).wait();
+    v.clear();  // NB: was moved, this is important
+    v.push_back({"str", "def"});
+    v.push_back({"flt", (Float32)7.5});
+
+    db.apply(TEST_TABLE, {"pk", 90}, std::move(v)).wait();
 
     // Cassandra should complain that we're attempting a table-scan (not using an indexed column)
-    EXPECT_THROW(db.retrieve(TEST_TABLE, Value("test", "str", Text("bar"))).wait(), bes::dbal::DbalException);
+    EXPECT_THROW(db.retrieve(TEST_TABLE, {"str", Text("bar")}).wait(), bes::dbal::DbalException);
 
-    FieldList f;
-    f.emplace_back("test", "str");
-    f.emplace_back("test", "flt");
-
-    result = db.retrieve(TEST_TABLE, Value("test", "pk", (Int32)5), std::move(f));
+    result = db.retrieve(TEST_TABLE, {"pk", (Int32)5}, {Field("str"), Field("flt")});
     EXPECT_EQ(result.rowCount(), 1);
     EXPECT_EQ(result.columnCount(), 2);
     ASSERT_TRUE(result.pop());
-    EXPECT_EQ(result.row()->at("test", "str").as<Text>(), "abc");
+    EXPECT_EQ(result.row()->at("str").as<Text>(), "abc");
 
     db.truncate(TEST_TABLE).wait();
 
-    result = db.retrieve(TEST_TABLE, Value("test", "pk", (Int32)5));
+    result = db.retrieve(TEST_TABLE, {"pk", 5});
     EXPECT_EQ(result.rowCount(), 0);
     EXPECT_EQ(result.columnCount(), 3);
 }
@@ -225,15 +215,15 @@ TEST(CassandraTest, Iterators)
     db.createTable(TEST_TABLE, createTestSchema(), true).wait();
 
     ValueList v;
-    v.push_back(Value("test", "str", "nice iterator"));
-    db.update(TEST_TABLE, Value("test", "pk", 1), std::move(v)).wait();
+    v.push_back({"str", "nice iterator"});
+    db.apply(TEST_TABLE, {"pk", 1}, std::move(v)).wait();
 
-    auto result = db.retrieve(TEST_TABLE, Value("test", "pk", (Int32)1));
+    auto result = db.retrieve(TEST_TABLE, {"pk", (Int32)1});
 
     // Creating an iterator will call wait() on the future
     bool called = false;
     for (auto& row : result) {
-        EXPECT_EQ(row.at("test", "str").as<Text>(), "nice iterator");
+        EXPECT_EQ(row.at("str").as<Text>(), "nice iterator");
         called = true;
     }
     EXPECT_TRUE(called);
@@ -248,34 +238,34 @@ TEST(CassandraTest, MultiKey)
     db.createTable(TEST_TABLE, createTestSchema(), true).wait();
 
     ValueList v;
-    v.push_back(Value("test", "str", "row 1"));
-    db.update(TEST_TABLE, Value("test", "pk", 101), std::move(v)).wait();
+    v.push_back(Value("str", "row 1"));
+    db.apply(TEST_TABLE, Value("pk", 101), std::move(v)).wait();
 
     v.clear();
-    v.push_back(Value("test", "str", "row 2"));
-    db.update(TEST_TABLE, Value("test", "pk", 102), std::move(v)).wait();
+    v.push_back(Value("str", "row 2"));
+    db.apply(TEST_TABLE, Value("pk", 102), std::move(v)).wait();
 
     v.clear();
-    v.push_back(Value("test", "str", "row 3"));
-    db.update(TEST_TABLE, Value("test", "pk", 103), std::move(v)).wait();
+    v.push_back(Value("str", "row 3"));
+    db.apply(TEST_TABLE, Value("pk", 103), std::move(v)).wait();
 
-    auto pk_all = Value("test", "pk", Int32List({101, 102, 103}));
+    auto pk_all = Value("pk", Int32List({101, 102, 103}));
     auto result = db.retrieve(TEST_TABLE, pk_all);
 
     EXPECT_EQ(result.rowCount(), 3);
     size_t iterated_rows = 0;
     for (auto const& row : result) {
-        EXPECT_NE(row.at("test", "str").as<Text>(), "awesome");
+        EXPECT_NE(row.at("str").as<Text>(), "awesome");
         ++iterated_rows;
     }
     EXPECT_EQ(iterated_rows, 3);
 
-    auto pk_duo = Value("test", "pk", Int32List({102, 103}));
-    db.update(TEST_TABLE, pk_duo, {Value("test", "str", "awesome")}).wait();
+    auto pk_duo = Value("pk", Int32List({102, 103}));
+    db.apply(TEST_TABLE, pk_duo, {Value("str", "awesome")}).wait();
 
     result = db.retrieve(TEST_TABLE, pk_duo);
     for (auto const& row : result) {
-        EXPECT_NE(row.at("test", "pk").as<Int32>(), 101);
-        EXPECT_EQ(row.at("test", "str").as<Text>(), "awesome");
+        EXPECT_NE(row.at("pk").as<Int32>(), 101);
+        EXPECT_EQ(row.at("str").as<Text>(), "awesome");
     }
 }

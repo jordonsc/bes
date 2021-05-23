@@ -19,8 +19,7 @@ class WideColumnDb
     virtual SuccessFuture createTable(std::string const& table_name, Schema const& schema, bool if_not_exists)
         const = 0;
     virtual SuccessFuture dropTable(std::string const& table_name, bool if_exists) const = 0;
-    virtual SuccessFuture insert(std::string const& table_name, ValueList values) const = 0;
-    virtual SuccessFuture update(std::string const& table_name, Value const& key, ValueList values) const = 0;
+    virtual SuccessFuture apply(std::string const& table_name, Value const& key, ValueList values) const = 0;
     virtual ResultFuture retrieve(std::string const& table_name, Value const& key) const = 0;
     virtual ResultFuture retrieve(std::string const& table_name, Value const& key, FieldList fields) const = 0;
     virtual SuccessFuture remove(std::string const& table_name, Value const& key) const = 0;

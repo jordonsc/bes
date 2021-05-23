@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../row.h"
+#include <bes/dbal.h>
+
 #include "cassandra.h"
 
 namespace bes::dbal::wide::cassandra {
@@ -14,7 +15,7 @@ class CassandraRow : WideRow
    public:
     CassandraRow() = delete;
     [[nodiscard]] Cell at(size_t) const override;
-    [[nodiscard]] Cell at(std::string const& ns, std::string const& qualifier) const override;
+    [[nodiscard]] Cell at(std::string const& qualifier) const override;
 
    protected:
     explicit CassandraRow(CassRow const* r, std::shared_ptr<CassResult>);

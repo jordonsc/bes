@@ -16,6 +16,8 @@ A core value of this project, in order to ensure stability and high-performance:
 As such, an absolute minimal external dependency list is mandatory for this project. Dependencies that do make it in
 must be highly trusted and/or only touch non-critical components. 
 
+> See the [Development Log](docs/Development_Log.md) for ongoing discussion on the development and strategy of the framework.  
+
 Documentation Contents
 ----------------------
 * [Contributing](docs/Contributing.md) - Includes code styles & naming conventions.

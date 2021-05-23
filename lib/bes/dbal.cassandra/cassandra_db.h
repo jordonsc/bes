@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../exception.h"
-#include "../wide_column_db.h"
+#include <bes/dbal.h>
+
 #include "connection.h"
 #include "keyspace.h"
 #include "query.tcc"
@@ -25,8 +25,7 @@ class Cassandra : public WideColumnDb
     SuccessFuture createTable(std::string const& table_name, Schema const& schema, bool if_not_exists) const override;
     SuccessFuture dropTable(std::string const& table_name, bool if_exists) const override;
 
-    SuccessFuture insert(std::string const& table_name, ValueList values) const override;
-    SuccessFuture update(std::string const& table_name, Value const& key, ValueList values) const override;
+    SuccessFuture apply(std::string const& table_name, Value const& key, ValueList values) const override;
     ResultFuture retrieve(std::string const& table_name, Value const& key) const override;
     ResultFuture retrieve(std::string const& table_name, Value const& key, FieldList fields) const override;
     SuccessFuture remove(std::string const& table_name, Value const& key) const override;

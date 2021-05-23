@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../wide_column_db.h"
+#include <bes/dbal.h>
+
 #include "credentials.h"
 #include "google/cloud/bigtable/table.h"
 #include "google/cloud/bigtable/table_admin.h"
@@ -17,8 +18,7 @@ class BigTable : public WideColumnDb
 
     SuccessFuture createTable(const std::string& table_name, const Schema& schema, bool if_not_exists) const override;
     SuccessFuture dropTable(const std::string& table_name, bool if_exists) const override;
-    SuccessFuture insert(const std::string& table_name, ValueList values) const override;
-    SuccessFuture update(const std::string& table_name, const Value& key, ValueList values) const override;
+    SuccessFuture apply(const std::string& table_name, const Value& key, ValueList values) const override;
     ResultFuture retrieve(const std::string& table_name, const Value& key) const override;
     ResultFuture retrieve(const std::string& table_name, const Value& key, FieldList fields) const override;
     SuccessFuture remove(const std::string& table_name, const Value& key) const override;

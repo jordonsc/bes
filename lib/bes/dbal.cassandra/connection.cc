@@ -1,6 +1,6 @@
 #include "connection.h"
 
-#include "../../exception.h"
+#include "bes/dbal/exception.h"
 
 using namespace bes::dbal::wide::cassandra;
 

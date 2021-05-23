@@ -1,10 +1,10 @@
 #pragma once
 
+#include <bes/dbal.h>
+
 #include <string>
 #include <vector>
 
-#include "../../exception.h"
-#include "../cell.tcc"
 #include "cassandra.h"
 #include "connection.h"
 #include "utility.h"
@@ -123,7 +123,6 @@ inline CassResult* Query::getResult()
     return const_cast<CassResult*>(cass_future_get_result(future.get()));
 }
 
-
 inline void Query::bind()
 {
     cass_statement_bind_null(statement.get(), q_pos);
@@ -174,8 +173,9 @@ inline void Query::execValidation() const
     }
 
     if (q_pos != expected_params) {
-        throw bes::dbal::DbalException("CQL parameter count mismatch: expected " + std::to_string(expected_params) +
-                                       ", have " + std::to_string(q_pos));
+        throw bes::dbal::DbalException(
+            "CQL parameter count mismatch: expected " + std::to_string(expected_params) + ", have " +
+            std::to_string(q_pos));
     }
 }
 

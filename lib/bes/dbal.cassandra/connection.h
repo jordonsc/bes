@@ -1,11 +1,11 @@
 #pragma once
 
+#include <bes/dbal.h>
 #include <bes/log.h>
 
 #include <memory>
 #include <string>
 
-#include "../../context.h"
 #include "cassandra.h"
 
 namespace bes::dbal::wide::cassandra {

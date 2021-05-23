@@ -17,9 +17,9 @@ class RowContainer
         return row->at(n);
     }
 
-    [[nodiscard]] inline Cell at(std::string const& ns, std::string const& qualifier) const
+    [[nodiscard]] inline Cell at(std::string const& qualifier) const
     {
-        return row->at(ns, qualifier);
+        return row->at(qualifier);
     }
 
     [[nodiscard]] Row const* operator->() const

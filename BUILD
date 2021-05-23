@@ -55,12 +55,26 @@ bes_cc_library(
 # Database Abstraction
 bes_cc_library(
     name = "dbal",
+    deps = [
+        ":core",
+        ":log",
+    ],
+)
+
+bes_cc_library(
+    name = "dbal.cassandra",
     linkops = [
         "-lcassandra",
     ],
     deps = [
-        ":core",
-        ":log",
+        ":dbal",
+    ],
+)
+
+bes_cc_library(
+    name = "dbal.bigtable",
+    deps = [
+        ":dbal",
         "@com_github_googleapis_google_cloud_cpp//:bigtable",
     ],
 )

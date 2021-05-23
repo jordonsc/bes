@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../row.h"
+#include <bes/dbal.h>
+
 #include "google/cloud/bigtable/table.h"
 
 namespace bes::dbal::wide::bigtable {
@@ -17,7 +18,7 @@ class CbtRow : WideRow
     explicit CbtRow(cbt::Row r);
 
     [[nodiscard]] Cell at(size_t) const override;
-    [[nodiscard]] Cell at(std::string const& ns, std::string const& qualifier) const override;
+    [[nodiscard]] Cell at(std::string const& qualifier) const override;
 
    protected:
     cbt::Row row;

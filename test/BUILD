@@ -65,7 +65,7 @@ cc_test(
         "integration",
     ],
     deps = [
-        "//:dbal",
+        "//:dbal.cassandra",
         "@gtest",
     ],
 )

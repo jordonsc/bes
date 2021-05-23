@@ -1,8 +1,9 @@
 #pragma once
 
+#include <bes/dbal.h>
+
 #include <memory>
 
-#include "../result_interface.h"
 #include "cassandra.h"
 #include "cassandra_row.h"
 #include "query.tcc"

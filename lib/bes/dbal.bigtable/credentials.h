@@ -1,9 +1,9 @@
 #pragma once
 
+#include <bes/dbal.h>
+
 #include <string>
 #include <utility>
-
-#include "../../context.h"
 
 namespace bes::dbal::wide::bigtable {
 

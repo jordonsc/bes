@@ -10,11 +10,11 @@ namespace bes::dbal::wide {
 struct Field
 {
     Field() = default;
-    Field(Datatype dt, std::string ns, std::string q) : datatype(dt), ns(std::move(ns)), qualifier(std::move(q)) {}
-    Field(std::string ns, std::string q) : datatype(Datatype::Null), ns(std::move(ns)), qualifier(std::move(q)) {}
+    Field(Datatype dt, std::string q) : datatype(dt), qualifier(std::move(q)) {}
+    explicit Field(std::string q) : datatype(Datatype::Null), qualifier(std::move(q)) {}
+    explicit Field(char const* q) : datatype(Datatype::Null), qualifier(std::string(q)) {}
 
-    Datatype datatype;
-    std::string ns;
+    Datatype datatype = Datatype::Null;
     std::string qualifier;
 };
 

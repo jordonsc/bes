@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../exception.h"
-#include "../cell.tcc"
+#include <bes/dbal.h>
+
 #include "cassandra.h"
 
 namespace bes::dbal::wide::cassandra {

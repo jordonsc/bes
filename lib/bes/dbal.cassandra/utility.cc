@@ -81,18 +81,7 @@ Field Utility::getFieldFromResult(CassResult const* result, size_t index)
 
     // The cass column name isn't null-terminated, which makes strchr() dangerous. Instead we'll convert to a C++
     // string and use the class functions.
-    auto full_name = std::string(col_name, col_name_len);
-
-    auto pos = full_name.find('_');
-    if (pos == std::string::npos) {
-        // This shouldn't happen, all DBAL-controlled fields use the underscore to split namespace/qualifier.
-        // Might happen if we've retried a non-DBAL created field. We'll just put the value in the qualifier and
-        // leave the namespace blank.
-        f.qualifier = full_name;
-    } else {
-        f.ns = full_name.substr(0, pos);
-        f.qualifier = full_name.substr(pos + 1);
-    }
+    f.qualifier = std::string(col_name, col_name_len);
 
     switch (cass_result_column_type(result, index)) {
         default:

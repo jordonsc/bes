@@ -68,9 +68,9 @@ class ResultFuture
     /**
      * Get Cell by name from current row.
      */
-    [[nodiscard]] inline Cell at(std::string const& ns, std::string const& qualifier) const
+    [[nodiscard]] inline Cell at(std::string const& qualifier) const
     {
-        return row()->at(ns, qualifier);
+        return row()->at(qualifier);
     }
 
     /**

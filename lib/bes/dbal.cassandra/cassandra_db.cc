@@ -149,46 +149,7 @@ void Cassandra::validateConnection() const
     }
 }
 
-SuccessFuture Cassandra::insert(std::string const& t, ValueList values) const
-{
-    /*
-     * INSERT INTO keyspace.table_name (field [,field]) VALUES (? [,?]);
-     */
-    if (values.empty()) {
-        throw DbalException("Cannot update without any values");
-    }
-
-    auto cql = std::string("INSERT INTO ");
-    cql.append(getKeyspace()).append(".").append(t).append(" (");
-
-    bool first = true;
-    for (auto const& v : values) {
-        validateNotList(v);
-        if (first) {
-            first = false;
-        } else {
-            cql.append(", ");
-        }
-        cql.append(getFieldCql(v, false));
-    }
-
-    cql.append(") VALUES (?");
-    for (size_t i = 1; i < values.size(); ++i) {
-        cql.append(", ?");
-    }
-    cql.append(");");
-
-    cassandra::Query q(cql, values.size());
-
-    // Bind values
-    for (auto& v : values) {
-        bindValue(q, std::move(v));
-    }
-
-    return executeSuccess(std::move(q));
-}
-
-SuccessFuture Cassandra::update(std::string const& t, Value const& key, ValueList values) const
+SuccessFuture Cassandra::apply(std::string const& t, Value const& key, ValueList values) const
 {
     /*
      * UPDATE keyspace.table_name SET field = ? [, field = ?] WHERE field = ?;
@@ -286,8 +247,7 @@ void Cassandra::bindValue(cassandra::Query& q, Value v)
 {
     switch (v.getDatatype()) {
         default:
-            throw DbalException(
-                "Unknown datatype in update request (" + v.getNs() + cassandra::NS_DELIMITER + v.getQualifier() + ")");
+            throw DbalException("Unknown datatype in update request (" + v.getQualifier() + ")");
         case Datatype::Null:
             // Values cannot have a list of null
             q.bind();
@@ -366,16 +326,11 @@ void Cassandra::bindValue(cassandra::Query& q, Value v)
 
 std::string Cassandra::getFieldCql(Field const& f, bool with_field_type)
 {
-    std::string r;
-    if (!f.ns.empty()) {
-        r.append(f.ns);
-        r += cassandra::NS_DELIMITER;
-    }
-    r.append(f.qualifier);
-
     if (f.qualifier.empty()) {
         throw DbalException("Missing field qualifier");
     }
+
+    std::string r(f.qualifier);
 
     if (with_field_type) {
         r.append(" ").append(fieldType(f.datatype));
@@ -386,16 +341,11 @@ std::string Cassandra::getFieldCql(Field const& f, bool with_field_type)
 
 std::string Cassandra::getFieldCql(Value const& v, bool with_field_type)
 {
-    std::string r;
-    if (!v.getNs().empty()) {
-        r.append(v.getNs());
-        r += cassandra::NS_DELIMITER;
-    }
-    r.append(v.getQualifier());
-
     if (v.getQualifier().empty()) {
         throw DbalException("Missing field qualifier");
     }
+
+    std::string r(v.getQualifier());
 
     if (with_field_type) {
         r.append(" ").append(fieldType(v.getDatatype()));
@@ -423,7 +373,7 @@ SuccessFuture Cassandra::executeSuccess(cassandra::Query q) const
 void Cassandra::validateNotList(Value const& v)
 {
     if (v.isList()) {
-        throw DbalException("Cannot accept a list type for value " + v.getNs() + ":" + v.getQualifier());
+        throw DbalException("Cannot accept a list type for value " + v.getQualifier());
     }
 }
 

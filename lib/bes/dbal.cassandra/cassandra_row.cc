@@ -1,6 +1,5 @@
 #include "cassandra_row.h"
 
-#include "types.h"
 #include "utility.h"
 
 using namespace bes::dbal::wide::cassandra;
@@ -18,20 +17,13 @@ Cell CassandraRow::at(size_t n) const
     return Utility::createCellFromColumn(cass_row_get_column(row, n), Utility::getFieldFromResult(result.get(), n));
 }
 
-Cell CassandraRow::at(std::string const& ns, std::string const& qualifier) const
+Cell CassandraRow::at(std::string const& qualifier) const
 {
     if (row == nullptr) {
         throw DbalException("Cannot index null row");
     }
 
-    Field f(ns, qualifier);
+    Field f(qualifier);
 
-    std::string fqn;
-    if (!ns.empty()) {
-        fqn.append(ns);
-        fqn += cassandra::NS_DELIMITER;
-    }
-    fqn.append(qualifier);
-
-    return cassandra::Utility::createCellFromColumn(cass_row_get_column_by_name(row, fqn.c_str()), std::move(f));
+    return cassandra::Utility::createCellFromColumn(cass_row_get_column_by_name(row, qualifier.c_str()), std::move(f));
 }

@@ -88,9 +88,3 @@ Value objects may also be multi-value, this is used when requesting multiple key
 
     auto result = db.retrieve("my_table", Value("main", "id", Int64List({100, 101}));
     assert(result.rowCount() == 2);
-
-DBAL TO-DO
-----------
-* Remove the namespace from field names
-* Remove the wide-column `insert` and `update` functions, replace with `apply`
-* Split the DBAL into sub-modules, so you don't need the requirements for every DB engine you're not using

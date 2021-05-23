@@ -1,8 +1,9 @@
 #pragma once
 
+#include <bes/dbal.h>
+
 #include <memory>
 
-#include "../result_interface.h"
 #include "cbt_row.h"
 #include "google/cloud/bigtable/table.h"
 #include "google/cloud/bigtable/table_admin.h"

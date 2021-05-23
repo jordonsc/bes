@@ -56,14 +56,7 @@ SuccessFuture BigTable::dropTable(std::string const& table_name, bool if_exists)
     return SuccessFuture(status.ok());
 }
 
-SuccessFuture BigTable::insert(std::string const& table_name, ValueList values) const
-{
-    // BigTable cannot do a generic insert, it requires a primary key at all times
-    // TODO: remove the "insert" function, replace both insert and update with an "apply" call
-    throw bes::dbal::DbalException("BigTable cannot perform an insert operation");
-}
-
-SuccessFuture BigTable::update(std::string const& table_name, Value const& key, ValueList values) const
+SuccessFuture BigTable::apply(std::string const& table_name, Value const& key, ValueList values) const
 {
     cbt::SingleRowMutation mutation(getKeyFromValue(key));
 
@@ -77,12 +70,13 @@ SuccessFuture BigTable::update(std::string const& table_name, Value const& key, 
             case Datatype::Null:
                 throw DbalException("TODO: not sure how to do a null value here..");
             case Datatype::Text:
+                // TODO: we're using a blank string for column family - think of a better approach (split string?)
                 mutation.emplace_back(
-                    cbt::SetCell(v.getNs(), v.getQualifier(), timestamp, std::any_cast<Text&&>(v.consumeValue())));
+                    cbt::SetCell("", v.getQualifier(), timestamp, std::any_cast<Text&&>(v.consumeValue())));
                 break;
             case Datatype::Boolean:
                 mutation.emplace_back(cbt::SetCell(
-                    v.getNs(),
+                    "",
                     v.getQualifier(),
                     timestamp,
                     std::any_cast<Boolean>(v.getValue()) ? "1" : "0"));
@@ -90,7 +84,7 @@ SuccessFuture BigTable::update(std::string const& table_name, Value const& key, 
             case Datatype::Int32: {
                 auto i32 = std::any_cast<Int32>(v.getValue());
                 mutation.emplace_back(cbt::SetCell(
-                    v.getNs(),
+                    "",
                     v.getQualifier(),
                     timestamp,
                     std::string(reinterpret_cast<char*>(&i32), sizeof(Int32))));
@@ -98,7 +92,7 @@ SuccessFuture BigTable::update(std::string const& table_name, Value const& key, 
             case Datatype::Int64: {
                 auto i64 = std::any_cast<Int64>(v.getValue());
                 mutation.emplace_back(cbt::SetCell(
-                    v.getNs(),
+                    "",
                     v.getQualifier(),
                     timestamp,
                     std::string(reinterpret_cast<char*>(&i64), sizeof(Int64))));
@@ -106,7 +100,7 @@ SuccessFuture BigTable::update(std::string const& table_name, Value const& key, 
             case Datatype::Float32: {
                 auto f32 = std::any_cast<Float32>(v.getValue());
                 mutation.emplace_back(cbt::SetCell(
-                    v.getNs(),
+                    "",
                     v.getQualifier(),
                     timestamp,
                     std::string(reinterpret_cast<char*>(&f32), sizeof(Float32))));
@@ -114,7 +108,7 @@ SuccessFuture BigTable::update(std::string const& table_name, Value const& key, 
             case Datatype::Float64: {
                 auto f64 = std::any_cast<Float64>(v.getValue());
                 mutation.emplace_back(cbt::SetCell(
-                    v.getNs(),
+                    "",
                     v.getQualifier(),
                     timestamp,
                     std::string(reinterpret_cast<char*>(&f64), sizeof(Float64))));

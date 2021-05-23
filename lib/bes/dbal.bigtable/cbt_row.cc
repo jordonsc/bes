@@ -13,16 +13,17 @@ Cell CbtRow::at(size_t n) const
     }
 }
 
-Cell CbtRow::at(std::string const& ns, std::string const& qualifier) const
+Cell CbtRow::at(std::string const& qualifier) const
 {
     // Will need to do a scan of the vector, no known other approaches at this stage..
     for (auto const& c : row.cells()) {
-        if (c.family_name() == ns && c.column_qualifier() == qualifier) {
+        // TODO: need to consider c.family_name() here, too
+        if (c.column_qualifier() == qualifier) {
             return CellFromCbtCell(c);
         }
     }
 
-    throw bes::dbal::OutOfRangeException("No cell for index '" + ns + ":" + qualifier + "'");
+    throw bes::dbal::OutOfRangeException("No cell for index '" + qualifier + "'");
 }
 
 /**
@@ -30,6 +31,7 @@ Cell CbtRow::at(std::string const& ns, std::string const& qualifier) const
  */
 Cell CbtRow::CellFromCbtCell(cbt::Cell c)
 {
-    auto f = Field(c.family_name(), c.column_qualifier());
+    // TODO: consider: auto f = Field(c.family_name() + "_" + c.column_qualifier());
+    auto f = Field(c.column_qualifier());
     return Cell(std::move(f), std::any(std::move(c).value()));
 }
