@@ -15,7 +15,7 @@ class Cassandra;
 
 namespace bes::dbal::wide::cassandra {
 
-class Result;
+class CassandraResult;
 
 /**
  * RAII query container.
@@ -55,6 +55,11 @@ class Query
     void execute(Connection const& con);
 
     /**
+     * Waits for query completion, does not return a result.
+     */
+    void wait();
+
+    /**
      * Waits for query completion and results the result.
      */
     CassResult* getResult();
@@ -68,7 +73,7 @@ class Query
     ExecMode mode = ExecMode::PENDING;
 
     friend class ::bes::dbal::wide::Cassandra;
-    friend class ::bes::dbal::wide::cassandra::Result;
+    friend class ::bes::dbal::wide::cassandra::CassandraResult;
 };
 
 // --------------------------------- //
@@ -96,7 +101,7 @@ inline void Query::execute(Connection const& con)
     }
 }
 
-inline CassResult* Query::getResult()
+inline void Query::wait()
 {
     if (mode != ExecMode::EXEC_ASYNC) {
         throw DbalException("Query not in execution mode, call execute() first.");
@@ -110,9 +115,14 @@ inline CassResult* Query::getResult()
         mode = ExecMode::FAILED;
         throw DbalException("Cassandra: " + Utility::getFutureErrMsg(future.get()));
     }
+}
 
+inline CassResult* Query::getResult()
+{
+    wait();
     return const_cast<CassResult*>(cass_future_get_result(future.get()));
 }
+
 
 inline void Query::bind()
 {

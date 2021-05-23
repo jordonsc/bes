@@ -38,8 +38,8 @@ TEST(CassandraTest, ServerVersion)
 {
     // Constructed via connection rvalue copy
     auto db = Cassandra(createContext());
-    ASSERT_EQ(db.getServerVersion().substr(0, 2), TEST_SERVER_VERSION);
-    ASSERT_EQ(db.getServerVersion().substr(0, 2), TEST_SERVER_VERSION);  // ensure consecutive queries work
+    EXPECT_EQ(db.getServerVersion().substr(0, 2), TEST_SERVER_VERSION);
+    EXPECT_EQ(db.getServerVersion().substr(0, 2), TEST_SERVER_VERSION);  // ensure consecutive queries work
 }
 
 TEST(CassandraTest, KeyspaceCreation)
@@ -48,7 +48,7 @@ TEST(CassandraTest, KeyspaceCreation)
     db.setKeyspace(TEST_KEYSPACE);
 
     // Remove any traces of previous runs
-    db.dropKeyspace(TEST_KEYSPACE, true).wait();
+    ASSERT_TRUE(db.dropKeyspace(TEST_KEYSPACE, true).ok());
 
     cassandra::Keyspace ks(TEST_KEYSPACE);
 
@@ -164,7 +164,8 @@ TEST(CassandraTest, RowSemantics)
     db.update(TEST_TABLE, Value("test", "pk", 5), std::move(v)).wait();
 
     result = db.retrieve(TEST_TABLE, Value("test", "pk", (Int32)5));
-    Row const* row = result.pop();
+    EXPECT_TRUE(result.pop());
+    Row const* row = result.row();
     ASSERT_NE(row, nullptr);
     ASSERT_FLOAT_EQ(row->at("test", "flt").as<Float32>(), (Float32)123.456);
     ASSERT_EQ(row->at("test", "str").as<Text>(), "hello world");
@@ -182,15 +183,15 @@ TEST(CassandraTest, DataCreation)
     // Table should be empty
     auto result = db.retrieve(TEST_TABLE, Value("test", "pk", (Int32)5));
     ASSERT_EQ(result.rowCount(), 0);
-    EXPECT_EQ(result.pop(), nullptr);
+    EXPECT_FALSE(result.pop());
 
     ValueList v;
-    v.push_back(Value("test", "str", "bar"));
+    v.push_back(Value("test", "str", "abc"));
     v.push_back(Value("test", "flt", (Float32)123456.789));
     db.update(TEST_TABLE, Value("test", "pk", 5), std::move(v)).wait();
 
     v.clear();
-    v.push_back(Value("test", "str", "bar"));
+    v.push_back(Value("test", "str", "def"));
     v.push_back(Value("test", "flt", (Float32)7.5));
     v.push_back(Value("test", "pk", 90));
     db.insert(TEST_TABLE, std::move(v)).wait();
@@ -205,6 +206,8 @@ TEST(CassandraTest, DataCreation)
     result = db.retrieve(TEST_TABLE, Value("test", "pk", (Int32)5), std::move(f));
     EXPECT_EQ(result.rowCount(), 1);
     EXPECT_EQ(result.columnCount(), 2);
+    ASSERT_TRUE(result.pop());
+    EXPECT_EQ(result.row()->at("test", "str").as<Text>(), "abc");
 
     db.truncate(TEST_TABLE).wait();
 
@@ -228,9 +231,12 @@ TEST(CassandraTest, Iterators)
     auto result = db.retrieve(TEST_TABLE, Value("test", "pk", (Int32)1));
 
     // Creating an iterator will call wait() on the future
-    for (auto const& row : result) {
+    bool called = false;
+    for (auto& row : result) {
         EXPECT_EQ(row.at("test", "str").as<Text>(), "nice iterator");
+        called = true;
     }
+    EXPECT_TRUE(called);
 }
 
 TEST(CassandraTest, MultiKey)

@@ -13,35 +13,59 @@ class Value final
    public:
     // -- Standard Value Types -- //
     Value(std::string ns, std::string qualifier, std::string value)
-        : ns(std::move(ns)), qualifier(std::move(qualifier)), value(std::move(value)), datatype(Datatype::Text)
+        : ns(std::move(ns)),
+          qualifier(std::move(qualifier)),
+          value(std::move(value)),
+          datatype(Datatype::Text)
     {}
 
     Value(std::string ns, std::string qualifier, char const* value)
-        : ns(std::move(ns)), qualifier(std::move(qualifier)), value(std::string(value)), datatype(Datatype::Text)
+        : ns(std::move(ns)),
+          qualifier(std::move(qualifier)),
+          value(std::string(value)),
+          datatype(Datatype::Text)
     {}
 
     Value(std::string ns, std::string qualifier, Int32 value)
-        : ns(std::move(ns)), qualifier(std::move(qualifier)), value(value), datatype(Datatype::Int32)
+        : ns(std::move(ns)),
+          qualifier(std::move(qualifier)),
+          value(value),
+          datatype(Datatype::Int32)
     {}
 
     Value(std::string ns, std::string qualifier, Int64 value)
-        : ns(std::move(ns)), qualifier(std::move(qualifier)), value(value), datatype(Datatype::Int64)
+        : ns(std::move(ns)),
+          qualifier(std::move(qualifier)),
+          value(value),
+          datatype(Datatype::Int64)
     {}
 
     Value(std::string ns, std::string qualifier, Float32 value)
-        : ns(std::move(ns)), qualifier(std::move(qualifier)), value(value), datatype(Datatype::Float32)
+        : ns(std::move(ns)),
+          qualifier(std::move(qualifier)),
+          value(value),
+          datatype(Datatype::Float32)
     {}
 
     Value(std::string ns, std::string qualifier, Float64 value)
-        : ns(std::move(ns)), qualifier(std::move(qualifier)), value(value), datatype(Datatype::Float64)
+        : ns(std::move(ns)),
+          qualifier(std::move(qualifier)),
+          value(value),
+          datatype(Datatype::Float64)
     {}
 
     Value(std::string ns, std::string qualifier, Boolean value)
-        : ns(std::move(ns)), qualifier(std::move(qualifier)), value(value), datatype(Datatype::Boolean)
+        : ns(std::move(ns)),
+          qualifier(std::move(qualifier)),
+          value(value),
+          datatype(Datatype::Boolean)
     {}
 
     Value(std::string ns, std::string qualifier)
-        : ns(std::move(ns)), qualifier(std::move(qualifier)), value((char)0), datatype(Datatype::Null)
+        : ns(std::move(ns)),
+          qualifier(std::move(qualifier)),
+          value((char)0),
+          datatype(Datatype::Null)
     {}
 
     Value() : value((char)0), datatype(Datatype::Null) {}
@@ -50,45 +74,45 @@ class Value final
     Value(std::string ns, std::string qualifier, std::vector<std::string> value)
         : ns(std::move(ns)),
           qualifier(std::move(qualifier)),
+          is_list(true),
           value(std::move(value)),
-          datatype(Datatype::Text),
-          is_list(true)
+          datatype(Datatype::Text)
     {}
 
     Value(std::string ns, std::string qualifier, std::vector<Int32> value)
         : ns(std::move(ns)),
           qualifier(std::move(qualifier)),
-          value(std::move(value)),
-          datatype(Datatype::Int32),
           is_list(true),
-          list_size(value.size())
+          list_size(value.size()),
+          value(std::move(value)),
+          datatype(Datatype::Int32)
     {}
 
     Value(std::string ns, std::string qualifier, std::vector<Int64> value)
         : ns(std::move(ns)),
           qualifier(std::move(qualifier)),
-          value(std::move(value)),
-          datatype(Datatype::Int64),
           is_list(true),
-          list_size(value.size())
+          list_size(value.size()),
+          value(std::move(value)),
+          datatype(Datatype::Int64)
     {}
 
     Value(std::string ns, std::string qualifier, std::vector<Float32> value)
         : ns(std::move(ns)),
           qualifier(std::move(qualifier)),
-          value(std::move(value)),
-          datatype(Datatype::Float32),
           is_list(true),
-          list_size(value.size())
+          list_size(value.size()),
+          value(std::move(value)),
+          datatype(Datatype::Float32)
     {}
 
     Value(std::string ns, std::string qualifier, std::vector<Float64> value)
         : ns(std::move(ns)),
           qualifier(std::move(qualifier)),
-          value(std::move(value)),
-          datatype(Datatype::Float64),
           is_list(true),
-          list_size(value.size())
+          list_size(value.size()),
+          value(std::move(value)),
+          datatype(Datatype::Float64)
     {}
 
     [[nodiscard]] std::string const& getNs() const
@@ -134,10 +158,10 @@ class Value final
    private:
     std::string ns;
     std::string qualifier;
-    std::any value;
-    Datatype datatype;
     bool is_list = false;
     size_t list_size = 0;
+    std::any value;
+    Datatype datatype;
 };
 
 using ValueList = std::vector<Value>;

@@ -3,7 +3,7 @@
 #include <shared_mutex>
 #include <utility>
 
-#include "result.h"
+#include "cassandra_result.h"
 #include "types.h"
 
 using namespace bes::dbal::wide;
@@ -14,7 +14,19 @@ Cassandra::Cassandra(Context c) : WideColumnDb(std::move(c)), connection(getCont
 std::string Cassandra::getServerVersion() const
 {
     validateConnection();
-    return execute(cassandra::Query("SELECT release_version FROM system.local")).pop()->at(0).as<Text>();
+
+    auto r = execute(cassandra::Query("SELECT release_version FROM system.local"));
+
+    if (!r.pop()) {
+        throw DbalException("Unable to fetch Cassandra server version");
+    }
+
+    auto row = r.row();
+    if (row == nullptr) {
+        throw DbalException("Unexpected error fetching Cassandra server version");
+    }
+
+    return row->at(0).as<Text>();
 }
 
 void Cassandra::setKeyspace(std::string const& value)
@@ -41,7 +53,7 @@ std::string const& Cassandra::getKeyspace() const
     }
 }
 
-ResultFuture Cassandra::createKeyspace(cassandra::Keyspace const& ks, bool if_not_exists) const
+SuccessFuture Cassandra::createKeyspace(cassandra::Keyspace const& ks, bool if_not_exists) const
 {
     /*
      * CREATE KEYSPACE [IF NOT EXISTS] keyspace_name
@@ -82,10 +94,10 @@ ResultFuture Cassandra::createKeyspace(cassandra::Keyspace const& ks, bool if_no
 
     cql.append(";");
 
-    return execute(cassandra::Query(cql));
+    return executeSuccess(cassandra::Query(cql));
 }
 
-ResultFuture Cassandra::dropKeyspace(const std::string& ks_name, bool if_exists) const
+SuccessFuture Cassandra::dropKeyspace(const std::string& ks_name, bool if_exists) const
 {
     /*
      * DROP KEYSPACE [IF EXISTS] keyspace_name;
@@ -93,10 +105,10 @@ ResultFuture Cassandra::dropKeyspace(const std::string& ks_name, bool if_exists)
     std::string cql = if_exists ? "DROP KEYSPACE IF EXISTS " : "DROP KEYSPACE ";
     cql.append(ks_name);
 
-    return execute(cassandra::Query(cql));
+    return executeSuccess(cassandra::Query(cql));
 }
 
-ResultFuture Cassandra::createTable(std::string const& table_name, Schema const& schema, bool if_not_exists) const
+SuccessFuture Cassandra::createTable(std::string const& table_name, Schema const& schema, bool if_not_exists) const
 {
     /*
      * CREATE TABLE [IF NOT EXISTS] keyspace.table_name (
@@ -116,10 +128,10 @@ ResultFuture Cassandra::createTable(std::string const& table_name, Schema const&
     }
     cql.append(");");
 
-    return execute(cassandra::Query(cql));
+    return executeSuccess(cassandra::Query(cql));
 }
 
-ResultFuture Cassandra::dropTable(std::string const& table_name, bool if_exists) const
+SuccessFuture Cassandra::dropTable(std::string const& table_name, bool if_exists) const
 {
     /*
      * DROP TABLE [IF EXISTS] keyspace.table_name;
@@ -127,7 +139,7 @@ ResultFuture Cassandra::dropTable(std::string const& table_name, bool if_exists)
     std::string cql = if_exists ? "DROP TABLE IF EXISTS " : "DROP TABLE ";
     cql.append(getKeyspace()).append(".").append(table_name);
 
-    return execute(cassandra::Query(cql));
+    return executeSuccess(cassandra::Query(cql));
 }
 
 void Cassandra::validateConnection() const
@@ -137,7 +149,7 @@ void Cassandra::validateConnection() const
     }
 }
 
-ResultFuture Cassandra::insert(std::string const& t, ValueList values) const
+SuccessFuture Cassandra::insert(std::string const& t, ValueList values) const
 {
     /*
      * INSERT INTO keyspace.table_name (field [,field]) VALUES (? [,?]);
@@ -173,10 +185,10 @@ ResultFuture Cassandra::insert(std::string const& t, ValueList values) const
         bindValue(q, std::move(v));
     }
 
-    return execute(std::move(q));
+    return executeSuccess(std::move(q));
 }
 
-ResultFuture Cassandra::update(std::string const& t, Value const& key, ValueList values) const
+SuccessFuture Cassandra::update(std::string const& t, Value const& key, ValueList values) const
 {
     /*
      * UPDATE keyspace.table_name SET field = ? [, field = ?] WHERE field = ?;
@@ -211,7 +223,7 @@ ResultFuture Cassandra::update(std::string const& t, Value const& key, ValueList
     // Bind PK
     bindValue(q, key);
 
-    return execute(std::move(q));
+    return executeSuccess(std::move(q));
 }
 
 ResultFuture Cassandra::retrieve(std::string const& table_name, Value const& key) const
@@ -250,7 +262,7 @@ ResultFuture Cassandra::retrieve(std::string const& table_name, Value const& key
     return execute(std::move(q));
 }
 
-ResultFuture Cassandra::remove(std::string const& table_name, Value const& key) const
+SuccessFuture Cassandra::remove(std::string const& table_name, Value const& key) const
 {
     auto cql = std::string("DELETE FROM ");
     cql.append(getKeyspace()).append(".").append(table_name);
@@ -259,23 +271,23 @@ ResultFuture Cassandra::remove(std::string const& table_name, Value const& key) 
     cassandra::Query q(cql, key.isList() ? key.size() : 1);
     bindValue(q, key);
 
-    return execute(std::move(q));
+    return executeSuccess(std::move(q));
 }
 
-ResultFuture Cassandra::truncate(std::string const& table_name) const
+SuccessFuture Cassandra::truncate(std::string const& table_name) const
 {
     auto cql = std::string("TRUNCATE TABLE ");
     cql.append(getKeyspace()).append(".").append(table_name).append(";");
 
-    return execute(cassandra::Query(cql));
+    return executeSuccess(cassandra::Query(cql));
 }
 
 void Cassandra::bindValue(cassandra::Query& q, Value v)
 {
     switch (v.getDatatype()) {
         default:
-            throw DbalException("Unknown datatype in update request (" + v.getNs() + cassandra::NS_DELIMITER +
-                                v.getQualifier() + ")");
+            throw DbalException(
+                "Unknown datatype in update request (" + v.getNs() + cassandra::NS_DELIMITER + v.getQualifier() + ")");
         case Datatype::Null:
             // Values cannot have a list of null
             q.bind();
@@ -395,7 +407,17 @@ std::string Cassandra::getFieldCql(Value const& v, bool with_field_type)
 ResultFuture Cassandra::execute(cassandra::Query q) const
 {
     q.execute(connection);
-    return ResultFuture(std::make_shared<bes::dbal::wide::cassandra::Result>(std::move(q)));
+    return ResultFuture(std::make_shared<bes::dbal::wide::cassandra::CassandraResult>(std::move(q)));
+}
+
+SuccessFuture Cassandra::executeSuccess(cassandra::Query q) const
+{
+    q.execute(connection);
+
+    return SuccessFuture([q{std::move(q)}]() mutable {
+        q.wait();
+        return true;
+    });
 }
 
 void Cassandra::validateNotList(Value const& v)

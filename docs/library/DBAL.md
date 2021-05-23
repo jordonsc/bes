@@ -18,6 +18,9 @@ To achieve consistency, the DBAL will only support features that are largely in 
 features will not be implemented, and where possible, some features will be manually implemented in the DBAL so that
 other engines can maintain their capabilities.
 
+> IMPORTANT: Because the DBAL needs to sync features, it strips all databases down to their most base level. Use 
+> with discretion, and consider integrating directly to a DB in complex scenarios.
+
 Current Implementations
 -----------------------
 ### Wide Column
@@ -85,3 +88,9 @@ Value objects may also be multi-value, this is used when requesting multiple key
 
     auto result = db.retrieve("my_table", Value("main", "id", Int64List({100, 101}));
     assert(result.rowCount() == 2);
+
+DBAL TO-DO
+----------
+* Remove the namespace from field names
+* Remove the wide-column `insert` and `update` functions, replace with `apply`
+* Split the DBAL into sub-modules, so you don't need the requirements for every DB engine you're not using

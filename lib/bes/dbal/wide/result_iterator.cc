@@ -6,10 +6,11 @@ using namespace bes::dbal::wide;
 
 ResultIterator::ResultIterator() : has_data(false) {}
 
-ResultIterator::ResultIterator(std::shared_ptr<bes::dbal::wide::Result> result)
-    : has_data(true), result(std::move(result))
+ResultIterator::ResultIterator(std::shared_ptr<bes::dbal::wide::ResultInterface> result)
+    : has_data(true),
+      result(std::move(result))
 {
-    this->operator++();
+    operator++();
 }
 
 ResultIterator::reference ResultIterator::operator*() const
@@ -34,10 +35,8 @@ bool ResultIterator::operator!=(ResultIterator const& other) const
 
 ResultIterator const& ResultIterator::operator++() const
 {
-    auto row_ptr = result->pop();
-
-    if (row_ptr) {
-        row = std::make_shared<RowContainer>(RowContainer(row_ptr));
+    if (result->pop()) {
+        row = std::make_shared<RowContainer>(RowContainer(result->row()));
     } else {
         has_data = false;
         row.reset();

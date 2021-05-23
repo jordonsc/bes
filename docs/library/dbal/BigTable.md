@@ -1,6 +1,8 @@
 DBAL: Google Cloud Bigtable
 ===========================
 
+> BIGTABLE LIBRARY IS A NON-FUNCTIONAL WORK-IN-PROGRESS - DO NOT USE
+
 Getting Started
 ---------------
 `gcloud` and `cbt` tools are essential for working with Cloud Bigtable. 

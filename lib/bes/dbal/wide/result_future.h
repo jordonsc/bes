@@ -3,18 +3,21 @@
 #include <memory>
 #include <utility>
 
-#include "result.h"
+#include "result_interface.h"
 #include "result_iterator.h"
 
 namespace bes::dbal::wide {
 
 /**
- * Wrapper that accepts an abstracted Result object as a pointer and takes it under memory management.
+ * Wrapper that accepts an implemented ResultInterface object in the form of a shared pointer.
+ *
+ * The purpose of this class is to create a RAII approach to an abstracted object that would otherwise need to be a
+ * pointer.
  */
 class ResultFuture
 {
    public:
-    explicit ResultFuture(std::shared_ptr<bes::dbal::wide::Result> result) : result(std::move(result)) {}
+    explicit ResultFuture(std::shared_ptr<bes::dbal::wide::ResultInterface> result) : result(std::move(result)) {}
 
     [[nodiscard]] ResultIterator begin() const
     {
@@ -81,11 +84,11 @@ class ResultFuture
     }
 
     /**
-     * Retrieves a row and returns it, invalidating the previous row.
+     * Retrieve a new row from the server, invalidating previous row records.
      *
-     * Will return a nullptr if no further rows exist.
+     * Returns false is no new records are available.
      */
-    inline Row const* pop()
+    inline bool pop()
     {
         return result->pop();
     }
@@ -93,25 +96,25 @@ class ResultFuture
     /**
      * Returns the current row. Does not advance the internal iterator.
      *
-     * Returns a nullptr is pop() has never been called or if there is no more row data available.
+     * Returns a nullptr if there is no row data available.
      */
     [[nodiscard]] inline Row const* row() const
     {
         return result->row();
     }
 
-    [[nodiscard]] inline Result* operator->() const
+    [[nodiscard]] inline ResultInterface* operator->() const
     {
         return result.get();
     }
 
-    [[nodiscard]] inline Result* get() const
+    [[nodiscard]] inline ResultInterface* get() const
     {
         return result.get();
     }
 
    protected:
-    std::shared_ptr<bes::dbal::wide::Result> result;
+    std::shared_ptr<bes::dbal::wide::ResultInterface> result;
 };
 
 }  // namespace bes::dbal::wide

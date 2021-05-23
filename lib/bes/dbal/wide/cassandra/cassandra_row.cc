@@ -1,13 +1,13 @@
-#include "row.h"
+#include "cassandra_row.h"
 
 #include "types.h"
 #include "utility.h"
 
 using namespace bes::dbal::wide::cassandra;
 
-Row::Row(CassRow const* r, std::shared_ptr<CassResult> rs) : row(r), result(std::move(rs)) {}
+CassandraRow::CassandraRow(CassRow const* r, std::shared_ptr<CassResult> rs) : row(r), result(std::move(rs)) {}
 
-Cell Row::at(size_t n) const
+Cell CassandraRow::at(size_t n) const
 {
     if (row == nullptr) {
         throw bes::dbal::DbalException("Cannot index null row");
@@ -18,7 +18,7 @@ Cell Row::at(size_t n) const
     return Utility::createCellFromColumn(cass_row_get_column(row, n), Utility::getFieldFromResult(result.get(), n));
 }
 
-Cell Row::at(std::string const& ns, std::string const& qualifier) const
+Cell CassandraRow::at(std::string const& ns, std::string const& qualifier) const
 {
     if (row == nullptr) {
         throw DbalException("Cannot index null row");

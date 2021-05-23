@@ -2,7 +2,7 @@
 
 #include <iterator>
 
-#include "result.h"
+#include "result_interface.h"
 #include "row_container.h"
 
 namespace bes::dbal::wide {
@@ -29,10 +29,10 @@ class ResultIterator : public std::iterator<std::input_iterator_tag, RowContaine
 
    protected:
     ResultIterator();
-    explicit ResultIterator(std::shared_ptr<bes::dbal::wide::Result> result);
+    explicit ResultIterator(std::shared_ptr<bes::dbal::wide::ResultInterface> result);
 
     mutable bool has_data;
-    std::shared_ptr<bes::dbal::wide::Result> result;
+    std::shared_ptr<bes::dbal::wide::ResultInterface> result;
     mutable std::shared_ptr<bes::dbal::wide::RowContainer> row;
 
     friend class bes::dbal::wide::ResultFuture;

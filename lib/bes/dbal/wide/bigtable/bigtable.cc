@@ -2,8 +2,8 @@
 
 #include <utility>
 
+#include "cbt_result.h"
 #include "google/cloud/bigtable/table.h"
-#include "result.h"
 
 namespace cbt = google::cloud::bigtable;
 using google::cloud::Status;
@@ -19,42 +19,51 @@ BigTable::BigTable(Context c) : WideColumnDb(std::move(c)), credentials(getConte
  *
  * When creating a table here, we'll use a standard rule of MaxNumVersions(1).
  */
-ResultFuture BigTable::createTable(std::string const& table_name, Schema const& schema, bool if_not_exists) const
+SuccessFuture BigTable::createTable(std::string const& table_name, Schema const& schema, bool if_not_exists) const
 {
-    cbt::GcRule gc_std = cbt::GcRule::MaxNumVersions(1);
+    /*
     std::map<std::string, cbt::GcRule> col_families;
 
-    col_families[schema.primary_key.ns] = gc_std;
+    col_families[schema.primary_key.ns] = cbt::GcRule::MaxNumVersions(1);
 
     for (auto const& field : schema.fields) {
         if (col_families.find(field.ns) == col_families.end()) {
-            col_families[field.ns] = gc_std;
+            col_families[field.ns] = cbt::GcRule::MaxNumVersions(1);
         }
     }
 
-    StatusOr<google::bigtable::admin::v2::Table> new_schema =
-        getTableAdmin().CreateTable(table_name, cbt::TableConfig(std::move(col_families), {}));
+    // TODO: requires some sort of parallelism - not a real future.
+    auto result = getTableAdmin().CreateTable(table_name, cbt::TableConfig(std::move(col_families), {}));
 
-    // TODO: change this to a "SuccessFuture" as it is never expected to return more than a success/fail
-    return ResultFuture(std::make_shared<bes::dbal::wide::bigtable::Result>());
+    if (!result.ok()) {
+        throw bes::dbal::DbalException(result.status().message());
+    }
+
+    return SuccessFuture(result.ok());
+     */
+    return SuccessFuture(false);
 }
 
-ResultFuture BigTable::dropTable(std::string const& table_name, bool if_exists) const
+SuccessFuture BigTable::dropTable(std::string const& table_name, bool if_exists) const
 {
     // Delete a table
-    Status status = getTableAdmin().DeleteTable(table_name);
+    auto status = getTableAdmin().DeleteTable(table_name);
 
-    return ResultFuture(std::make_shared<bes::dbal::wide::bigtable::Result>());
+    if (!status.ok()) {
+        throw bes::dbal::DbalException(status.message());
+    }
+
+    return SuccessFuture(status.ok());
 }
 
-ResultFuture BigTable::insert(std::string const& table_name, ValueList values) const
+SuccessFuture BigTable::insert(std::string const& table_name, ValueList values) const
 {
     // BigTable cannot do a generic insert, it requires a primary key at all times
     // TODO: remove the "insert" function, replace both insert and update with an "apply" call
-    return ResultFuture(std::make_shared<bes::dbal::wide::bigtable::Result>());
+    throw bes::dbal::DbalException("BigTable cannot perform an insert operation");
 }
 
-ResultFuture BigTable::update(std::string const& table_name, Value const& key, ValueList values) const
+SuccessFuture BigTable::update(std::string const& table_name, Value const& key, ValueList values) const
 {
     cbt::SingleRowMutation mutation(getKeyFromValue(key));
 
@@ -72,35 +81,53 @@ ResultFuture BigTable::update(std::string const& table_name, Value const& key, V
                     cbt::SetCell(v.getNs(), v.getQualifier(), timestamp, std::any_cast<Text&&>(v.consumeValue())));
                 break;
             case Datatype::Boolean:
-                mutation.emplace_back(
-                    cbt::SetCell(v.getNs(), v.getQualifier(), timestamp, std::any_cast<Boolean>(v.getValue())));
+                mutation.emplace_back(cbt::SetCell(
+                    v.getNs(),
+                    v.getQualifier(),
+                    timestamp,
+                    std::any_cast<Boolean>(v.getValue()) ? "1" : "0"));
                 break;
-            case Datatype::Int32:
-                mutation.emplace_back(
-                    cbt::SetCell(v.getNs(), v.getQualifier(), timestamp, std::any_cast<Int32>(v.getValue())));
-                break;
-            case Datatype::Int64:
-                mutation.emplace_back(
-                    cbt::SetCell(v.getNs(), v.getQualifier(), timestamp, std::any_cast<Int64>(v.getValue())));
-                break;
-            case Datatype::Float32:
-                mutation.emplace_back(
-                    cbt::SetCell(v.getNs(), v.getQualifier(), timestamp, std::any_cast<Float32>(v.getValue())));
-                break;
-            case Datatype::Float64:
-                mutation.emplace_back(
-                    cbt::SetCell(v.getNs(), v.getQualifier(), timestamp, std::any_cast<Float64>(v.getValue())));
-                break;
+            case Datatype::Int32: {
+                auto i32 = std::any_cast<Int32>(v.getValue());
+                mutation.emplace_back(cbt::SetCell(
+                    v.getNs(),
+                    v.getQualifier(),
+                    timestamp,
+                    std::string(reinterpret_cast<char*>(&i32), sizeof(Int32))));
+            } break;
+            case Datatype::Int64: {
+                auto i64 = std::any_cast<Int64>(v.getValue());
+                mutation.emplace_back(cbt::SetCell(
+                    v.getNs(),
+                    v.getQualifier(),
+                    timestamp,
+                    std::string(reinterpret_cast<char*>(&i64), sizeof(Int64))));
+            } break;
+            case Datatype::Float32: {
+                auto f32 = std::any_cast<Float32>(v.getValue());
+                mutation.emplace_back(cbt::SetCell(
+                    v.getNs(),
+                    v.getQualifier(),
+                    timestamp,
+                    std::string(reinterpret_cast<char*>(&f32), sizeof(Float32))));
+            } break;
+            case Datatype::Float64: {
+                auto f64 = std::any_cast<Float64>(v.getValue());
+                mutation.emplace_back(cbt::SetCell(
+                    v.getNs(),
+                    v.getQualifier(),
+                    timestamp,
+                    std::string(reinterpret_cast<char*>(&f64), sizeof(Float64))));
+            } break;
         }
     }
 
     auto status = getTable(table_name).Apply(std::move(mutation));
-
     if (!status.ok()) {
-        throw std::runtime_error(status.message());
+        throw bes::dbal::DbalException(status.message());
     }
 
-    return ResultFuture(std::make_shared<bes::dbal::wide::bigtable::Result>());
+    return SuccessFuture(status.ok());
 }
 
 ResultFuture BigTable::retrieve(std::string const& table_name, Value const& key) const
@@ -109,23 +136,24 @@ ResultFuture BigTable::retrieve(std::string const& table_name, Value const& key)
 
     cbt::RowSet rs(getKeyFromValue(key));
 
-    return ResultFuture(std::make_shared<bes::dbal::wide::bigtable::Result>(getTable(table_name).ReadRows(std::move(rs), Filter::PassAllFilter())));
+    return ResultFuture(std::make_shared<bes::dbal::wide::bigtable::CbtResult>(
+        getTable(table_name).ReadRows(std::move(rs), Filter::PassAllFilter())));
 }
 
 ResultFuture BigTable::retrieve(std::string const& table_name, Value const& key, FieldList fields) const
 {
     // auto filter = Filter::Chain(google::cloud::bigtable::Filter::ColumnName());
-    return ResultFuture(std::make_shared<bes::dbal::wide::bigtable::Result>());
+    return retrieve(table_name, key);
 }
 
-ResultFuture BigTable::remove(std::string const& table_name, Value const& key) const
+SuccessFuture BigTable::remove(std::string const& table_name, Value const& key) const
 {
-    return ResultFuture(std::make_shared<bes::dbal::wide::bigtable::Result>());
+    return SuccessFuture(false);
 }
 
-ResultFuture BigTable::truncate(std::string const& table_name) const
+SuccessFuture BigTable::truncate(std::string const& table_name) const
 {
-    return ResultFuture(std::make_shared<bes::dbal::wide::bigtable::Result>());
+    return SuccessFuture(false);
 }
 
 google::cloud::bigtable::Table BigTable::getTable(std::string const& tbl) const
