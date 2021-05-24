@@ -56,6 +56,7 @@ cc_test(
     srcs = [
         "dbal/cassandra.cc",
         "dbal/context.cc",
+        "dbal/redis.cc",
         "test.cc",
     ],
     copts = COPTS,
@@ -66,6 +67,7 @@ cc_test(
     ],
     deps = [
         "//:dbal.cassandra",
+        "//:dbal.redis",
         "@gtest",
     ],
 )

@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "datatype.h"
+#include "../datatype.h"
 
 namespace bes::dbal::wide {
 

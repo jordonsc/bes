@@ -6,8 +6,8 @@
 
 namespace bes::dbal::wide::cassandra {
 
+using bes::dbal::Datatype;
 using bes::dbal::wide::Cell;
-using bes::dbal::wide::Datatype;
 using bes::dbal::wide::Field;
 
 class Utility

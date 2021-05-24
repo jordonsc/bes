@@ -3,9 +3,9 @@
 #include <bes/dbal.h>
 
 #include "connection.h"
+#include "constants.h"
 #include "keyspace.h"
 #include "query.tcc"
-#include "types.h"
 
 namespace bes::dbal::wide {
 
@@ -15,21 +15,21 @@ class Cassandra : public WideColumnDb
     Cassandra() = delete;
     explicit Cassandra(Context c);
 
-    [[nodiscard]] std::string getServerVersion() const;
+    [[nodiscard]] std::string getServerVersion();
     void setKeyspace(std::string const&);
     [[nodiscard]] std::string const& getKeyspace() const;
 
-    SuccessFuture createKeyspace(cassandra::Keyspace const& keyspace, bool if_not_exists = false) const;
-    SuccessFuture dropKeyspace(std::string const& ks_name, bool if_exists = false) const;
+    SuccessFuture createKeyspace(cassandra::Keyspace const& keyspace, bool if_not_exists = false);
+    SuccessFuture dropKeyspace(std::string const& ks_name, bool if_exists = false);
 
-    SuccessFuture createTable(std::string const& table_name, Schema const& schema, bool if_not_exists) const override;
-    SuccessFuture dropTable(std::string const& table_name, bool if_exists) const override;
+    SuccessFuture createTable(std::string const& table_name, Schema const& schema) override;
+    SuccessFuture dropTable(std::string const& table_name) override;
 
-    SuccessFuture apply(std::string const& table_name, Value const& key, ValueList values) const override;
-    ResultFuture retrieve(std::string const& table_name, Value const& key) const override;
-    ResultFuture retrieve(std::string const& table_name, Value const& key, FieldList fields) const override;
-    SuccessFuture remove(std::string const& table_name, Value const& key) const override;
-    SuccessFuture truncate(std::string const& table_name) const override;
+    SuccessFuture apply(std::string const& table_name, Value const& key, ValueList values) override;
+    ResultFuture retrieve(std::string const& table_name, Value const& key) override;
+    ResultFuture retrieve(std::string const& table_name, Value const& key, FieldList fields) override;
+    SuccessFuture remove(std::string const& table_name, Value const& key) override;
+    SuccessFuture truncate(std::string const& table_name) override;
 
    private:
     mutable std::shared_mutex ks_mutex;

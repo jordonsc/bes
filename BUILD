@@ -79,6 +79,14 @@ bes_cc_library(
     ],
 )
 
+bes_cc_library(
+    name = "dbal.redis",
+    deps = [
+        ":dbal",
+        "@cpp_redis",
+    ],
+)
+
 # RPC service management
 bes_cc_library(
     name = "rpc",

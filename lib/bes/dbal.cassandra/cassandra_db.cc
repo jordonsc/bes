@@ -4,14 +4,14 @@
 #include <utility>
 
 #include "cassandra_result.h"
-#include "types.h"
+#include "constants.h"
 
 using namespace bes::dbal::wide;
 using cassandra::Connection;
 
 Cassandra::Cassandra(Context c) : WideColumnDb(std::move(c)), connection(getContext()) {}
 
-std::string Cassandra::getServerVersion() const
+std::string Cassandra::getServerVersion()
 {
     validateConnection();
 
@@ -53,7 +53,7 @@ std::string const& Cassandra::getKeyspace() const
     }
 }
 
-SuccessFuture Cassandra::createKeyspace(cassandra::Keyspace const& ks, bool if_not_exists) const
+SuccessFuture Cassandra::createKeyspace(cassandra::Keyspace const& ks, bool if_not_exists)
 {
     /*
      * CREATE KEYSPACE [IF NOT EXISTS] keyspace_name
@@ -97,7 +97,7 @@ SuccessFuture Cassandra::createKeyspace(cassandra::Keyspace const& ks, bool if_n
     return executeSuccess(cassandra::Query(cql));
 }
 
-SuccessFuture Cassandra::dropKeyspace(const std::string& ks_name, bool if_exists) const
+SuccessFuture Cassandra::dropKeyspace(const std::string& ks_name, bool if_exists)
 {
     /*
      * DROP KEYSPACE [IF EXISTS] keyspace_name;
@@ -108,7 +108,7 @@ SuccessFuture Cassandra::dropKeyspace(const std::string& ks_name, bool if_exists
     return executeSuccess(cassandra::Query(cql));
 }
 
-SuccessFuture Cassandra::createTable(std::string const& table_name, Schema const& schema, bool if_not_exists) const
+SuccessFuture Cassandra::createTable(std::string const& table_name, Schema const& schema)
 {
     /*
      * CREATE TABLE [IF NOT EXISTS] keyspace.table_name (
@@ -116,7 +116,7 @@ SuccessFuture Cassandra::createTable(std::string const& table_name, Schema const
      *    field_name field_type ...
      * );
      */
-    std::string cql = if_not_exists ? "CREATE TABLE IF NOT EXISTS " : "CREATE TABLE ";
+    std::string cql = "CREATE TABLE ";
     cql.append(getKeyspace())
         .append(".")
         .append(table_name)
@@ -131,12 +131,12 @@ SuccessFuture Cassandra::createTable(std::string const& table_name, Schema const
     return executeSuccess(cassandra::Query(cql));
 }
 
-SuccessFuture Cassandra::dropTable(std::string const& table_name, bool if_exists) const
+SuccessFuture Cassandra::dropTable(std::string const& table_name)
 {
     /*
      * DROP TABLE [IF EXISTS] keyspace.table_name;
      */
-    std::string cql = if_exists ? "DROP TABLE IF EXISTS " : "DROP TABLE ";
+    std::string cql = "DROP TABLE ";
     cql.append(getKeyspace()).append(".").append(table_name);
 
     return executeSuccess(cassandra::Query(cql));
@@ -149,7 +149,7 @@ void Cassandra::validateConnection() const
     }
 }
 
-SuccessFuture Cassandra::apply(std::string const& t, Value const& key, ValueList values) const
+SuccessFuture Cassandra::apply(std::string const& t, Value const& key, ValueList values)
 {
     /*
      * UPDATE keyspace.table_name SET field = ? [, field = ?] WHERE field = ?;
@@ -187,7 +187,7 @@ SuccessFuture Cassandra::apply(std::string const& t, Value const& key, ValueList
     return executeSuccess(std::move(q));
 }
 
-ResultFuture Cassandra::retrieve(std::string const& table_name, Value const& key) const
+ResultFuture Cassandra::retrieve(std::string const& table_name, Value const& key)
 {
     auto cql = std::string("SELECT * FROM ");
     cql.append(getKeyspace()).append(".").append(table_name);
@@ -199,7 +199,7 @@ ResultFuture Cassandra::retrieve(std::string const& table_name, Value const& key
     return execute(std::move(q));
 }
 
-ResultFuture Cassandra::retrieve(std::string const& table_name, Value const& key, FieldList fields) const
+ResultFuture Cassandra::retrieve(std::string const& table_name, Value const& key, FieldList fields)
 {
     auto cql = std::string("SELECT ");
 
@@ -223,7 +223,7 @@ ResultFuture Cassandra::retrieve(std::string const& table_name, Value const& key
     return execute(std::move(q));
 }
 
-SuccessFuture Cassandra::remove(std::string const& table_name, Value const& key) const
+SuccessFuture Cassandra::remove(std::string const& table_name, Value const& key)
 {
     auto cql = std::string("DELETE FROM ");
     cql.append(getKeyspace()).append(".").append(table_name);
@@ -235,7 +235,7 @@ SuccessFuture Cassandra::remove(std::string const& table_name, Value const& key)
     return executeSuccess(std::move(q));
 }
 
-SuccessFuture Cassandra::truncate(std::string const& table_name) const
+SuccessFuture Cassandra::truncate(std::string const& table_name)
 {
     auto cql = std::string("TRUNCATE TABLE ");
     cql.append(getKeyspace()).append(".").append(table_name).append(";");
@@ -389,6 +389,6 @@ void Cassandra::appendWhereClause(std::string& cql, Value const& key, bool final
         }
         cql.append(final ? ");" : ")");
     } else {
-        cql.append(final ? " = ?;" : ")");
+        cql.append(final ? " = ?;" : " = ?");
     }
 }

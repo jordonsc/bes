@@ -16,10 +16,10 @@ namespace bes::dbal::wide::bigtable {
 
 namespace cbt = google::cloud::bigtable;
 using WideRow = bes::dbal::wide::Row;
-using ResultFuture = bes::dbal::wide::ResultInterface;
+using bes::dbal::wide::ResultInterface;
 using RowIterator = cbt::RowReader::iterator;
 
-class CbtResult : public ResultFuture
+class CbtResult : public ResultInterface
 {
    public:
     CbtResult() = delete;

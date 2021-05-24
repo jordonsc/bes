@@ -14,7 +14,17 @@ class NotConnectedException : public DbalException
     using DbalException::DbalException;
 };
 
-class NoRecordException : public DbalException
+class DoesNotExistException : public DbalException
+{
+    using DbalException::DbalException;
+};
+
+class BadDataType : public DbalException
+{
+    using DbalException::DbalException;
+};
+
+class AlreadyExistsException : public DbalException
 {
     using DbalException::DbalException;
 };

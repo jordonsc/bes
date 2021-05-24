@@ -1,8 +1,9 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
-namespace bes::dbal::wide {
+namespace bes::dbal {
 
 enum class Datatype : char
 {
@@ -28,4 +29,4 @@ using Int64List = std::vector<Int64>;
 using Float32List = std::vector<Float32>;
 using Float64List = std::vector<Float64>;
 
-}  // namespace bes::dbal::wide
+}  // namespace bes::dbal

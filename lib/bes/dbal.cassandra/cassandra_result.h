@@ -13,7 +13,7 @@ namespace bes::dbal::wide::cassandra {
 class Query;
 
 using WideRow = bes::dbal::wide::Row;
-using ResultFuture = bes::dbal::wide::ResultInterface;
+using bes::dbal::wide::ResultInterface;
 
 class CassandraResult : public ResultInterface
 {

@@ -113,7 +113,14 @@ inline void Query::wait()
     CassError rc = cass_future_error_code(future.get());
     if (rc != CASS_OK) {
         mode = ExecMode::FAILED;
-        throw DbalException("Cassandra: " + Utility::getFutureErrMsg(future.get()));
+        auto err = Utility::getFutureErrMsg(future.get());
+        if (err.substr(0, 27) == "Cannot add already existing") {
+            throw AlreadyExistsException(err);
+        } else if (err.substr(0, 19) == "unconfigured table ") {
+            throw DoesNotExistException(err);
+        } else {
+            throw DbalException("Cassandra: " + err);
+        }
     }
 }
 

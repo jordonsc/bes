@@ -3,6 +3,7 @@
 
 #include <vector>
 
+using namespace bes::dbal;
 using namespace bes::dbal::wide;
 
 static char const* const TEST_SERVER = "localhost";
@@ -30,6 +31,7 @@ static bes::dbal::Context createContext()
 
 TEST(CassandraTest, Connection)
 {
+    ASSERT_NO_THROW({ auto throwaway = bes::dbal::wide::cassandra::Connection(createContext()); });
     auto con = bes::dbal::wide::cassandra::Connection(createContext());
     ASSERT_TRUE(con.isConnected());
 }
@@ -81,19 +83,13 @@ TEST(CassandraTest, TableCreation)
 
     Schema s({Datatype::Int32, "pk"}, std::move(fields));
 
-    ASSERT_NO_THROW({
-        db.createTable(TEST_TABLE, s, false).wait();
-        db.createTable(TEST_TABLE, s, true).wait();
-    });
+    EXPECT_NO_THROW({ db.createTable(TEST_TABLE, s).wait(); });
+    EXPECT_THROW({ db.createTable(TEST_TABLE, s).wait(); }, bes::dbal::AlreadyExistsException);
 
-    ASSERT_THROW({ db.createTable(TEST_TABLE, s, false).wait(); }, bes::dbal::DbalException);
+    EXPECT_NO_THROW({ db.dropTable(TEST_TABLE).wait(); });
+    EXPECT_THROW({ db.dropTable(TEST_TABLE).wait(); }, bes::dbal::DoesNotExistException);
 
-    ASSERT_NO_THROW({
-        db.dropTable(TEST_TABLE, false).wait();
-        db.dropTable(TEST_TABLE, true).wait();
-    });
-
-    ASSERT_THROW({ db.dropKeyspace(TEST_TABLE, false).wait(); }, bes::dbal::DbalException);
+    EXPECT_THROW({ db.dropKeyspace(TEST_TABLE, false).wait(); }, bes::dbal::DbalException);
 }
 
 TEST(CassandraTest, RowSemantics)
@@ -102,16 +98,19 @@ TEST(CassandraTest, RowSemantics)
     db.setKeyspace(TEST_KEYSPACE);
 
     db.createKeyspace(cassandra::Keyspace(TEST_KEYSPACE), true).wait();
-    db.dropTable(TEST_TABLE, true).wait();
-    db.createTable(TEST_TABLE, createTestSchema(), false).wait();
+    try {
+        db.dropTable(TEST_TABLE).wait();
+    } catch (bes::dbal::DoesNotExistException&) {
+    }
+    db.createTable(TEST_TABLE, createTestSchema()).wait();
 
     // Create test data, nb that we are omitting `flt` here, which should be a null value
     ValueList v;
     v.push_back(Value("str", "bar"));
     // NB: both insert and update are "upsert" statements, you could have used db.update() here, too
-    db.apply(TEST_TABLE, Value("pk", 5), std::move(v)).wait();
+    db.apply(TEST_TABLE, Value("pk", Int32(5)), std::move(v)).wait();
 
-    auto result = db.retrieve(TEST_TABLE, Value("pk", (Int32)5));
+    auto result = db.retrieve(TEST_TABLE, Value("pk", Int32(5)));
 
     // NB: not waiting here, the first call to anything (eg rowCount()) will immediate force the future to wait()
     EXPECT_EQ(result.rowCount(), 1);
@@ -155,15 +154,15 @@ TEST(CassandraTest, RowSemantics)
     // Will update the table, adding a non-null value for `flt`
     v.clear();
     v.push_back(Value("str", "hello world"));
-    v.push_back(Value("flt", (Float32)123.456));
+    v.push_back(Value("flt", Float32(123.456)));
     // NB: be careful with literals - the typecasting is very important and must match schema, ie does `5` == `(Int32)5`
     db.apply(TEST_TABLE, Value("pk", (Int32)5), std::move(v)).wait();
 
-    result = db.retrieve(TEST_TABLE, Value("pk", (Int32)5));
+    result = db.retrieve(TEST_TABLE, Value("pk", Int32(5)));
     EXPECT_TRUE(result.pop());
     Row const* row = result.row();
     ASSERT_NE(row, nullptr);
-    ASSERT_FLOAT_EQ(row->at("flt").as<Float32>(), (Float32)123.456);
+    ASSERT_FLOAT_EQ(row->at("flt").as<Float32>(), Float32(123.456));
     ASSERT_EQ(row->at("str").as<Text>(), "hello world");
 }
 
@@ -173,20 +172,23 @@ TEST(CassandraTest, DataCreation)
     db.setKeyspace(TEST_KEYSPACE);
 
     db.createKeyspace(cassandra::Keyspace(TEST_KEYSPACE), true).wait();
-    db.dropTable(TEST_TABLE, true).wait();
-    db.createTable(TEST_TABLE, createTestSchema(), false).wait();
+    try {
+        db.dropTable(TEST_TABLE).wait();
+    } catch (bes::dbal::DoesNotExistException&) {
+    }
+    db.createTable(TEST_TABLE, createTestSchema()).wait();
 
     // Table should be empty
-    auto result = db.retrieve(TEST_TABLE, Value("pk", (Int32)5));
+    auto result = db.retrieve(TEST_TABLE, Value("pk", Int32(5)));
     ASSERT_EQ(result.rowCount(), 0);
     EXPECT_FALSE(result.pop());
 
-    ValueList v = {{"str", "abc"}, {"flt", (Float32)123456.789}};
+    ValueList v = {{"str", "abc"}, {"flt", Float32(123456.789)}};
     db.apply(TEST_TABLE, {"pk", 5}, std::move(v)).wait();
 
     v.clear();  // NB: was moved, this is important
     v.push_back({"str", "def"});
-    v.push_back({"flt", (Float32)7.5});
+    v.push_back({"flt", Float32(7.5)});
 
     db.apply(TEST_TABLE, {"pk", 90}, std::move(v)).wait();
 
@@ -198,6 +200,16 @@ TEST(CassandraTest, DataCreation)
     EXPECT_EQ(result.columnCount(), 2);
     ASSERT_TRUE(result.pop());
     EXPECT_EQ(result.row()->at("str").as<Text>(), "abc");
+
+    // Overwrite existing data
+    v.clear();
+    v.push_back({"str", "deaded"});
+    v.push_back({"flt", Float32(44)});
+    db.apply(TEST_TABLE, {"pk", 90}, std::move(v)).wait();
+
+    result = db.retrieve(TEST_TABLE, {"pk", Int32(90)});
+    ASSERT_TRUE(result.pop());
+    EXPECT_EQ(result.row()->at("str").as<Text>(), "deaded");
 
     db.truncate(TEST_TABLE).wait();
 
@@ -212,13 +224,16 @@ TEST(CassandraTest, Iterators)
     db.setKeyspace(TEST_KEYSPACE);
 
     db.createKeyspace(cassandra::Keyspace(TEST_KEYSPACE), true).wait();
-    db.createTable(TEST_TABLE, createTestSchema(), true).wait();
+    try {
+        db.createTable(TEST_TABLE, createTestSchema()).wait();
+    } catch (bes::dbal::AlreadyExistsException&) {
+    }
 
     ValueList v;
     v.push_back({"str", "nice iterator"});
     db.apply(TEST_TABLE, {"pk", 1}, std::move(v)).wait();
 
-    auto result = db.retrieve(TEST_TABLE, {"pk", (Int32)1});
+    auto result = db.retrieve(TEST_TABLE, {"pk", Int32(1)});
 
     // Creating an iterator will call wait() on the future
     bool called = false;
@@ -235,7 +250,10 @@ TEST(CassandraTest, MultiKey)
     db.setKeyspace(TEST_KEYSPACE);
 
     db.createKeyspace(cassandra::Keyspace(TEST_KEYSPACE), true).wait();
-    db.createTable(TEST_TABLE, createTestSchema(), true).wait();
+    try {
+        db.createTable(TEST_TABLE, createTestSchema()).wait();
+    } catch (bes::dbal::AlreadyExistsException&) {
+    }
 
     ValueList v;
     v.push_back(Value("str", "row 1"));

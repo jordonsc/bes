@@ -16,13 +16,13 @@ class BigTable : public WideColumnDb
    public:
     explicit BigTable(Context c);
 
-    SuccessFuture createTable(const std::string& table_name, const Schema& schema, bool if_not_exists) const override;
-    SuccessFuture dropTable(const std::string& table_name, bool if_exists) const override;
-    SuccessFuture apply(const std::string& table_name, const Value& key, ValueList values) const override;
-    ResultFuture retrieve(const std::string& table_name, const Value& key) const override;
-    ResultFuture retrieve(const std::string& table_name, const Value& key, FieldList fields) const override;
-    SuccessFuture remove(const std::string& table_name, const Value& key) const override;
-    SuccessFuture truncate(const std::string& table_name) const override;
+    SuccessFuture createTable(const std::string& table_name, const Schema& schema) override;
+    SuccessFuture dropTable(const std::string& table_name) override;
+    SuccessFuture apply(const std::string& table_name, const Value& key, ValueList values) override;
+    ResultFuture retrieve(const std::string& table_name, const Value& key) override;
+    ResultFuture retrieve(const std::string& table_name, const Value& key, FieldList fields) override;
+    SuccessFuture remove(const std::string& table_name, const Value& key) override;
+    SuccessFuture truncate(const std::string& table_name) override;
 
    protected:
     bigtable::Credentials credentials;

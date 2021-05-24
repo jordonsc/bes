@@ -19,7 +19,7 @@ BigTable::BigTable(Context c) : WideColumnDb(std::move(c)), credentials(getConte
  *
  * When creating a table here, we'll use a standard rule of MaxNumVersions(1).
  */
-SuccessFuture BigTable::createTable(std::string const& table_name, Schema const& schema, bool if_not_exists) const
+SuccessFuture BigTable::createTable(std::string const& table_name, Schema const& schema)
 {
     /*
     std::map<std::string, cbt::GcRule> col_families;
@@ -44,7 +44,7 @@ SuccessFuture BigTable::createTable(std::string const& table_name, Schema const&
     return SuccessFuture(false);
 }
 
-SuccessFuture BigTable::dropTable(std::string const& table_name, bool if_exists) const
+SuccessFuture BigTable::dropTable(std::string const& table_name)
 {
     // Delete a table
     auto status = getTableAdmin().DeleteTable(table_name);
@@ -56,7 +56,7 @@ SuccessFuture BigTable::dropTable(std::string const& table_name, bool if_exists)
     return SuccessFuture(status.ok());
 }
 
-SuccessFuture BigTable::apply(std::string const& table_name, Value const& key, ValueList values) const
+SuccessFuture BigTable::apply(std::string const& table_name, Value const& key, ValueList values)
 {
     cbt::SingleRowMutation mutation(getKeyFromValue(key));
 
@@ -75,11 +75,8 @@ SuccessFuture BigTable::apply(std::string const& table_name, Value const& key, V
                     cbt::SetCell("", v.getQualifier(), timestamp, std::any_cast<Text&&>(v.consumeValue())));
                 break;
             case Datatype::Boolean:
-                mutation.emplace_back(cbt::SetCell(
-                    "",
-                    v.getQualifier(),
-                    timestamp,
-                    std::any_cast<Boolean>(v.getValue()) ? "1" : "0"));
+                mutation.emplace_back(
+                    cbt::SetCell("", v.getQualifier(), timestamp, std::any_cast<Boolean>(v.getValue()) ? "1" : "0"));
                 break;
             case Datatype::Int32: {
                 auto i32 = std::any_cast<Int32>(v.getValue());
@@ -124,7 +121,7 @@ SuccessFuture BigTable::apply(std::string const& table_name, Value const& key, V
     return SuccessFuture(status.ok());
 }
 
-ResultFuture BigTable::retrieve(std::string const& table_name, Value const& key) const
+ResultFuture BigTable::retrieve(std::string const& table_name, Value const& key)
 {
     using google::cloud::bigtable::Filter;
 
@@ -134,18 +131,18 @@ ResultFuture BigTable::retrieve(std::string const& table_name, Value const& key)
         getTable(table_name).ReadRows(std::move(rs), Filter::PassAllFilter())));
 }
 
-ResultFuture BigTable::retrieve(std::string const& table_name, Value const& key, FieldList fields) const
+ResultFuture BigTable::retrieve(std::string const& table_name, Value const& key, FieldList fields)
 {
     // auto filter = Filter::Chain(google::cloud::bigtable::Filter::ColumnName());
     return retrieve(table_name, key);
 }
 
-SuccessFuture BigTable::remove(std::string const& table_name, Value const& key) const
+SuccessFuture BigTable::remove(std::string const& table_name, Value const& key)
 {
     return SuccessFuture(false);
 }
 
-SuccessFuture BigTable::truncate(std::string const& table_name) const
+SuccessFuture BigTable::truncate(std::string const& table_name)
 {
     return SuccessFuture(false);
 }

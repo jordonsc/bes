@@ -70,7 +70,6 @@ RedisSessionMgr* RedisSessionMgr::fromConfig(bes::Config const& config)
 
 void RedisSessionMgr::connect()
 {
-    using namespace std::placeholders;
     auto log = [this](auto&& host, auto&& port, auto&& status) {
         logConnectStatus(host, port, status);
     };

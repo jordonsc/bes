@@ -3,10 +3,10 @@
 #include <functional>
 #include <utility>
 
-namespace bes::dbal::wide {
+namespace bes::dbal::kv {
 
 /**
- * Determines if a result was successful or failed in the form of a future.
+ * Determines if a result was successful or failed, in the form of a future.
  *
  * Construct an instance by passing a lambda that should close your future and return a result.
  *
@@ -41,7 +41,7 @@ class SuccessFuture final
      *
      * Will throw an exception on error.
      */
-    inline bool ok()
+    [[nodiscard]] inline bool ok()
     {
         return lambda();
     }
@@ -50,4 +50,4 @@ class SuccessFuture final
     FnSig lambda;
 };
 
-}  // namespace bes::dbal::wide
+}  // namespace bes::dbal::kv

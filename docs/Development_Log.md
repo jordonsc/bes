@@ -1,6 +1,28 @@
 Development Log
 ===============
 
+2021-05-xx (JS)
+---------------
+### DBAL
+* Added Redis to the DBAL as a key-value store
+* Key-value databases will support a TTL
+* Key-value databases will support "if not exists" logic
+* Wide-column databases will NOT support "if not exists" logic
+* Database call functions are no longer `const` qualified
+
+A bit of refactoring has been done to the wide-column interface, notably removing the "if exists" boolean logic to
+some of the create/drop calls. Instead an exception should be raised. This was done for the simplicity of the interface
+as default values don't work well on abstract classes.
+
+The "if not exists" on write operations makes sense for Redis, but on wide-column databases, typically a Paxos or 
+similar implementation, this has very serious ramifications that aren't easily understood by someone looking at the
+difference between a call to `apply()` or `applyNx()` (not exists), and the logic of `applyNx()` can vary dramatically
+depending on how the database cluster is configured.
+
+With Redis added to the DBAL, an obvious next step would be to look at the `web.redis` library and refactor it to use
+the DBAL instead, making it more of a `web.sessions` module supporting any DBAL K/V implementation.
+
+
 2021-05-23 (JS)
 ---------------
 ### DBAL
