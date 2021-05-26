@@ -70,6 +70,12 @@ TEST(RedisTest, IntegerData)
     db.apply("num", Int64(10)).wait();
     EXPECT_EQ(db.retrieve("num").asInt(), 10);
 
+    db.applyNx("num", Int64(12)).wait();
+    EXPECT_EQ(db.retrieve("num").asInt(), 10);
+
+    db.applyNx("num-nx", Int64(12)).wait();
+    EXPECT_EQ(db.retrieve("num-nx").asInt(), 12);
+
     db.offset("num", Int64(3)).wait();
     EXPECT_EQ(db.retrieve("num").asInt(), 13);
 
@@ -81,4 +87,30 @@ TEST(RedisTest, IntegerData)
     db.apply("notanum", "hola");
     db.offset("notanum", Int64(3));  // nothing will happen
     EXPECT_THROW(db.retrieve("notanum").asInt(), BadDataType);
+}
+
+TEST(RedisTest, FloatData)
+{
+    auto db = createDatabase();
+
+    db.apply("float", Float64(10.1)).wait();
+    EXPECT_EQ(db.retrieve("float").asFloat(), 10.1);
+
+    db.applyNx("float", Float64(12.1)).wait();
+    EXPECT_EQ(db.retrieve("float").asFloat(), 10.1);
+
+    db.applyNx("float-nx", Float64(12.5)).wait();
+    EXPECT_EQ(db.retrieve("float-nx").asFloat(), 12.5);
+
+    db.offset("float", Float64(3.3)).wait();
+    EXPECT_EQ(db.retrieve("float").asFloat(), 13.4);
+
+    db.offset("float", Float64(-5.2)).wait();
+    EXPECT_EQ(db.retrieve("float").asFloat(), 8.2);
+
+    EXPECT_EQ(db.retrieve("float").asString(), "8.2");
+
+    db.apply("notanum", "hola");
+    db.offset("notanum", Float64(3.1));  // nothing will happen
+    EXPECT_THROW(db.retrieve("notanum").asFloat(), BadDataType);
 }

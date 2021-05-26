@@ -144,7 +144,12 @@ SuccessFuture Redis::offset(std::string const& key, bes::dbal::Int64 offset)
     return createSuccessFuture(f.share(), key);
 }
 
-SuccessFuture Redis::offset(std::string const& key, bes::dbal::Float64 offset) {}
+SuccessFuture Redis::offset(std::string const& key, bes::dbal::Float64 offset)
+{
+    auto f = client.incrbyfloat(key, offset);
+    client.commit();
+    return createSuccessFuture(f.share(), key);
+}
 
 ResultFuture Redis::ttl(std::string const& key) {}
 
