@@ -53,6 +53,14 @@ TEST(RedisTest, StringData)
     auto f = db.retrieve("key1");
     EXPECT_NO_THROW(f.wait());
     EXPECT_EQ(f.asString(), "");
+
+    // Test the -not-exists functions
+    EXPECT_TRUE(db.applyNx("key 2", "value nx").ok());
+    EXPECT_EQ(db.retrieve("key 2").asString(), "value 2");
+
+    // Test that on a value that doesn't exist
+    EXPECT_TRUE(db.apply("key 4", "value nx").ok());
+    EXPECT_EQ(db.retrieve("key 4").asString(), "value nx");
 }
 
 TEST(RedisTest, IntegerData)

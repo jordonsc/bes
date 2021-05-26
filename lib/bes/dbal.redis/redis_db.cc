@@ -100,11 +100,26 @@ SuccessFuture Redis::apply(std::string const& key, bes::dbal::Float64 value)
     return createSuccessFuture(f.share(), key);
 }
 
-SuccessFuture Redis::applyNx(std::string const& key, std::string const& value) {}
+SuccessFuture Redis::applyNx(std::string const& key, std::string const& value)
+{
+    auto f = client.setnx(key, value);
+    client.commit();
+    return createSuccessFuture(f.share(), key);
+}
 
-SuccessFuture Redis::applyNx(std::string const& key, bes::dbal::Int64 value) {}
+SuccessFuture Redis::applyNx(std::string const& key, bes::dbal::Int64 value)
+{
+    auto f = client.setnx(key, std::to_string(value));
+    client.commit();
+    return createSuccessFuture(f.share(), key);
+}
 
-SuccessFuture Redis::applyNx(std::string const& key, bes::dbal::Float64 value) {}
+SuccessFuture Redis::applyNx(std::string const& key, bes::dbal::Float64 value)
+{
+    auto f = client.setnx(key, std::to_string(value));
+    client.commit();
+    return createSuccessFuture(f.share(), key);
+}
 
 ResultFuture Redis::retrieve(std::string const& key)
 {
