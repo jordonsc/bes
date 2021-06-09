@@ -11,7 +11,7 @@ All tests are run via Bazel's test functionality:
     bazel test //test:all
     
     # Run all unit tests (skip integration tests):
-    bazel test //test:all --test_tag_filter=-integration
+    bazel test //test:all --test_tag_filters=-integration
 
 The `.bazelrc` file will instruct the test command output only to be verbose on failure.
 
@@ -39,4 +39,4 @@ To create/delete a Google Bigtable instance for testing:
 
 You can now run the integration tests:
 
-    bazel test //test:all --test_tag_filter=integration
+    bazel test //test:all --test_tag_filters=integration

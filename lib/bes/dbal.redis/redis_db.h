@@ -2,6 +2,8 @@
 
 #include <bes/dbal.h>
 
+#include <atomic>
+
 #include "redis_result.h"
 
 namespace bes::dbal::kv {
@@ -39,7 +41,12 @@ class Redis : public KeyValueDb
     SuccessFuture expire(std::string const& key, size_t ttl) override;
     SuccessFuture persist(std::string const& key) override;
 
+    // Batch operations
+    void beginBatch() override;
+    void commitBatch() override;
+
    protected:
+    std::atomic<bool> in_batch = false;
     cpp_redis::client client;
     static SuccessFuture createSuccessFuture(std::shared_future<cpp_redis::reply> f, std::string key);
     static ResultFuture createResultFuture(std::shared_future<cpp_redis::reply> f, std::string key);

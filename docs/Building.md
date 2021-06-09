@@ -30,6 +30,15 @@ OS. You require the Cassandra driver and the and `libuv` package.
 
 You only need the above to use the DBAL library.
 
+### Ubuntu Quick Steps
+
+    declare -a packages=(
+        "http://security.ubuntu.com/ubuntu/pool/main/g/glibc/multiarch-support_2.27-3ubuntu1.2_amd64.deb"
+        "https://downloads.datastax.com/cpp-driver/ubuntu/18.04/cassandra/v2.16.0/cassandra-cpp-driver_2.16.0-1_amd64.deb"
+        "https://downloads.datastax.com/cpp-driver/ubuntu/18.04/dependencies/libuv/v1.35.0/libuv1_1.35.0-1_amd64.deb"
+    )    
+    for pkg in "${packages[@]}"; do wget -O /tmp/pkg.deb "${pkg}" && dpkg -i /tmp/pkg.deb && rm -f /tmp/pkg.deb; done 
+
 Building Libraries
 ------------------
 To build an application, use the `build` command with a Bazel build target path:

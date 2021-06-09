@@ -21,9 +21,9 @@ void Redis::connect()
     auto const& ctx = getContext();
 
     // Common connection config options
-    uint32_t timeout = std::atoi(ctx.getOr(redis::CFG_CON_TIMEOUT, redis::DEFAULT_CON_TIMEOUT).c_str());
-    int32_t max_connects = std::atoi(ctx.getOr(redis::CFG_MAX_RECONNECTS, redis::DEFAULT_MAX_RECONNECTS).c_str());
-    uint32_t backoff = std::atoi(ctx.getOr(redis::CFG_CON_TIMEOUT, redis::DEFAULT_CON_TIMEOUT).c_str());
+    uint32_t timeout = std::stoi(ctx.getOr(redis::CFG_CON_TIMEOUT, redis::DEFAULT_CON_TIMEOUT));
+    int32_t max_connects = std::stoi(ctx.getOr(redis::CFG_MAX_RECONNECTS, redis::DEFAULT_MAX_RECONNECTS));
+    uint32_t backoff = std::stoi(ctx.getOr(redis::CFG_CON_TIMEOUT, redis::DEFAULT_CON_TIMEOUT));
 
     if (ctx.hasParameter(redis::CFG_SENTINEL_SVC)) {
         // Sentinel connection
@@ -36,7 +36,7 @@ void Redis::connect()
         }
     } else if (ctx.hasParameter(redis::CFG_HOSTNAME)) {
         // Direct server connection
-        size_t port = std::atoi(ctx.getOr(redis::CFG_PORT, redis::DEFAULT_PORT).c_str());
+        size_t port = std::stoi(ctx.getOr(redis::CFG_PORT, redis::DEFAULT_PORT));
         try {
             client.connect(ctx.getParameter(redis::CFG_HOSTNAME), port, log, timeout, max_connects, backoff);
         } catch (std::exception const& e) {
@@ -173,4 +173,23 @@ SuccessFuture Redis::createSuccessFuture(std::shared_future<cpp_redis::reply> f,
 ResultFuture Redis::createResultFuture(std::shared_future<cpp_redis::reply> ftr, std::string key)
 {
     return ResultFuture(std::make_shared<redis::RedisResult>(std::move(ftr), std::move(key)));
+}
+
+void Redis::beginBatch()
+{
+    if (in_batch) {
+        throw DbalException("Redis batch operation already begun, cannot start new batch");
+    }
+
+    in_batch = true;
+}
+
+void Redis::commitBatch()
+{
+    if (!in_batch) {
+        throw DbalException("Redis batch operation NOT begun, cannot commit batch");
+    }
+
+    client.commit();
+    in_batch = false;
 }

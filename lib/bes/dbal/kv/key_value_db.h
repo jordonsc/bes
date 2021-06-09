@@ -69,6 +69,25 @@ class KeyValueDb : public ContextualDatabase
      * Remove the TTL from a key, allowing it to live indefinitely.
      */
     virtual SuccessFuture persist(std::string const& key) = 0;
+
+    // Batching calls
+    /**
+     * Begin a batch operation.
+     *
+     * All successive calls will not begin until `commitBatch()` is called. If you have already begun a batch operation
+     * and not committed it, an exception will be thrown.
+     *
+     * Attempting to acquire the value of a future without calling `commitBatch()` is called will result in a hang.
+     */
+    virtual void beginBatch() = 0;
+
+    /**
+     * Commit a batch operation.
+     *
+     * All calls raised since `beginBatch()` will now be sent to the server. If a batch operation has not been started,
+     * an exception will be thrown.
+     */
+    virtual void commitBatch() = 0;
 };
 
 }  // namespace bes::dbal::kv
