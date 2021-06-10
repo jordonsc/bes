@@ -128,13 +128,18 @@ ResultFuture Redis::retrieve(std::string const& key)
     return createResultFuture(f.share(), key);
 }
 
-SuccessFuture Redis::remove(std::string const& key) {}
+SuccessFuture Redis::remove(std::string const& key)
+{
+    auto f = client.del({key});
+    client.commit();
+    return createSuccessFuture(f.share(), key);
+}
 
 SuccessFuture Redis::truncate()
 {
     auto f = client.flushdb();
     client.commit();
-    return createSuccessFuture(f.share(), "(truncate)");
+    return createSuccessFuture(f.share(), std::string());
 }
 
 SuccessFuture Redis::offset(std::string const& key, bes::dbal::Int64 offset)
@@ -177,19 +182,20 @@ ResultFuture Redis::createResultFuture(std::shared_future<cpp_redis::reply> ftr,
 
 void Redis::beginBatch()
 {
-    if (in_batch) {
+    if (in_batch.load(std::memory_order_consume)) {
         throw DbalException("Redis batch operation already begun, cannot start new batch");
     }
 
-    in_batch = true;
+    in_batch.store(true, std::memory_order_release);
 }
 
 void Redis::commitBatch()
 {
-    if (!in_batch) {
+    if (!in_batch.load(std::memory_order_acquire)) {
         throw DbalException("Redis batch operation NOT begun, cannot commit batch");
     }
 
     client.commit();
-    in_batch = false;
+
+    in_batch.store(false, std::memory_order_release);
 }
