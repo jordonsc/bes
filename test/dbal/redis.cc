@@ -114,3 +114,41 @@ TEST(RedisTest, FloatData)
     db.offset("notanum", Float64(3.1));  // nothing will happen
     EXPECT_THROW(db.retrieve("notanum").asFloat(), BadDataType);
 }
+
+TEST(RedisTest, Transactions)
+{
+    auto db = createDatabase();
+    db.truncate().wait();
+    db.apply("trans_test_a", "foo").wait();
+
+    // Test abandoning the transaction
+    EXPECT_TRUE(db.beginTransaction().ok());
+    db.apply("trans_test", "some data").wait();
+    db.apply("trans_test_a", "bar").wait();
+    EXPECT_TRUE(db.discardTransaction().ok());
+
+    EXPECT_EQ(db.retrieve("trans_test_a").asString(), "foo");
+    EXPECT_THROW(db.retrieve("trans_test").wait(), DoesNotExistException);
+
+    // Commit now, record should exist
+    db.beginTransaction();
+    db.apply("trans_test", "some data");
+    db.apply("trans_test_a", "bar");
+    db.commitTransaction().wait();
+
+    EXPECT_EQ(db.retrieve("trans_test").asString(), "some data");
+    EXPECT_EQ(db.retrieve("trans_test_a").asString(), "bar");
+
+    // Apply and retrieve in the same transaction
+    db.beginTransaction();
+    auto a1 = db.apply("trans_test", "new data");
+    auto a2 = db.apply("trans_test_a", "hello world");
+    auto b = db.retrieve("trans_test");
+    auto ba = db.retrieve("trans_test_a");
+    db.commitTransaction();
+
+    EXPECT_TRUE(a1.ok());
+    EXPECT_TRUE(a2.ok());
+    EXPECT_NE(b.asString(), "new data");    // Redis will return "QUEUED" for uncommitted retrievals
+    EXPECT_NE(ba.asString(), "hello world");
+}

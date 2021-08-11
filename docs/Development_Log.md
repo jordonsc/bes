@@ -1,7 +1,18 @@
 Development Log
 ===============
 
-2021-05-xx (JS)
+2021-08-11 (JS)
+---------------
+### DBAL
+* Cassandra v4 support added
+* Completed Redis transaction support
+
+Cassandra v4 changed some error messages. The unit tests have been updated to force a v4 server (what you'll get if
+you do a docker pull with the latest image), but this pulls into the limelight the need for the tests to run against
+multiple server versions, which at current there is no facility to do.
+
+
+2021-05-27 (JS)
 ---------------
 ### DBAL
 * Added Redis to the DBAL as a key-value store

@@ -116,7 +116,9 @@ inline void Query::wait()
         auto err = Utility::getFutureErrMsg(future.get());
         if (err.substr(0, 27) == "Cannot add already existing") {
             throw AlreadyExistsException(err);
-        } else if (err.substr(0, 19) == "unconfigured table ") {
+        } else if (err.substr(0, 19) == "unconfigured table ") {    // v3 error
+            throw DoesNotExistException(err);
+        } else if (err.substr(err.size() - 14) == " doesn't exist") {    // v4 error
             throw DoesNotExistException(err);
         } else {
             throw DbalException("Cassandra: " + err);

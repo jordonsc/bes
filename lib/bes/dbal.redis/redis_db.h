@@ -41,12 +41,13 @@ class Redis : public KeyValueDb
     SuccessFuture expire(std::string const& key, size_t ttl) override;
     SuccessFuture persist(std::string const& key) override;
 
-    // Batch operations
-    void beginBatch() override;
-    void commitBatch() override;
+    // Transactions
+    SuccessFuture beginTransaction() override;
+    SuccessFuture commitTransaction() override;
+    SuccessFuture discardTransaction() override;
 
    protected:
-    std::atomic<bool> in_batch = false;
+    std::atomic<bool> in_transaction = false;
     cpp_redis::client client;
     static SuccessFuture createSuccessFuture(std::shared_future<cpp_redis::reply> f, std::string key);
     static ResultFuture createResultFuture(std::shared_future<cpp_redis::reply> f, std::string key);

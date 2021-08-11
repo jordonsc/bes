@@ -180,22 +180,44 @@ ResultFuture Redis::createResultFuture(std::shared_future<cpp_redis::reply> ftr,
     return ResultFuture(std::make_shared<redis::RedisResult>(std::move(ftr), std::move(key)));
 }
 
-void Redis::beginBatch()
+SuccessFuture Redis::beginTransaction()
 {
-    if (in_batch.load(std::memory_order_consume)) {
-        throw DbalException("Redis batch operation already begun, cannot start new batch");
+    if (in_transaction.load(std::memory_order_consume)) {
+        throw DbalException("Redis transaction already begun, cannot start new transaction");
     }
 
-    in_batch.store(true, std::memory_order_release);
-}
+    in_transaction.store(true, std::memory_order_release);
 
-void Redis::commitBatch()
-{
-    if (!in_batch.load(std::memory_order_acquire)) {
-        throw DbalException("Redis batch operation NOT begun, cannot commit batch");
-    }
-
+    auto f = client.multi();
     client.commit();
 
-    in_batch.store(false, std::memory_order_release);
+    return createSuccessFuture(f.share(), std::string());
 }
+
+SuccessFuture Redis::commitTransaction()
+{
+    if (!in_transaction.load(std::memory_order_acquire)) {
+        throw DbalException("Redis transaction NOT begun, cannot commit transaction");
+    }
+
+    auto f = client.exec();
+    client.commit();
+
+    in_transaction.store(false, std::memory_order_release);
+
+    return createSuccessFuture(f.share(), std::string());
+}
+
+SuccessFuture Redis::discardTransaction() {
+    if (!in_transaction.load(std::memory_order_acquire)) {
+        throw DbalException("Redis batch operation NOT begun, cannot discard batch");
+    }
+
+    auto f = client.discard();
+    client.commit();
+
+    in_transaction.store(false, std::memory_order_release);
+
+    return createSuccessFuture(f.share(), std::string());
+}
+

@@ -70,24 +70,30 @@ class KeyValueDb : public ContextualDatabase
      */
     virtual SuccessFuture persist(std::string const& key) = 0;
 
-    // Batching calls
+    // Transactions
     /**
-     * Begin a batch operation.
+     * Begin a transaction.
      *
-     * All successive calls will not begin until `commitBatch()` is called. If you have already begun a batch operation
-     * and not committed it, an exception will be thrown.
-     *
-     * Attempting to acquire the value of a future without calling `commitBatch()` is called will result in a hang.
+     * All successive calls will be sent to the server but not committed until `commitTransaction()` is called. If you
+     * have already begun a transaction and not committed it, an exception will be thrown.
      */
-    virtual void beginBatch() = 0;
+    virtual SuccessFuture beginTransaction() = 0;
 
     /**
-     * Commit a batch operation.
+     * Commit and execute a transaction.
      *
-     * All calls raised since `beginBatch()` will now be sent to the server. If a batch operation has not been started,
+     * All calls raised since `beginTransaction()` will now be executed on the server. If a transaction has not been
+     * started an exception will be thrown.
+     */
+    virtual SuccessFuture commitTransaction() = 0;
+
+    /**
+     * Discard a transaction.
+     *
+     * All calls raised since `beginTransaction()` will be discarded. If a transaction has not been started,
      * an exception will be thrown.
      */
-    virtual void commitBatch() = 0;
+    virtual SuccessFuture discardTransaction() = 0;
 };
 
 }  // namespace bes::dbal::kv

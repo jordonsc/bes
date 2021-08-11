@@ -7,7 +7,7 @@ using namespace bes::dbal;
 using namespace bes::dbal::wide;
 
 static char const* const TEST_SERVER = "localhost";
-static char const* const TEST_SERVER_VERSION = "3.";  // test server should be Cassandra 3.x
+static char const* const TEST_SERVER_VERSION = "4.";  // test server should be Cassandra 4.x
 static char const* const TEST_KEYSPACE = "test_ks";
 static char const* const TEST_TABLE = "test_table";
 
@@ -40,7 +40,7 @@ TEST(CassandraTest, ServerVersion)
 {
     // Constructed via connection rvalue copy
     auto db = Cassandra(createContext());
-    EXPECT_EQ(db.getServerVersion().substr(0, 2), TEST_SERVER_VERSION);
+    ASSERT_EQ(db.getServerVersion().substr(0, 2), TEST_SERVER_VERSION);
     EXPECT_EQ(db.getServerVersion().substr(0, 2), TEST_SERVER_VERSION);  // ensure consecutive queries work
 }
 
