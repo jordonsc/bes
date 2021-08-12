@@ -18,8 +18,8 @@ class TemplateApp : public bes::app::Application
     void configureCli(bes::cli::Parser& parser) override;
 
    protected:
-    virtual void ConfigureServer(bes::web::WebServer& svr) = 0;
-    virtual void RegisterControllers(bes::web::MappedRouter&) = 0;
+    virtual void configureServer(bes::web::WebServer& svr) = 0;
+    virtual void registerControllers(bes::web::MappedRouter&) = 0;
 
     std::unique_ptr<bes::web::WebServer> svc;
     std::string build;

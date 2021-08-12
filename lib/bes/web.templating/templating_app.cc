@@ -62,7 +62,7 @@ void TemplateApp::bootstrap()
     }
 
     // Controllers
-    RegisterControllers(*router);
+    registerControllers(*router);
 }
 
 void TemplateApp::loadTemplates(std::string const& fn)
@@ -138,7 +138,7 @@ void TemplateApp::run()
     svc->addRouter(kernel().getContainer().get<bes::web::MappedRouter>("router"));
 
     // Allow the app to add a session manager or other configuration
-    ConfigureServer(*(svc.get()));
+    configureServer(*(svc.get()));
 
     auto session_cookie = kernel().getConfig().getOr<std::string>("bsn", "web", "sessions", "cookie");
     auto session_prefix = kernel().getConfig().getOr<std::string>("S", "web", "sessions", "prefix");

@@ -105,7 +105,7 @@ class Kernel : public KernelInterface
      * If the argument is not a nullptr, it will be executed between the Init() and Run() calls. This is the ideal place
      * to put a discovery interface builder which would require the kernel's container to be built.
      */
-    int Execute(std::function<int()> const& builder = nullptr);
+    int execute(std::function<int()> const& builder = nullptr);
 
     /**
      * Configure the CLI, config, etc.
@@ -125,19 +125,19 @@ class Kernel : public KernelInterface
     /**
      * Request the entire kernel and application shutdown and exit.
      */
-    void Shutdown();
+    void shutdown();
 
     /**
      * Check if we've had a termination request.
      *
      * Returns with the signal that was used to request a shutdown, or zero if no shutdown has been requested.
      */
-    int ExitRequestStatus();
+    int exitRequestStatus();
 
     /**
      * Block indefinitely until a shutdown request is made.
      */
-    void WaitForExit();
+    void waitForExit();
 
     /**
      * Wait until a shutdown request is made or given `time` has expired.
@@ -145,7 +145,7 @@ class Kernel : public KernelInterface
      * Returns true if a shutdown request was made, else false.
      */
     template <class R>
-    bool WaitForExit(std::chrono::duration<R> const& time);
+    bool waitForExit(std::chrono::duration<R> const& time);
 
    private:
     std::unique_ptr<AppT> app;
@@ -164,7 +164,7 @@ class Kernel : public KernelInterface
      * Will send a condition_variable notify_all when a signal has been received. You can use ExitRequestStatus() to
      * check the signal sent.
      */
-    void InitSignalInterception();
+    void initSignalInterception();
 
     /**
      * Run code in this function to control the way the application terminates.
@@ -175,24 +175,24 @@ class Kernel : public KernelInterface
      *
      * To control the exit code without logging any output, use a SilentExitException or a ManagedExitException.
      */
-    int ErrorControlledExecution(std::function<int()> const& f);
+    int errorControlledExecution(std::function<int()> const& f);
 
     /**
      * This will respond to CLI arguments such as --help, --version, etc.
      */
-    int ExecuteKernelCli();
+    int executeKernelCli();
 
     /// Load the DI container with some core data and services
-    void WaitForDI();
+    void waitForDi();
 
     /// Builds the logger
-    void InitLogger(size_t verbosity = 0);
+    void initLogger(size_t verbosity = 0);
 
     /// Runs the config parser, if a valid file exists
-    void InitConfig();
+    void initConfig();
 
     /// Load the DI container with some core data and services
-    void LoadContainer();
+    void loadContainer();
 };
 
 template <class AppT>
@@ -212,34 +212,34 @@ int Kernel<AppT>::init()
     has_inited = true;
 
     // From here on in, we'll run in an exception handler
-    return ErrorControlledExecution([this] {
+    return errorControlledExecution([this] {
         app.get()->configureCli(cli_parser);
         cli_parser.parse(argc, argv);
 
         try {
             // Init the logger according to the verbosity in the CLI
-            InitLogger(cli_parser["verbose"].count());
+            initLogger(cli_parser["verbose"].count());
         } catch (bes::cli::NoSuchArgumentException&) {
             // App removed the standard --verbose option, cannot alter default verbosity
-            InitLogger();
+            initLogger();
         }
 
         BES_LOG(INFO) << "Init <" << app.get()->getKey() << ">";
 
         // Load the configuration file, will consider the --config option from the CLI if present
-        InitConfig();
+        initConfig();
 
         // Bootstrap the service container with some base values & services
-        LoadContainer();
+        loadContainer();
 
         // Allow the kernel to respond to CLI commands (such as --help or --version) before starting the app
-        int cli_result = ExecuteKernelCli();
+        int cli_result = executeKernelCli();
         if (cli_result != static_cast<int>(ExitCode::SUCCESS)) {
             return cli_result;
         }
 
         // Block signals from here-on in
-        InitSignalInterception();
+        initSignalInterception();
 
         return static_cast<int>(ExitCode::SUCCESS);
     });
@@ -252,7 +252,7 @@ int Kernel<AppT>::run()
         throw std::runtime_error("Attempted to run application before initialising kernel");
     }
 
-    return ErrorControlledExecution([this] {
+    return errorControlledExecution([this] {
         // If the application didn't create a DiscoveryInterface before executing Run(), we'll create a standard Sidecar
         // now. If this model isn't appropriate, consider creating one in a lambda function passed to Exec().
         if (!di_t::hasDiscoveryInterface()) {
@@ -261,7 +261,7 @@ int Kernel<AppT>::run()
         }
 
         // Wait for the DiscoveryInterface to come online
-        WaitForDI();
+        waitForDi();
 
         /**
          * The Application may now start its main processing. We expect the app to start a thread for a process loop and
@@ -272,7 +272,7 @@ int Kernel<AppT>::run()
         // Wait for shutdown
         // The only way to pass this point is to send a SIGINT or SIGTERM (as Kernel::Shutdown() does)
         BES_LOG(NOTICE) << "Service <" << app.get()->getKey() << "> (" << app.get()->getName() << ") online";
-        WaitForExit();
+        waitForExit();
 
         // Allow additional signals to kill us if we're taking too long
         pthread_sigmask(SIG_UNBLOCK, &signal_intercept, nullptr);
@@ -282,7 +282,7 @@ int Kernel<AppT>::run()
         app.get()->shutdown();
         di_t::getDiscoveryInterface()->shutdown();
 
-        return signalToExitCode(ExitRequestStatus());
+        return signalToExitCode(exitRequestStatus());
     });
 }
 
@@ -293,7 +293,7 @@ int Kernel<AppT>::run()
  * allowing it to still be fully POSIX compliant.
  */
 template <class AppT>
-void Kernel<AppT>::InitSignalInterception()
+void Kernel<AppT>::initSignalInterception()
 {
     sigemptyset(&signal_intercept);
 
@@ -337,7 +337,7 @@ void Kernel<AppT>::InitSignalInterception()
 }
 
 template <class AppT>
-inline void Kernel<AppT>::InitLogger(size_t verbosity)
+inline void Kernel<AppT>::initLogger(size_t verbosity)
 {
     using bes::log::LogFormat;
     using bes::log::Severity;
@@ -360,7 +360,7 @@ inline void Kernel<AppT>::InitLogger(size_t verbosity)
 }
 
 template <class AppT>
-void Kernel<AppT>::InitConfig()
+void Kernel<AppT>::initConfig()
 {
     try {
         try {
@@ -388,11 +388,11 @@ void Kernel<AppT>::InitConfig()
 }
 
 template <class AppT>
-int Kernel<AppT>::ExecuteKernelCli()
+int Kernel<AppT>::executeKernelCli()
 {
     try {
         if (cli_parser["help"].present()) {
-            std::cout << app.get()->usage();
+            std::cout << app.get()->getUsage();
             return static_cast<int>(ExitCode::CLI_SUCCESS);
         }
     } catch (bes::cli::NoSuchArgumentException&) {
@@ -411,7 +411,7 @@ int Kernel<AppT>::ExecuteKernelCli()
 }
 
 template <class AppT>
-void Kernel<AppT>::LoadContainer()
+void Kernel<AppT>::loadContainer()
 {
     std::string const key = app.get()->getKey();
 
@@ -426,17 +426,17 @@ void Kernel<AppT>::LoadContainer()
 template <class AppT>
 std::string Kernel<AppT>::usage()
 {
-    return app.get()->usage();
+    return app.get()->getUsage();
 }
 
 template <class AppT>
-int Kernel<AppT>::ExitRequestStatus()
+int Kernel<AppT>::exitRequestStatus()
 {
     return exit_request.load();
 }
 
 template <class AppT>
-void Kernel<AppT>::WaitForExit()
+void Kernel<AppT>::waitForExit()
 {
     std::unique_lock<std::mutex> lock(exit_cv_mutex);
     exit_cv.wait(lock);
@@ -444,7 +444,7 @@ void Kernel<AppT>::WaitForExit()
 
 template <class AppT>
 template <class R>
-bool Kernel<AppT>::WaitForExit(std::chrono::duration<R> const& time)
+bool Kernel<AppT>::waitForExit(std::chrono::duration<R> const& time)
 {
     std::unique_lock<std::mutex> lock(exit_cv_mutex);
     exit_cv.wait_for(lock, time);
@@ -452,7 +452,7 @@ bool Kernel<AppT>::WaitForExit(std::chrono::duration<R> const& time)
 }
 
 template <class AppT>
-void Kernel<AppT>::Shutdown()
+void Kernel<AppT>::shutdown()
 {
     // Send a kill signal to our process group, this will allow a graceful shutdown like it was requested externally.
     // NB: using [std::]raise() will not reach the sigwait() handler.
@@ -460,7 +460,7 @@ void Kernel<AppT>::Shutdown()
 }
 
 template <class AppT>
-int Kernel<AppT>::Execute(std::function<int()> const& builder)
+int Kernel<AppT>::execute(std::function<int()> const& builder)
 {
     if (int r = init()) {
         return r < 0 ? 0 : r;
@@ -476,7 +476,7 @@ int Kernel<AppT>::Execute(std::function<int()> const& builder)
 }
 
 template <class AppT>
-int Kernel<AppT>::ErrorControlledExecution(std::function<int()> const& f)
+int Kernel<AppT>::errorControlledExecution(std::function<int()> const& f)
 {
     try {
         return f();
@@ -515,7 +515,7 @@ template <class AppT>
 Kernel<AppT>::~Kernel()
 {
     if (signal_thread.joinable()) {
-        if (ExitRequestStatus() == 0) {
+        if (exitRequestStatus() == 0) {
             // The signal listener is instructed to ignore SIGUSR1 and break out silently
             ::kill(0, SIGUSR1);
         }
@@ -525,14 +525,14 @@ Kernel<AppT>::~Kernel()
 }
 
 template <class AppT>
-void Kernel<AppT>::WaitForDI()
+void Kernel<AppT>::waitForDi()
 {
     // Wait until the discovery interface is ready before starting the application's Run() sequence
     auto di = di_t::getDiscoveryInterface().get();
     unsigned wait_time = 0;
     unsigned max_wait = getConfig().template getOr<unsigned>(60, "discovery", "ready-wait-time");
     while (!di->ready()) {
-        int sig = ExitRequestStatus();
+        int sig = exitRequestStatus();
         if (sig > 0) {
             throw ManagedExitException("Exit before kernel came online", signalToExitCode(sig));
         } else if (++wait_time > max_wait) {
