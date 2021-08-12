@@ -172,12 +172,12 @@ TEST(RedisTest, Ttl)
     auto db = createDatabase();
 
     EXPECT_TRUE(db.apply("ttl:key:1", "some data").ok());
-    EXPECT_EQ(db.ttl("ttl:key:1").asInt(), 0);
+    EXPECT_EQ(db.ttl("ttl:key:1").asInt(), -1);
 
     // NB: this is pipelined, so we shouldn't expect the TTL to be consumed during the test processing
     db.expire("ttl:key:1", 10);
     EXPECT_EQ(db.ttl("ttl:key:1").asInt(), 10);
 
     db.persist("ttl:key:1").wait();
-    EXPECT_EQ(db.ttl("ttl:key:1").asInt(), 0);
+    EXPECT_EQ(db.ttl("ttl:key:1").asInt(), -1);
 }

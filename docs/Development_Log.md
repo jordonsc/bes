@@ -7,6 +7,7 @@ Development Log
 * Cassandra v4 support added
 * Completed Redis transaction support
 * Added pipelining support for Redis
+* Completed Redis TTL functions
 
 Cassandra v4 changed some error messages. The unit tests have been updated to force a v4 server (what you'll get if
 you do a docker pull with the latest image), but this pulls into the limelight the need for the tests to run against
@@ -20,6 +21,9 @@ transparent, pipelining is by default, and won't dispatch until you run `dispatc
 A side-effect of this is that if you ignore the logic, you might not start the network activity in advance of reading
 the response (if you fail to call `dispatch()` manually) - but you will get the most optimum pipelining, however.
 
+**Redis TTL Functions** have also been implemented. If a TTL does not exist, Redis will return -1. I'm not sure how I
+feel about this, this functionality relies on other DBs acting in the same manner. It's tricky to abstract since the
+Redis client wrapper just returns a result from any arbitrary server call.
 
 2021-05-27 (JS)
 ---------------

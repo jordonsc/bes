@@ -52,14 +52,16 @@ class RedisResult : public ResultInterface
     Int64 getInt() override
     {
         wait();
-        if (reply.is_string()) {
+        if (reply.is_integer()) {
+            return reply.as_integer();
+        } else if (reply.is_string()) {
             try {
                 return std::stol(reply.as_string());
             } catch (std::invalid_argument const&) {
-                throw BadDataType("Data for key '" + key + "' is not an integer");
+                throw BadDataType("Data for key '" + key + "' is not in integer form");
             }
         } else {
-            throw BadDataType("Data for key '" + key + "' cannot be represented as a string for integer conversion");
+            throw BadDataType("Data for key '" + key + "' cannot be converted to an integer");
         }
     }
 
@@ -70,10 +72,10 @@ class RedisResult : public ResultInterface
             try {
                 return std::stod(reply.as_string());
             } catch (std::invalid_argument const&) {
-                throw BadDataType("Data for key '" + key + "' is not a floating point number");
+                throw BadDataType("Data for key '" + key + "' is in floating point number form");
             }
         } else {
-            throw BadDataType("Data for key '" + key + "' cannot be represented as a string for float conversion");
+            throw BadDataType("Data for key '" + key + "' cannot be converted to a float");
         }
     }
 
