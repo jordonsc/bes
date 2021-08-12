@@ -6,7 +6,7 @@ Logger::Logger(Severity severity, char const* function, char const* filename, in
     : severity(severity), function(function), filename(filename), lineno(lineno)
 {
     if (LogSink::hasInstance()) {
-        LogSink& s = LogSink::Instance();
+        LogSink& s = LogSink::instance();
         log_enabled = !s.empty() && s.enabled(severity);
     } else {
         log_enabled = false;
@@ -34,7 +34,7 @@ void Logger::dispatch()
     record.timestamp = std::chrono::system_clock::now();
     record.message = ostream->str();
 
-    LogSink::Instance().log(record);
+    LogSink::instance().log(record);
 }
 
 std::ostream& Logger::stream()

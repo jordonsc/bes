@@ -1,5 +1,4 @@
-#ifndef BES_RPC_SERVICECLIENT_H
-#define BES_RPC_SERVICECLIENT_H
+#pragma once
 
 #include <bes/app.h>
 #include <grpcpp/grpcpp.h>
@@ -13,8 +12,8 @@ class RpcClient
 {
    public:
     explicit RpcClient(std::shared_ptr<bes::app::discovery::DiscoveryInterface> const& discovery_iface = nullptr)
-        : discovery_iface(discovery_iface ? discovery_iface
-                                          : bes::app::discovery::DiscoveryInterface::getDiscoveryInterface())
+        : discovery_iface(
+              discovery_iface ? discovery_iface : bes::app::discovery::DiscoveryInterface::getDiscoveryInterface())
     {}
 
    protected:
@@ -41,5 +40,3 @@ class RpcClient
 };
 
 }  // namespace bes::rpc
-
-#endif

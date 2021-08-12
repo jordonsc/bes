@@ -1,5 +1,4 @@
-#ifndef BES_LOG_MODEL_H
-#define BES_LOG_MODEL_H
+#pragma once
 
 #include <chrono>
 #include <functional>
@@ -131,5 +130,3 @@ std::ostream &operator<<(std::ostream &stream, bes::log::Severity const &s);
  *      BES_LOG(INFO) << "Test Log";
  */
 #define BES_LOG(level) BES_LOG_LVL(::bes::log::Severity::level)
-
-#endif

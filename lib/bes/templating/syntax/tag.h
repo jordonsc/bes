@@ -1,5 +1,4 @@
-#ifndef BES_TEMPLATING_SYNTAX_TAG_H
-#define BES_TEMPLATING_SYNTAX_TAG_H
+#pragma once
 
 #include <string>
 
@@ -26,5 +25,3 @@ struct Tag
 };
 
 }  // namespace bes::templating::syntax
-
-#endif

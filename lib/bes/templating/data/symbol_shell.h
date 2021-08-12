@@ -1,5 +1,4 @@
-#ifndef BES_TEMPLATING_DATA_SYMBOL_SHELL_H
-#define BES_TEMPLATING_DATA_SYMBOL_SHELL_H
+#pragma once
 
 #include <memory>
 
@@ -113,5 +112,3 @@ class SymbolShell : public ShellInterface
 };
 
 }  // namespace bes::templating::data
-
-#endif

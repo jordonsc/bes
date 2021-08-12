@@ -1,5 +1,4 @@
-#ifndef BES_LOG_LOGGER_H
-#define BES_LOG_LOGGER_H
+#pragma once
 
 #include <chrono>
 #include <functional>
@@ -46,5 +45,3 @@ class Logger
 };
 
 }  // namespace bes::log
-
-#endif

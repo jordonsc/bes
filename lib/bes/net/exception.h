@@ -1,5 +1,4 @@
-#ifndef BES_NET_EXCEPTION_H
-#define BES_NET_EXCEPTION_H
+#pragma once
 
 #include <bes/core.h>
 
@@ -21,5 +20,3 @@ class SocketBindException : public SocketException
 };
 
 }  // namespace bes::net
-
-#endif

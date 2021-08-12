@@ -132,7 +132,7 @@ void RpcController<ServiceClass>::handleRpc(threadsize_t max_threads)
                     break;
                 }
 
-                (new HandlerT(&service, cq.get(), &tracker, application))->Proceed();
+                (new HandlerT(&service, cq.get(), &tracker, application))->proceed();
             }
 
             /**
@@ -153,7 +153,7 @@ void RpcController<ServiceClass>::handleRpc(threadsize_t max_threads)
                 // Have a request to process (could be either process or clean-up)
                 thread_pool.enqueue(
                     [](void* ref) {
-                        static_cast<HandlerT*>(ref)->Proceed();
+                        static_cast<HandlerT*>(ref)->proceed();
                     },
                     tag);
             }

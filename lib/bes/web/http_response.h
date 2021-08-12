@@ -1,5 +1,4 @@
-#ifndef BES_WEB_HTTP_RESPONSE_H
-#define BES_WEB_HTTP_RESPONSE_H
+#pragma once
 
 #include <sstream>
 #include <unordered_map>
@@ -61,5 +60,3 @@ class HttpResponse
 };
 
 }  // namespace bes::web
-
-#endif

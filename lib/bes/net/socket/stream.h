@@ -1,5 +1,4 @@
-#ifndef BES_NET_SOCKET_STREAM_H
-#define BES_NET_SOCKET_STREAM_H
+#pragma once
 
 #include <atomic>
 #include <functional>
@@ -26,8 +25,8 @@ class Stream : public Socket
      * @param tv_usec Number of microseconds before polling for a kill signal
      */
     void listen(std::function<void(Stream&&)> const& callback, size_t max_queue = 5, long tv_sec = 1, long tv_usec = 0);
-    void listenAsync(std::function<void(Stream&&)> const& callback, size_t max_queue = 5, long tv_sec = 1,
-                     long tv_usec = 0);
+    void
+    listenAsync(std::function<void(Stream&&)> const& callback, size_t max_queue = 5, long tv_sec = 1, long tv_usec = 0);
 
     /**
      * Send a kill-signal to the Listen() function, allowing it to drop out when the timeout is next reached.
@@ -60,5 +59,3 @@ class Stream : public Socket
 };
 
 }  // namespace bes::net::socket
-
-#endif

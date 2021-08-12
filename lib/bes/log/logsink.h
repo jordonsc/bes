@@ -1,5 +1,4 @@
-#ifndef BES_LOG_LOGSINK_H
-#define BES_LOG_LOGSINK_H
+#pragma once
 
 #include <atomic>
 #include <functional>
@@ -34,7 +33,7 @@ class LogSink
     LogSink(LogSink&) = delete;
     LogSink& operator=(LogSink&) = delete;
 
-    static LogSink& Instance();
+    static LogSink& instance();
     static bool hasInstance() noexcept;
 
     void log(LogRecord const& log_record);
@@ -77,5 +76,3 @@ long LogSink::addBackend(Args&&... args)
 }
 
 }  // namespace bes::log
-
-#endif

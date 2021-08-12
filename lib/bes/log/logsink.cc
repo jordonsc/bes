@@ -20,7 +20,7 @@ LogSink::~LogSink()
     LogSink::singleton = nullptr;
 }
 
-LogSink& LogSink::Instance()
+LogSink& LogSink::instance()
 {
     return *LogSink::singleton;
 }

@@ -1,5 +1,4 @@
-#ifndef BES_NET_SOCKET_MESSAGE_H
-#define BES_NET_SOCKET_MESSAGE_H
+#pragma once
 
 #include <string>
 #include <utility>
@@ -11,7 +10,8 @@ namespace bes::net {
 struct Message
 {
     inline Message(std::string payload, bes::net::Address address)
-        : payload(std::move(payload)), address(std::move(address))
+        : payload(std::move(payload)),
+          address(std::move(address))
     {}
 
     std::string payload;
@@ -19,5 +19,3 @@ struct Message
 };
 
 }  // namespace bes::net
-
-#endif

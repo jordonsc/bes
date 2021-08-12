@@ -1,5 +1,4 @@
-#ifndef BES_RPC_RPC_HANDLER_TCC
-#define BES_RPC_RPC_HANDLER_TCC
+#pragma once
 
 #include <bes/log.h>
 #include <grpcpp/grpcpp.h>
@@ -35,7 +34,7 @@ class RpcHandler
 
     virtual ~RpcHandler();
 
-    void Proceed();
+    void proceed();
 
    protected:
     /**
@@ -44,14 +43,14 @@ class RpcHandler
      * eg:
      * service->RequestHelloWorld(&context, &request, &responder, completion_queue, completion_queue, this);
      */
-    virtual void RequestRpc() = 0;
+    virtual void requestRpc() = 0;
 
     /**
      * The core logic for the RPC will go in here.
      *
      * Will be executed in a thread, keep atomic.
      */
-    virtual grpc::Status Process() = 0;
+    virtual grpc::Status process() = 0;
 
     RequestT request;    // What we get from the client
     ResponseT response;  // What we send back to the client
@@ -94,17 +93,17 @@ inline RpcHandler<SyncSvcT, RequestT, ResponseT>::RpcHandler(SyncSvcT* svc, Serv
 }
 
 template <class SyncSvcT, class RequestT, class ResponseT>
-inline void RpcHandler<SyncSvcT, RequestT, ResponseT>::Proceed()
+inline void RpcHandler<SyncSvcT, RequestT, ResponseT>::proceed()
 {
     if (status == CallStatus::CREATE) {
         // Request a call from the gRPC engine
-        RequestRpc();
+        requestRpc();
         status = CallStatus::PROCESS;
 
     } else if (status == CallStatus::PROCESS) {
         // We've got an incoming RPC call, inform the tracker that we're no longer offering capacity
         tracker->instanceWorking(this);
-        grpc::Status rpc_status = Process();
+        grpc::Status rpc_status = process();
 
         // Let the gRPC runtime know we've finished and pass it our reply (formed in Process())
         responder.Finish(response, rpc_status, this);
@@ -128,5 +127,3 @@ inline RpcHandler<SyncSvcT, RequestT, ResponseT>::~RpcHandler()
 }
 
 }  // namespace bes::rpc
-
-#endif
