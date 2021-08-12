@@ -29,19 +29,10 @@ static bes::dbal::Context createContext()
     return ctx;
 }
 
-TEST(CassandraTest, Connection)
-{
-    ASSERT_NO_THROW({ auto throwaway = bes::dbal::wide::cassandra::Connection(createContext()); });
-    auto con = bes::dbal::wide::cassandra::Connection(createContext());
-    ASSERT_TRUE(con.isConnected());
-}
-
 TEST(CassandraTest, ServerVersion)
 {
-    // Constructed via connection rvalue copy
     auto db = Cassandra(createContext());
     ASSERT_EQ(db.getServerVersion().substr(0, 2), TEST_SERVER_VERSION);
-    EXPECT_EQ(db.getServerVersion().substr(0, 2), TEST_SERVER_VERSION);  // ensure consecutive queries work
 }
 
 TEST(CassandraTest, KeyspaceCreation)

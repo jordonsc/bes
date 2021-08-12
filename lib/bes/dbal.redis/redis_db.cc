@@ -82,89 +82,105 @@ Redis& Redis::logConnectStatus(std::string const& host, std::size_t port, cpp_re
 SuccessFuture Redis::apply(std::string const& key, std::string const& value)
 {
     auto f = client.set(key, value);
-    client.commit();
+    has_cmds = true;
     return createSuccessFuture(f.share(), key);
 }
 
 SuccessFuture Redis::apply(std::string const& key, bes::dbal::Int64 value)
 {
     auto f = client.set(key, std::to_string(value));
-    client.commit();
+    has_cmds = true;
     return createSuccessFuture(f.share(), key);
 }
 
 SuccessFuture Redis::apply(std::string const& key, bes::dbal::Float64 value)
 {
     auto f = client.set(key, std::to_string(value));
-    client.commit();
+    has_cmds = true;
     return createSuccessFuture(f.share(), key);
 }
 
 SuccessFuture Redis::applyNx(std::string const& key, std::string const& value)
 {
     auto f = client.setnx(key, value);
-    client.commit();
+    has_cmds = true;
     return createSuccessFuture(f.share(), key);
 }
 
 SuccessFuture Redis::applyNx(std::string const& key, bes::dbal::Int64 value)
 {
     auto f = client.setnx(key, std::to_string(value));
-    client.commit();
+    has_cmds = true;
     return createSuccessFuture(f.share(), key);
 }
 
 SuccessFuture Redis::applyNx(std::string const& key, bes::dbal::Float64 value)
 {
     auto f = client.setnx(key, std::to_string(value));
-    client.commit();
+    has_cmds = true;
     return createSuccessFuture(f.share(), key);
 }
 
 ResultFuture Redis::retrieve(std::string const& key)
 {
     auto f = client.get(key);
-    client.commit();
+    has_cmds = true;
     return createResultFuture(f.share(), key);
 }
 
 SuccessFuture Redis::remove(std::string const& key)
 {
     auto f = client.del({key});
-    client.commit();
+    has_cmds = true;
     return createSuccessFuture(f.share(), key);
 }
 
 SuccessFuture Redis::truncate()
 {
     auto f = client.flushdb();
-    client.commit();
+    has_cmds = true;
     return createSuccessFuture(f.share(), std::string());
 }
 
 SuccessFuture Redis::offset(std::string const& key, bes::dbal::Int64 offset)
 {
     auto f = client.incrby(key, offset);
-    client.commit();
+    has_cmds = true;
     return createSuccessFuture(f.share(), key);
 }
 
 SuccessFuture Redis::offset(std::string const& key, bes::dbal::Float64 offset)
 {
     auto f = client.incrbyfloat(key, offset);
-    client.commit();
+    has_cmds = true;
     return createSuccessFuture(f.share(), key);
 }
 
-ResultFuture Redis::ttl(std::string const& key) {}
+ResultFuture Redis::ttl(std::string const& key)
+{
+    auto f = client.ttl(key);
+    has_cmds = true;
+    return createResultFuture(f.share(), key);
+}
 
-SuccessFuture Redis::expire(std::string const& key, size_t ttl) {}
+SuccessFuture Redis::expire(std::string const& key, size_t ttl)
+{
+    auto f = client.expire(key, ttl);
+    has_cmds = true;
+    return createSuccessFuture(f.share(), key);
+}
 
-SuccessFuture Redis::persist(std::string const& key) {}
+SuccessFuture Redis::persist(std::string const& key)
+{
+    auto f = client.persist(key);
+    has_cmds = true;
+    return createSuccessFuture(f.share(), key);
+}
 
 SuccessFuture Redis::createSuccessFuture(std::shared_future<cpp_redis::reply> f, std::string key)
 {
-    return SuccessFuture([f = std::move(f), key = std::move(key)]() mutable {
+    return SuccessFuture([this, f = std::move(f), key = std::move(key)]() mutable {
+        dispatch();
         f.wait();
         auto const& reply = f.get();
         if (reply.is_error()) {
@@ -177,47 +193,59 @@ SuccessFuture Redis::createSuccessFuture(std::shared_future<cpp_redis::reply> f,
 
 ResultFuture Redis::createResultFuture(std::shared_future<cpp_redis::reply> ftr, std::string key)
 {
-    return ResultFuture(std::make_shared<redis::RedisResult>(std::move(ftr), std::move(key)));
+    return ResultFuture(std::make_shared<redis::RedisResult>(std::move(ftr), std::move(key), [this]() {
+        dispatch();
+    }));
 }
 
 SuccessFuture Redis::beginTransaction()
 {
-    if (in_transaction.load(std::memory_order_consume)) {
-        throw DbalException("Redis transaction already begun, cannot start new transaction");
+    if (in_transaction) {
+        throw LogicException("Redis transaction already begun, cannot start new transaction");
     }
 
-    in_transaction.store(true, std::memory_order_release);
-
+    in_transaction = true;
+    has_cmds = true;
     auto f = client.multi();
-    client.commit();
 
     return createSuccessFuture(f.share(), std::string());
 }
 
 SuccessFuture Redis::commitTransaction()
 {
-    if (!in_transaction.load(std::memory_order_acquire)) {
-        throw DbalException("Redis transaction NOT begun, cannot commit transaction");
+    if (!in_transaction) {
+        throw LogicException("Redis transaction NOT begun, cannot commit transaction");
     }
 
     auto f = client.exec();
-    client.commit();
-
-    in_transaction.store(false, std::memory_order_release);
+    in_transaction = false;
+    has_cmds = true;
 
     return createSuccessFuture(f.share(), std::string());
 }
 
-SuccessFuture Redis::discardTransaction() {
-    if (!in_transaction.load(std::memory_order_acquire)) {
-        throw DbalException("Redis batch operation NOT begun, cannot discard batch");
+SuccessFuture Redis::discardTransaction()
+{
+    if (!in_transaction) {
+        throw LogicException("Redis batch operation NOT begun, cannot discard batch");
     }
 
     auto f = client.discard();
-    client.commit();
-
-    in_transaction.store(false, std::memory_order_release);
+    in_transaction = false;
+    has_cmds = true;
 
     return createSuccessFuture(f.share(), std::string());
 }
 
+void Redis::dispatch()
+{
+    if (has_cmds) {
+        client.commit();
+        has_cmds = false;
+    }
+}
+
+bool Redis::hasUnsentCommands() const
+{
+    return has_cmds;
+}

@@ -9,6 +9,11 @@ class DbalException : public bes::BesException
     using BesException::BesException;
 };
 
+class LogicException : public DbalException
+{
+    using DbalException::DbalException;
+};
+
 class NotConnectedException : public DbalException
 {
     using DbalException::DbalException;

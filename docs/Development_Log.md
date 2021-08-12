@@ -1,15 +1,24 @@
 Development Log
 ===============
 
-2021-08-11 (JS)
+2021-08-12 (JS)
 ---------------
 ### DBAL
 * Cassandra v4 support added
 * Completed Redis transaction support
+* Added pipelining support for Redis
 
 Cassandra v4 changed some error messages. The unit tests have been updated to force a v4 server (what you'll get if
 you do a docker pull with the latest image), but this pulls into the limelight the need for the tests to run against
 multiple server versions, which at current there is no facility to do.
+
+Pipelining Redis commands was originally going to work like transactions - you run a start command, run a bunch of
+commands and then finally run a 'commit' command that dispatches all queued commands. Instead I've managed to make it
+transparent, pipelining is by default, and won't dispatch until you run `dispatch()` yourself or any invocation of
+`wait()` is called (whereby it internally runs `dispatch()`) itself.
+
+A side-effect of this is that if you ignore the logic, you might not start the network activity in advance of reading
+the response (if you fail to call `dispatch()` manually) - but you will get the most optimum pipelining, however.
 
 
 2021-05-27 (JS)

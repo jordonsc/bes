@@ -46,11 +46,19 @@ class Redis : public KeyValueDb
     SuccessFuture commitTransaction() override;
     SuccessFuture discardTransaction() override;
 
+    // Pipelining
+    void dispatch() override;
+
+    // Utility
+    bool hasUnsentCommands() const;
+
    protected:
-    std::atomic<bool> in_transaction = false;
+    bool in_transaction = false;    // true if `beginTransaction()` has been called
+    bool has_cmds = false;          // true if unsent commands have been queued
+
     cpp_redis::client client;
-    static SuccessFuture createSuccessFuture(std::shared_future<cpp_redis::reply> f, std::string key);
-    static ResultFuture createResultFuture(std::shared_future<cpp_redis::reply> f, std::string key);
+    SuccessFuture createSuccessFuture(std::shared_future<cpp_redis::reply> f, std::string key);
+    ResultFuture createResultFuture(std::shared_future<cpp_redis::reply> f, std::string key);
 
     void connect();
     Redis& logConnectStatus(std::string const& host, std::size_t port, cpp_redis::connect_state status);

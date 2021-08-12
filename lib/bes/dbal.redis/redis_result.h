@@ -12,14 +12,24 @@ using ResultInterface = bes::dbal::kv::ResultInterface;
 class RedisResult : public ResultInterface
 {
    public:
+    using DispatchSig = std::function<void()>;
+
     RedisResult() = delete;
-    explicit RedisResult(std::shared_future<cpp_redis::reply> future, std::string key)
+
+    /**
+     * @param future Future from the Redis client itself
+     * @param key    Redis key in question (for logging), can be blank
+     * @param d      Callback to ask the client to send any unsent commands to the server
+     */
+    explicit RedisResult(std::shared_future<cpp_redis::reply> future, std::string key, DispatchSig d)
         : reply_future(std::move(future)),
-          key(std::move(key))
+          key(std::move(key)),
+          dispatchFn(std::move(d))
     {}
 
     void wait() override
     {
+        dispatchFn();
         reply_future.wait();
         reply = reply_future.get();
         if (!reply.ok()) {
@@ -71,6 +81,7 @@ class RedisResult : public ResultInterface
     cpp_redis::reply reply;
     std::shared_future<cpp_redis::reply> reply_future;
     std::string key;
+    DispatchSig dispatchFn;  // allows the client to send any unsent commands to the server
 };
 
 }  // namespace bes::dbal::kv::redis

@@ -75,7 +75,7 @@ class KeyValueDb : public ContextualDatabase
      * Begin a transaction.
      *
      * All successive calls will be sent to the server but not committed until `commitTransaction()` is called. If you
-     * have already begun a transaction and not committed it, an exception will be thrown.
+     * have already begun a transaction and not committed it, a LogicException will be thrown.
      */
     virtual SuccessFuture beginTransaction() = 0;
 
@@ -83,7 +83,7 @@ class KeyValueDb : public ContextualDatabase
      * Commit and execute a transaction.
      *
      * All calls raised since `beginTransaction()` will now be executed on the server. If a transaction has not been
-     * started an exception will be thrown.
+     * started a LogicException will be thrown.
      */
     virtual SuccessFuture commitTransaction() = 0;
 
@@ -91,9 +91,17 @@ class KeyValueDb : public ContextualDatabase
      * Discard a transaction.
      *
      * All calls raised since `beginTransaction()` will be discarded. If a transaction has not been started,
-     * an exception will be thrown.
+     * a LogicException will be thrown.
      */
     virtual SuccessFuture discardTransaction() = 0;
+
+    // Pipelining
+    /**
+     * Send all queued commands to the server.
+     *
+     * If no commands are queued, this will do nothing. Returns immediately, must be asynchronous.
+     */
+    virtual void dispatch() = 0;
 };
 
 }  // namespace bes::dbal::kv

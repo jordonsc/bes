@@ -37,15 +37,25 @@ TEST(RedisTest, StringData)
     // Validate we've lost our data
     EXPECT_THROW(db.retrieve("key 0").wait(), DoesNotExistException);
 
-    // Test various string scenarios
-    db.apply("key1", "value1").wait();
-    db.apply("key 2", "value 2").wait();
+    // Test various string scenarios, will pipeline all three into a single call to the server
+    db.apply("key1", "value1");
+    db.apply("key 2", "value 2");
     db.apply("key 3", "value 3").wait();
 
-    // Reordered - should make no difference
+    // Reordered - should make no difference - no pipelining
     EXPECT_EQ(db.retrieve("key 3").asString(), "value 3");
     EXPECT_EQ(db.retrieve("key1").asString(), "value1");
     EXPECT_EQ(db.retrieve("key 2").asString(), "value 2");
+
+    // Will now pipeline three retrieval commands
+    EXPECT_FALSE(db.hasUnsentCommands());
+    auto r1 = db.retrieve("key1");
+    auto r2 = db.retrieve("key 2");
+    auto r3 = db.retrieve("key 3");
+    EXPECT_TRUE(db.hasUnsentCommands());
+    EXPECT_EQ(r3.asString(), "value 3");  // will dispatch here
+    EXPECT_EQ(r2.asString(), "value 2");  // should have result already
+    EXPECT_FALSE(db.hasUnsentCommands());
 
     // Blank a value to ensure it doesn't trigger a DoesNotExistException
     EXPECT_TRUE(db.apply("key1", "").ok());
@@ -67,7 +77,7 @@ TEST(RedisTest, IntegerData)
 {
     auto db = createDatabase();
 
-    db.apply("num", Int64(10)).wait();
+    db.apply("num", Int64(10));  // not waiting, will pipeline the two commands
     EXPECT_EQ(db.retrieve("num").asInt(), 10);
 
     db.applyNx("num", Int64(12)).wait();
@@ -119,6 +129,10 @@ TEST(RedisTest, Transactions)
 {
     auto db = createDatabase();
     db.truncate().wait();
+
+    EXPECT_THROW(db.commitTransaction(), LogicException);
+    EXPECT_THROW(db.discardTransaction(), LogicException);
+
     db.apply("trans_test_a", "foo").wait();
 
     // Test abandoning the transaction
@@ -149,6 +163,21 @@ TEST(RedisTest, Transactions)
 
     EXPECT_TRUE(a1.ok());
     EXPECT_TRUE(a2.ok());
-    EXPECT_NE(b.asString(), "new data");    // Redis will return "QUEUED" for uncommitted retrievals
+    EXPECT_NE(b.asString(), "new data");  // Redis will return "QUEUED" for uncommitted retrievals
     EXPECT_NE(ba.asString(), "hello world");
+}
+
+TEST(RedisTest, Ttl)
+{
+    auto db = createDatabase();
+
+    EXPECT_TRUE(db.apply("ttl:key:1", "some data").ok());
+    EXPECT_EQ(db.ttl("ttl:key:1").asInt(), 0);
+
+    // NB: this is pipelined, so we shouldn't expect the TTL to be consumed during the test processing
+    db.expire("ttl:key:1", 10);
+    EXPECT_EQ(db.ttl("ttl:key:1").asInt(), 10);
+
+    db.persist("ttl:key:1").wait();
+    EXPECT_EQ(db.ttl("ttl:key:1").asInt(), 0);
 }
