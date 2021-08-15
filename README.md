@@ -44,6 +44,8 @@ Code Dependencies
 Core dependencies:
 * gRPC
   * Nexus of RPC applications
+* Curlpp
+  * Driver for the Net HTTP library
 
 Non-critical dependencies:
 * YAML C++:

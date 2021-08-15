@@ -5,4 +5,5 @@
 #include "net/message.h"
 #include "net/socket/datagram.h"
 #include "net/socket/stream.h"
+#include "net/http/service.h"
 

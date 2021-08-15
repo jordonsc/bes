@@ -49,6 +49,7 @@ bes_cc_library(
     name = "net",
     deps = [
         ":core",
+        "@curlpp",
     ],
 )
 

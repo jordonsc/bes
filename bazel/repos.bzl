@@ -50,6 +50,15 @@ def bes_repos():
             ],
         )
 
+    if "curlpp" not in native.existing_rules():
+        http_archive(
+            name = "curlpp",
+            build_file = "@//bazel/curlpp:BUILD",
+            sha256 = "97e3819bdcffc3e4047b6ac57ca14e04af85380bd93afe314bee9dd5c7f46a0a",
+            strip_prefix = "curlpp-0.8.1",
+            urls = ["https://github.com/jpbarrette/curlpp/archive/refs/tags/v0.8.1.tar.gz"],
+        )
+
 def bes_test_repos():
     if "gtest" not in native.existing_rules():
         http_archive(
