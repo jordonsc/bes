@@ -73,6 +73,25 @@ cc_test(
 )
 
 cc_test(
+    name = "net",
+    size = "small",
+    srcs = [
+        "net/http.cc",
+        "test.cc",
+    ],
+    copts = COPTS,
+    linkopts = LINKOPTS,
+    tags = [
+        "exclusive",
+        "integration",
+    ],
+    deps = [
+        "//:net",
+        "@gtest",
+    ],
+)
+
+cc_test(
     name = "templating",
     size = "small",
     srcs = glob([
